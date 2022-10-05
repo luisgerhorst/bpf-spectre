@@ -35,6 +35,7 @@
 %:- use_module(concolic(concolic), [conc_stats/3]).
 :- use_module(muasm_translator(muasm_parser)).
 :- use_module(muasm_translator(x86_to_muasm)).
+:- use_module(muasm_translator(bpf_to_muasm)).
 
 :- use_module(spectector_flags).
 :- use_module(spectector_stats).
@@ -291,6 +292,8 @@ run(PrgFile, Opts) :-
 	    Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
 	; Ext = '.asm' ->
 	    Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
+	; Ext = '.bpf.s' ->
+	    Prg = ~translate_bpf_to_muasm(PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
 	    Memory0 = [], Locs0 = [] % TODO: allow init mem and symbols?

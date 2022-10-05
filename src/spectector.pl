@@ -203,7 +203,8 @@ parse_args([], [], []).
 :- export(run/2).
 run(PrgFile, Opts) :-
 	path_split(PrgFile, Path, PrgNameExt),
-	path_splitext(PrgNameExt, _PrgBasename, Ext),
+	path_splitext(PrgNameExt, PrgBasename, Ext),
+	path_splitext(PrgBasename, _, SecondExt),
 	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path))
 	; ConfContents = []
 	),
@@ -288,12 +289,12 @@ run(PrgFile, Opts) :-
 
 	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
 	statistics(walltime, [TParse0, _]),
-	( Ext = '.s' ->
+	( SecondExt = '.bpf', Ext = '.s' ->
+	    Prg = ~translate_bpf_to_muasm(PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
+	; Ext = '.s' ->
 	    Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
 	; Ext = '.asm' ->
 	    Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
-	; Ext = '.bpf.s' ->
-	    Prg = ~translate_bpf_to_muasm(PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
 	    Memory0 = [], Locs0 = [] % TODO: allow init mem and symbols?

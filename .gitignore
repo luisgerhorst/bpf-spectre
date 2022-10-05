@@ -3,3 +3,4 @@
 *.itf
 *.asr
 dist/
+/tests/lbe_*.bpf.s

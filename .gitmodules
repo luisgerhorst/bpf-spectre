@@ -1,0 +1,3 @@
+[submodule "tests/libbpf-bootstrap"]
+	path = tests/libbpf-bootstrap
+	url = git@gitlab.cs.fau.de:un65esoq/libbpf-bootstrap.git

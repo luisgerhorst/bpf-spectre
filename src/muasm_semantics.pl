@@ -166,7 +166,7 @@ run_(X<-E,c(M,A)) := c(M,A2) :-
 % ConditionalUpdate (depending on the contition EP, it does 1 or 2)
 run_(cmov(EP,X<-E),C0) := C :- !,
 	C = ~run_(X<-ite(~bv(EP),E,X), C0).
-% Load
+% Load from address E into location X.
 run_(load(X,E),c(M,A)) := c(M,A2) :-
 	N = ~ev(E,A),
 	trace(load(N)),
@@ -176,7 +176,10 @@ run_(load(X,E),c(M,A)) := c(M,A2) :-
 	),
 	A1 = ~update(A,X,V),
 	A2 = ~update0(A1,pc,~incpc(A1)).
-% Store % TODO: Notify about possible injection on stack (return direction)
+%
+% Store from location X to address E.
+%
+% TODO: Notify about possible injection on stack (return direction)
 run_(store(X,E),c(M,A)) := c(M2,A2) :-
 	Xv = ~ev(X,A),
 	Ev = ~ev(E,A),

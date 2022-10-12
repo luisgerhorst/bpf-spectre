@@ -1,7 +1,7 @@
-;; [unsafe]
+;; [program is unsafe]
 ;;
 ;; Branch might be taken, then speculation leaks data.
-;; Multiple calls might return different values.
+;; That's because multiple calls might return different values.
 .text
     call 1
     r6 = r0

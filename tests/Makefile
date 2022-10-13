@@ -3,6 +3,9 @@ LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter
 
 CUSTOM_APPS = spectre
 
+# Don't remove intermediate results.
+.SECONDARY:
+
 .PHONY: all
 all: $(patsubst %,lbe_%.bpf.s,$(LBE_APPS)) $(patsubst %,%.bpf.o,$(CUSTOM_APPS))
 
@@ -13,6 +16,12 @@ lbe_%.bpf.s:
 
 %.bpf.o: %.bpf.s
 	llvm-mc -triple bpf -filetype=obj -o $@ $<
+
+%.bpf.objdump: %.bpf.o
+	llvm-objdump -d $< > $@
+
+%.bpf.readelf: %.bpf.o
+	llvm-readelf --all $< > $@
 
 .PHONY: clean
 clean:

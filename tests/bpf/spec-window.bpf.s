@@ -1,7 +1,7 @@
-;; [program is safe]
-;;
-;; Branch might be taken, then speculation would leak data. However, speculative
-;; execution never reaches the instructions that leak the data.
+# [program is safe]
+#
+# Branch might be taken, then speculation would leak data. However, speculative
+# execution never reaches the instructions that leak the data.
 .text
     r2 = *(u64 *)(r1 + 0)
     r3 = *(u64 *)(r1 + 8)

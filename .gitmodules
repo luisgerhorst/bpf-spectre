@@ -1,3 +1,6 @@
 [submodule "tests/libbpf-bootstrap"]
-	path = tests/libbpf-bootstrap
+	path = tests/bpf/libbpf-bootstrap
 	url = git@gitlab.cs.fau.de:un65esoq/libbpf-bootstrap.git
+[submodule "tests/bpf/cilium"]
+	path = tests/bpf/cilium
+	url = git@github.com:cilium/cilium.git

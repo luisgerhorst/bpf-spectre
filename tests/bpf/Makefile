@@ -17,12 +17,12 @@ all: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) $(patsubst %.bpf.s,.build
 .PHONY: lbe_%.bpf.s
 lbe_%.bpf.s:
 	$(MAKE) -C libbpf-bootstrap/examples/c .output/$*.bpf.s
-	ln -s libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
+	ln -fs libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
 
 .PHONY: cilium_%.bpf.s
 cilium_%.bpf.s:
 	$(MAKE) -C cilium/bpf bpf_$*.s
-	ln -s cilium/bpf/bpf_$*.s $@
+	ln -fs cilium/bpf/bpf_$*.s $@
 
 .build/%.bpf.o: %.bpf.s | .build
 	llvm-mc -triple bpf -filetype=obj -o $@ $<
@@ -35,6 +35,10 @@ cilium_%.bpf.s:
 
 .build:
 	mkdir -p $@
+
+.PHONY: install-deps
+install-deps:
+	sudo apt install golang llvm
 
 .PHONY: clean
 clean:

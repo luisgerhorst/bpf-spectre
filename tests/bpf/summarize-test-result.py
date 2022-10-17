@@ -7,12 +7,14 @@ from pathlib import Path
 import yaml # pyaml
 import logging
 import string
+import pandas as pd
 
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('output', type=str)
     parser.add_argument('log', type=str) # spectector log
     parser.add_argument('source', type=str)
+    parser.add_argument('perf', type=str)
     return parser.parse_args()
 
 def main():
@@ -44,14 +46,28 @@ def main():
         if spectector_result == "unsafe":
             test_result = "success"
 
-    result = {
+    df = {
         "source": args.source,
         "spectector_result": spectector_result,
         "test_result": test_result,
     }
 
+    perf = pd.read_csv(
+        Path(args.perf), sep=",", comment="#",
+        names = ["counter_value", "counter_unit", "counter_name", "counter_run_time", "counter_run_time_perc", "metric_value", "metric_unit"]
+    )
+    for _i, row in perf.iterrows():
+        counter_unit_suffix = "" if not isinstance(row.counter_unit, str) else "_" + row.counter_unit
+        counter_name = str(row.counter_name).lower().replace("-", "_").replace(":", "_")
+        df["perf_" + counter_name + counter_unit_suffix] = row.counter_value
+        df["perf_counter_run_time_" + counter_name] = row.counter_run_time
+        df["perf_counter_run_time_perc_" + counter_name] = row.counter_run_time_perc
+        if isinstance(row.metric_unit, str):
+            mu = str(row.metric_unit).lower().replace(" ", "_").replace("/", "p")
+            df["perf_" + counter_name + "_" + mu] = row.metric_value
+
     with open(Path(args.output), "w") as output_file:
-        yaml.dump(result, output_file)
+        yaml.dump(df, output_file)
 
 if __name__ == '__main__':
     main()

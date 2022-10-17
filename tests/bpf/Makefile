@@ -42,17 +42,21 @@ SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 $(SPECTECTOR):
 	CIAOPATH=$(CIAOPATH) ciao build -r spectector
 
-.build/%.spectector.log: %.bpf.s $(SPECTECTOR)
-	$(SPECTECTOR) $< 2>&1 | tee $@
+.build/%.spectector.log: %.bpf.s $(SPECTECTOR) | .build
+	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
 
 .build/%.test-result.yaml: .build/%.spectector.log %.bpf.s
-	./summarize-test-result.py $@ $< $*.bpf.s
+	./summarize-test-result.py $@ $< $*.bpf.s .build/$*.perf
 
 .build/test-results.tsv.gz: $(patsubst %.bpf.s,.build/%.test-result.yaml,$(ALL_S))
 	./join-yamls.py --output $@ --yamls $^
 
 .build:
 	mkdir -p $@
+
+.PHONY: allow-perf
+allow-perf:
+	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid
 
 .PHONY: install-deps
 install-deps:

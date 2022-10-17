@@ -35,7 +35,7 @@ cilium_%.bpf.s:
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
 
-CIAOPATH=../../..
+CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 
 .PHONY: $(SPECTECTOR)

@@ -25,6 +25,7 @@ def main():
     source = Path(args.source).read_text()
 
     spectector_result = "NA"
+    spectector_error = "NA"
     if log.__contains__("[program is safe]"):
         spectector_result = "safe"
     if log.__contains__("[program is unsafe]"):
@@ -32,7 +33,11 @@ def main():
         spectector_result = "unsafe"
     if log.__contains__("{ERROR:"):
         assert spectector_result == "NA"
-        spectector_result = "error"
+        spectector_result = "problem"
+        spectector_error = "error"
+    if log.__contains__("WARNING: Pass through an unsupported instruction!"):
+        spectector_result = "problem"
+        spectector_error = "unsupported_instruction"
 
     test_result = "NA"
     if source.__contains__("#![program is safe]"):
@@ -49,6 +54,7 @@ def main():
     df = {
         "source": args.source,
         "spectector_result": spectector_result,
+        "spectector_error": spectector_error,
         "test_result": test_result,
     }
 
@@ -62,9 +68,11 @@ def main():
         df["perf_" + counter_name + counter_unit_suffix] = row.counter_value
         df["perf_counter_run_time_" + counter_name] = row.counter_run_time
         df["perf_counter_run_time_perc_" + counter_name] = row.counter_run_time_perc
-        if isinstance(row.metric_unit, str):
-            mu = str(row.metric_unit).lower().replace(" ", "_").replace("/", "p")
-            df["perf_" + counter_name + "_" + mu] = row.metric_value
+        # Perf may use a different unit here unpredictably (M vs G):
+        #
+        # if isinstance(row.metric_unit, str):
+        #     mu = str(row.metric_unit).lower().replace(" ", "_").replace("/", "p")
+        #     df["perf_" + counter_name + "_" + mu] = row.metric_value
 
     with open(Path(args.output), "w") as output_file:
         yaml.dump(df, output_file)

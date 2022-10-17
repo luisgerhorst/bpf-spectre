@@ -1,3 +1,4 @@
+#![program is unsafe]
 .text
     r2 = *(u64 *)(r1 + 0)
     r3 = *(u64 *)(r1 + 8)

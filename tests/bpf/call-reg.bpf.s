@@ -1,4 +1,4 @@
-# [program is unsafe]
+#![program is unsafe]
 #
 # Branch might be taken, then speculation leaks data.
 # That's because multiple calls might return different values.

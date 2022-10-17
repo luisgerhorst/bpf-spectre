@@ -1,4 +1,4 @@
-# [program is unsafe]
+#![program is unsafe]
 .text
     r6 = var ll
     r7 = 0

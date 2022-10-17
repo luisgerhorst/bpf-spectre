@@ -1,4 +1,4 @@
-# [program is safe]
+#![program is safe]
 .text
     # Read 8 bytes from ctx pointer.
     r2 = *(u64 *)(r1 + 0)

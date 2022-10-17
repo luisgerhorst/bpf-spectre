@@ -1,4 +1,4 @@
-# [program is unsafe]
+#![program is unsafe]
 #
 # Gadget should never execute regularly, speculation leaks data.
 .text

@@ -12,7 +12,9 @@ ALL_S = $(wildcard *.bpf.s) $(CILIUM_S) $(patsubst %,lbe_%.bpf.s,$(LBE_APPS))
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) $(patsubst %.bpf.s,.build/%.bpf.readelf,$(ALL_S))
+all: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
+	$(patsubst %.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
+	$(patsubst %.bpf.s,.build/%.test-result.yaml,$(ALL_S))
 
 .PHONY: lbe_%.bpf.s
 lbe_%.bpf.s:
@@ -32,6 +34,19 @@ cilium_%.bpf.s:
 
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
+
+CIAOPATH=../../..
+SPECTECTOR=$(CIAOPATH)/build/bin/spectector
+
+.PHONY: $(SPECTECTOR)
+$(SPECTECTOR):
+	CIAOPATH=$(CIAOPATH) ciao build -r spectector
+
+.build/%.spectector.log: %.bpf.s $(SPECTECTOR)
+	$(SPECTECTOR) $< 2>&1 | tee $@
+
+.build/%.test-result.yaml: .build/%.spectector.log %.bpf.s
+	./summarize-test-result.py $@ $< $*.bpf.s
 
 .build:
 	mkdir -p $@

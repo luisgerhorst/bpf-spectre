@@ -1,4 +1,4 @@
-# [program is safe]
+#![program is safe]
 #
 # Branch might be taken, then speculation would leak data. However, speculative
 # execution never reaches the instructions that leak the data.

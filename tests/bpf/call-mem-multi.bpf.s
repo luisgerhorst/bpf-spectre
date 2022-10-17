@@ -1,4 +1,4 @@
-# [program is unsafe]
+#![program is unsafe]
 #
 # Branch might be taken, then speculation leaks data.
 # That's because a call can change arbitrary memory locations, invalidating the

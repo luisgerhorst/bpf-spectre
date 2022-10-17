@@ -14,7 +14,7 @@ ALL_S = $(wildcard *.bpf.s) $(CILIUM_S) $(patsubst %,lbe_%.bpf.s,$(LBE_APPS))
 .PHONY: all
 all: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst %.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
-	$(patsubst %.bpf.s,.build/%.test-result.yaml,$(ALL_S))
+	.build/test-results.tsv.gz
 
 .PHONY: lbe_%.bpf.s
 lbe_%.bpf.s:
@@ -48,12 +48,15 @@ $(SPECTECTOR):
 .build/%.test-result.yaml: .build/%.spectector.log %.bpf.s
 	./summarize-test-result.py $@ $< $*.bpf.s
 
+.build/test-results.tsv.gz: $(patsubst %.bpf.s,.build/%.test-result.yaml,$(ALL_S))
+	./join-yamls.py --output $@ --yamls $^
+
 .build:
 	mkdir -p $@
 
 .PHONY: install-deps
 install-deps:
-	sudo apt install golang llvm
+	sudo apt install golang llvm python3-pandas
 
 .PHONY: clean
 clean:

@@ -12,11 +12,12 @@ ALL_S = $(wildcard *.bpf.s) $(CILIUM_S) $(patsubst %,lbe_%.bpf.s,$(LBE_APPS))
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
+all: dumps .build/test-results.tsv.gz
+
+.PHONY: dump
+dump: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst %.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
-	$(patsubst %.bpf.s,.build/%.dump-xlated,$(ALL_S)) \
-	$(patsubst %.bpf.s,.build/%.dump-jited,$(ALL_S)) \
-	.build/test-results.tsv.gz
+	$(patsubst %.bpf.s,.build/%.xlated,$(ALL_S))
 
 .PHONY: lbe_%.bpf.s
 lbe_%.bpf.s:
@@ -37,14 +38,15 @@ cilium_%.bpf.s:
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
 
-/sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o
-	sudo bpftool prog load $< $@
+/sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o Makefile
+	sudo rm -rfd $@
+	sudo bpftool prog loadall $< $@ 2>&1 > .build/$*.loadall
 
-.build/%.dump-xlated: /sys/fs/bpf/spectector-bpf/%
-	sudo bpftool prog dump xlated pinned $< > $@
+.build/%.xlated: /sys/fs/bpf/spectector-bpf/%
+	sudo ./bpftool-dumpall $< 2>&1 > $@
 
-.build/%.dump-jited: /sys/fs/bpf/spectector-bpf/%
-	sudo bpftool prog dump jited pinned $< > $@
+# .build/%.dump-jited: /sys/fs/bpf/spectector-bpf/%
+# 	sudo bpftool prog dump jited pinned $< > $@
 
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
@@ -88,4 +90,4 @@ clean:
 	rm -f lbe_*.bpf.s
 	rm -f cilium_*.bpf.s
 	rm -rfd .build
-	sudo rm -f /sys/fs/bpf/spectector-bpf/*
+	sudo rm -rfd /sys/fs/bpf/spectector-bpf/*

@@ -3,6 +3,6 @@
 *.itf
 *.asr
 dist/
-/tests/bpf/lbe_*.bpf.s
-/tests/bpf/cilium_*.bpf.s
+/tests/bpf/prog/lbe_*.bpf.s
+/tests/bpf/prog/cilium_*.bpf.s
 /tests/bpf/.build/

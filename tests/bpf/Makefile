@@ -14,6 +14,8 @@ ALL_S = $(wildcard *.bpf.s) $(CILIUM_S) $(patsubst %,lbe_%.bpf.s,$(LBE_APPS))
 .PHONY: all
 all: $(patsubst %.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst %.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
+	$(patsubst %.bpf.s,.build/%.dump-xlated,$(ALL_S)) \
+	$(patsubst %.bpf.s,.build/%.dump-jited,$(ALL_S)) \
 	.build/test-results.tsv.gz
 
 .PHONY: lbe_%.bpf.s
@@ -35,6 +37,15 @@ cilium_%.bpf.s:
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
 
+/sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o
+	sudo bpftool prog load $< $@
+
+.build/%.dump-xlated: /sys/fs/bpf/spectector-bpf/%
+	sudo bpftool prog dump xlated pinned $< > $@
+
+.build/%.dump-jited: /sys/fs/bpf/spectector-bpf/%
+	sudo bpftool prog dump jited pinned $< > $@
+
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 
@@ -54,9 +65,19 @@ $(SPECTECTOR):
 .build:
 	mkdir -p $@
 
-.PHONY: allow-perf
-allow-perf:
+.PHONY: get-pwned
+get-pwned:
 	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid
+	# sudo setcap cap_bpf+ep $(shell which bpftool)
+	sudo mkdir /sys/fs/bpf/spectector-bpf
+	sudo chgrp $(USER) /sys/fs/bpf/spectector-bpf
+	sudo chmod g+rwx /sys/fs/bpf/spectector-bpf
+
+.PHONY: lock-system
+lock-system:
+	echo "4" | sudo tee /proc/sys/kernel/perf_event_paranoid
+	# sudo setcap -r $(shell which bpftool)
+	sudo rm -rfd /sys/fs/bpf/spectector-bpf/
 
 .PHONY: install-deps
 install-deps:
@@ -67,3 +88,4 @@ clean:
 	rm -f lbe_*.bpf.s
 	rm -f cilium_*.bpf.s
 	rm -rfd .build
+	sudo rm -f /sys/fs/bpf/spectector-bpf/*

@@ -17,3 +17,11 @@
 End:
     r0 = 0
     exit
+
+	.type	var,@object                  # @my_pid
+	.section	.bss,"aw",@nobits
+	.globl var
+	.p2align	2
+var:
+	.long	0                               # 0x0
+	.size	var, 4

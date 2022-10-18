@@ -25,19 +25,20 @@ def main():
     source = Path(args.source).read_text()
 
     spectector_result = "NA"
-    spectector_error = "NA"
     if log.__contains__("[program is safe]"):
         spectector_result = "safe"
     if log.__contains__("[program is unsafe]"):
         assert spectector_result == "NA"
         spectector_result = "unsafe"
+
+    spectector_problem = "NA"
     if log.__contains__("{ERROR:"):
         assert spectector_result == "NA"
         spectector_result = "problem"
-        spectector_error = "error"
+        spectector_problem = "error"
     if log.__contains__("WARNING: Pass through an unsupported instruction!"):
         spectector_result = "problem"
-        spectector_error = "unsupported_instruction"
+        spectector_problem = "unsupported_instruction"
 
     test_result = "NA"
     if source.__contains__("#![program is safe]"):
@@ -54,7 +55,7 @@ def main():
     df = {
         "source": args.source,
         "spectector_result": spectector_result,
-        "spectector_error": spectector_error,
+        "spectector_problem": spectector_problem,
         "test_result": test_result,
     }
 

@@ -19,9 +19,6 @@ dump: $(patsubst prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
 	$(patsubst prog/%.bpf.s,.build/%.xlated,$(ALL_S))
 
-prog:
-	mkdir $@
-
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
 	$(MAKE) -C libbpf-bootstrap/examples/c .output/$*.bpf.s
@@ -43,13 +40,13 @@ prog/cilium_%.bpf.s: | prog
 
 /sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o Makefile
 	sudo rm -rfd $@
-	sudo bpftool prog loadall $< $@ 2>&1 > .build/$*.loadall; echo $$? > .build/$*.loadall.exit-code || true
+	sudo bpftool prog loadall --debug $< $@ 2> .build/$*.loadall; echo $$? > .build/$*.loadall.exit-code || true
 
 .build/%.xlated: /sys/fs/bpf/spectector-bpf/%
-	sudo ./bpftool-dumpall.sh $< 2>&1 > $@; echo $$? > $@.exit-code || true
+	sudo ./bpftool-dumpall.sh $< > $@; echo $$? > $@.exit-code || true
 
-# .build/%.dump-jited: /sys/fs/bpf/spectector-bpf/%
-# 	sudo bpftool prog dump jited pinned $< > $@
+.build/%.jited: /sys/fs/bpf/spectector-bpf/%
+	sudo bpftool prog dump jited pinned $< 2> $@
 
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
@@ -66,8 +63,12 @@ $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH
 .build/test-results.tsv.gz: $(patsubst prog/%.bpf.s,.build/%.test-result.yaml,$(ALL_S))
 	./join-yamls.py --output $@ --yamls $^
 
-.build:
-	mkdir -p $@
+.PHONY: clean
+clean:
+	rm -f prog/lbe_*.bpf.s
+	rm -f prog/cilium_*.bpf.s
+	rm -rfd .build
+	sudo rm -rfd /sys/fs/bpf/spectector-bpf/*
 
 .PHONY: get-pwned
 get-pwned:
@@ -87,9 +88,8 @@ lock-system:
 install-deps:
 	sudo apt install golang llvm python3-pandas
 
-.PHONY: clean
-clean:
-	rm -f prog/lbe_*.bpf.s
-	rm -f prog/cilium_*.bpf.s
-	rm -rfd .build
-	sudo rm -rfd /sys/fs/bpf/spectector-bpf/*
+.build:
+	mkdir -p $@
+
+prog:
+	mkdir -p $@

@@ -4,3 +4,6 @@
 [submodule "tests/bpf/cilium"]
 	path = tests/bpf/cilium
 	url = git@github.com:cilium/cilium.git
+[submodule "tests/bpf/linux-build/linux"]
+	path = tests/bpf/linux-build/linux
+	url = git@gitlab.cs.fau.de:un65esoq/linux.git

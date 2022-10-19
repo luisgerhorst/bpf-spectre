@@ -43,7 +43,7 @@ prog/cilium_%.bpf.s: | prog
 
 /sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o Makefile
 	sudo rm -rfd $@
-	sudo bpftool prog loadall $< $@ 2>&1 > .build/$*.loadall; echo $$? > $@.exit-code || true
+	sudo bpftool prog loadall $< $@ 2>&1 > .build/$*.loadall; echo $$? > .build/$*.loadall.exit-code || true
 
 .build/%.xlated: /sys/fs/bpf/spectector-bpf/%
 	sudo ./bpftool-dumpall.sh $< 2>&1 > $@; echo $$? > $@.exit-code || true
@@ -54,15 +54,14 @@ prog/cilium_%.bpf.s: | prog
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 
-.PHONY: $(SPECTECTOR)
-$(SPECTECTOR):
+$(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH)/muasm_translator/src/*.pl)
 	CIAOPATH=$(CIAOPATH) ciao build -r spectector
 
 .build/%.spectector.log: prog/%.bpf.s $(SPECTECTOR) | .build
 	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
 
 .build/%.test-result.yaml: .build/%.spectector.log
-	./summarize-test-result.py $@ $^ prog/$*.bpf.s .build/$*.perf
+	./summarize-test-result.py $@ $^ prog/$*.bpf.s .build/$*.perf .build/$*.loadall.exit-code
 
 .build/test-results.tsv.gz: $(patsubst prog/%.bpf.s,.build/%.test-result.yaml,$(ALL_S))
 	./join-yamls.py --output $@ --yamls $^

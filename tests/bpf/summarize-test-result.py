@@ -15,6 +15,7 @@ def parseargs():
     parser.add_argument('log', type=str) # spectector log
     parser.add_argument('source', type=str)
     parser.add_argument('perf', type=str)
+    parser.add_argument('loadall_exit_code', type=str)
     return parser.parse_args()
 
 def main():
@@ -57,6 +58,7 @@ def main():
         "spectector_result": spectector_result,
         "spectector_problem": spectector_problem,
         "test_result": test_result,
+        "bpftool_loadall_exit_code": Path(args.loadall_exit_code).read_text().strip(),
     }
 
     perf = pd.read_csv(

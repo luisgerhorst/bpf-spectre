@@ -24,6 +24,7 @@ handle_tp:                              # @handle_tp
 .Ltmp7:
 .Ltmp8:
 	if r1 != r0 goto LBB0_2
+    nospec
 .Ltmp9:
 .Ltmp10:
 # %bb.1:

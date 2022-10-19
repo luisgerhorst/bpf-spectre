@@ -29,8 +29,9 @@ prog/cilium_%.bpf.s: | prog
 	$(MAKE) -C cilium/bpf bpf_$*.s
 	ln -fs ../cilium/bpf/bpf_$*.s $@
 
+# https://pchaigno.github.io/bpf/2021/10/20/ebpf-instruction-sets.html
 .build/%.bpf.o: prog/%.bpf.s | .build
-	llvm-mc -triple bpf -filetype=obj -o $@ $<
+	llvm-mc -triple bpf -mcpu=v3 -filetype=obj -o $@ $<
 
 .build/%.bpf.objdump: .build/%.bpf.o | .build
 	llvm-objdump -d $< > $@

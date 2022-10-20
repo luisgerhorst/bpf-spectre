@@ -1,0 +1,5 @@
+#!/bin/env bash
+set -euo pipefail
+bash -n "$(command -v "$0")"
+
+SSH_DEST=root@localhost SSH_PORT=$(cat debian/hda-dirty.ssh_port) ./scripts/target-scpsh "$@"

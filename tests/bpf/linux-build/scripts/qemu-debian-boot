@@ -1,0 +1,58 @@
+#!/bin/env bash
+set -e
+set -u
+set -x
+
+# Brings the VM online such that it is reachable using SSH.
+
+vm=$1
+kernel=$2
+
+random_port() {
+    # https://unix.stackexchange.com/questions/55913/whats-the-easiest-way-to-find-an-unused-local-port
+    comm -23 <(seq 49152 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) \
+        | shuf \
+        | head -n 1
+}
+
+ssh_dst=root@localhost
+if [ -e ${vm}.ssh_port ]
+then
+    ssh_port=$(cat ${vm}.ssh_port)
+    ssh="ssh ${ssh_dst} -p ${ssh_port} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
+
+    set +e
+    ${ssh} "true"
+    vm_online=$?
+    set -e
+    if [ ${vm_online} -eq 0 ]
+    then
+        exit 0
+    fi
+fi
+
+export PATH="$(pwd):$(pwd)/scripts/:${PATH}"
+qemu-debian-shutdown ${vm}
+
+kernel_flag=''
+append=''
+if [ ${kernel} != "/dev/null" ]
+then
+    # Beware that the kernel might not find the appropriate modules on it's root
+    # filesystem.
+    kernel_flag="-kernel ${kernel}"
+    append='console=ttyS0 root=/dev/sda1 nokaslr loglevel=15'
+fi
+
+ssh_port=$(random_port)
+ssh="ssh ${ssh_dst} -p ${ssh_port} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
+
+echo -n ${ssh_port} > ${vm}.ssh_port
+qemu-system-x86_64 \
+    -hda ${vm}.qcow2 ${kernel_flag} -append "${append}" \
+    -smp cpus=2 \
+	-m 2048 \
+    -nographic \
+    -enable-kvm \
+    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian-vm,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
+	-device e1000,netdev=net0,mac=52:54:98:76:54:32

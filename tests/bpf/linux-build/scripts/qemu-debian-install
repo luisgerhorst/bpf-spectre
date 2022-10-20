@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -e
+set -u
+set -x
+
+TARGET=$1
+ROOT_PASSWORD=$2
+NETBOOT_TARGZ=$3
+PRESEED_CFG=$4
+
+random_port() {
+    # https://unix.stackexchange.com/questions/55913/whats-the-easiest-way-to-find-an-unused-local-port
+    comm -23 <(seq 49152 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) \
+        | shuf \
+        | head -n 1
+}
+
+TFTP_PORT=$(random_port)
+LOG_PORT=$(random_port)
+
+TEMP=$(mktemp -d ${TARGET}.$(date --iso-8601=minutes).XXXXX)
+
+mkdir -p ${TEMP}/tftp
+tar xzvf ${NETBOOT_TARGZ} -C ${TEMP}/tftp
+
+echo "$(ssh-add -L)" > ${TEMP}/tftp/authorized_keys
+cp ${PRESEED_CFG} ${TEMP}/tftp/preseed.cfg
+echo "d-i preseed/late_command string \
+in-target mkdir /root/.ssh ; \
+in-target chmod 0700 /root/.ssh ; \
+in-target wget -O /root/.ssh/authorized_keys http://10.0.2.2:${TFTP_PORT}/authorized_keys ; \
+in-target apt-get --yes install openssh-server ; \
+" \
+     >> ${TEMP}/tftp/preseed.cfg
+
+pushd ${TEMP}
+
+nc -ul -p ${LOG_PORT} > pxe.log &
+NC_PID=$!
+
+pushd tftp
+python3 -m http.server ${TFTP_PORT} &
+PYTHON_PID=$!
+popd
+
+CRYPTED_PASSWORD=$(openssl passwd -1 -salt xyz "$ROOT_PASSWORD")
+cat > tftp/debian-installer/amd64/pxelinux.cfg/default <<EOF
+serial 0
+prompt 0
+default autoinst
+label autoinst
+kernel debian-installer/amd64/linux
+append initrd=debian-installer/amd64/initrd.gz \
+auto=true \
+priority=critical \
+passwd/root-password-crypted=${CRYPTED_PASSWORD} \
+DEBIAN_FRONTEND=text \
+url=http://10.0.2.2:${TFTP_PORT}/preseed.cfg \
+log_host=10.0.2.2 \
+log_port=${LOG_PORT} \
+--- console=ttyS0
+EOF
+
+echo "Creating disk image for Debian Buster x86_64..." >&2
+qemu-img create -f qcow2 hda.qcow2 32G
+
+echo "Running Debian Installer..." >&2
+qemu-system-x86_64 \
+	-hda hda.qcow2 \
+    -smp cpus=2 \
+	-m 2048 \
+	-nographic \
+    -enable-kvm \
+    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian-vm,domainname=local,tftp=tftp,bootfile=pxelinux.0 \
+	-device e1000,netdev=net0,mac=52:54:98:76:54:32 \
+	-boot once=n \
+        | tee qemu.log
+
+popd
+
+kill $PYTHON_PID
+kill $NC_PID
+
+rm -rfd ${TARGET}
+mv -T ${TEMP} ${TARGET}

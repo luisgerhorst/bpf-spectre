@@ -1,0 +1,71 @@
+#!/bin/env bash
+set -euo pipefail
+bash -n "$(command -v "$0")"
+
+function usage_error() {
+    echo "Usage: $0 [-C <working_dir>] [-o <result_dir_dest>] [-p <target_prefix>] <command...>" >&2
+    exit 1
+}
+
+working_dir_defined=0
+result_dir_defined=0
+TARGET_PREFIX=/home/$USER/.target-scpsh/$(hostname)
+
+while getopts "C:o:" opt
+do
+    case ${opt} in
+        C)
+            working_dir_defined=1
+            working_dir=${OPTARG}
+            ;;
+        o)
+            result_dir_defined=1
+            result_dir=${OPTARG}
+            ;;
+        p)
+            TARGET_PREFIX=${OPTARG}
+            ;;
+        *)
+            usage_error
+            ;;
+    esac
+done
+
+command="${@:$OPTIND+0}"
+
+ssh="ssh ${SSH_DEST} -p ${SSH_PORT} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
+scp="scp -P ${SSH_PORT} -B -o NoHostAuthenticationForLocalhost=true -q"
+
+guest_temp=$(${ssh} mktemp -d)
+
+if [ $working_dir_defined -eq 1 ]
+then
+    ${scp} -r ${working_dir} ${SSH_DEST}:${guest_temp}/working_dir
+else
+    ${ssh} "mkdir ${guest_temp}/working_dir"
+    ${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
+fi
+
+command_sh=$(mktemp)
+echo "#!/bin/bash
+set -euo pipefail" > "${command_sh}"
+echo "${command}" >> "${command_sh}"
+chmod +x "${command_sh}"
+${scp} ${command_sh} ${SSH_DEST}:${guest_temp}/command.sh
+
+${ssh} "mkdir ${guest_temp}/result_dir"
+
+set +e
+${ssh} env -C "${guest_temp}/working_dir" "../command.sh"
+EXIT_CODE=$?
+set -e
+
+if [ $result_dir_defined -eq 1 ]
+then
+    ${scp} -r "${SSH_DEST}:${guest_temp}/result_dir" "${result_dir}"
+fi
+
+${ssh} "rm -rd ${guest_temp}"
+rm ${command_sh}
+
+exit $EXIT_CODE

@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# Writes the git revision identifier of ${TREE} into ${STATUS_FILE}, only modifying
+# the file if the revision has changed. ${STATUS_FILE} may then be used as a make
+# dependency.
+set -u
+set -e
+
+TREE=$1
+STATUS_FILE=$2
+
+# Filter lines containing commit ids as update-git-rev already takes care.
+# Ignore submodules because syncing libbpf with the kernel otherwise triggers
+# and update.
+new="$(env -C "${TREE}" git status -vv | awk '$1 != "index" { print }' | md5sum | awk '{ print $1 }')"
+
+env -C "${TREE}" git status --ignore-submodules -vv | awk '$1 != "index" { print }' > $STATUS_FILE.full
+
+if [ -f "${STATUS_FILE}" ]
+then
+    # BUG: No spaces in the file allowed.
+    old=$(cat "${STATUS_FILE}")
+    if [ "${new}" != "${old}" ]
+    then
+        echo ${new} > "${STATUS_FILE}"
+    fi
+else
+    echo ${new} > "${STATUS_FILE}"
+fi

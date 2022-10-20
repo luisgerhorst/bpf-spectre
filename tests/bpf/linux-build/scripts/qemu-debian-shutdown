@@ -1,0 +1,24 @@
+#!/bin/env bash
+set -u
+set -x
+
+# Shuts down the VM. Running this script and the boot script in succession
+# should guarantee that the latest kernel is booted in the VM.
+
+vm=$1
+
+if [ -e "${vm}.ssh_port" ]
+then
+    ssh_dst=root@localhost
+    ssh_port=$(cat ${vm}.ssh_port)
+    ssh="ssh ${ssh_dst} -p ${ssh_port} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
+
+    ${ssh} "true"
+    vm_online=$?
+
+    if [ ${vm_online} -eq 0 ]
+    then
+        # Expected to fail with 'Connection to localhost closed by remote host.'
+        ${ssh} "shutdown now"
+    fi
+fi

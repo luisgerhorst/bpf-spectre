@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Writes the git revision identifier of ${TREE} into ${REV_FILE}, only modifying
+# the file if the revision has changed. ${REV_FILE} may then be used as a make
+# dependency.
+set -u
+set -e
+
+TREE=$1
+REV_FILE=$2
+
+rev=`env -C "${TREE}" git rev-parse --short HEAD`
+
+if [ -f "${REV_FILE}" ]
+then
+    old_rev=`cat "${REV_FILE}"`
+    if [ "${rev}" != "${old_rev}" ]
+    then
+        echo ${rev} > "${REV_FILE}"
+    fi
+else
+    echo ${rev} > "${REV_FILE}"
+fi

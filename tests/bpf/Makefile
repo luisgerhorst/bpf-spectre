@@ -39,15 +39,15 @@ prog/cilium_%.bpf.s: | prog
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
 
-/sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o Makefile
-	sudo rm -rfd $@
-	sudo bpftool prog loadall --debug $< $@ 2> .build/$*.loadall; echo $$? > .build/$*.loadall.exit-code || true
+# /sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o Makefile
+# 	sudo rm -rfd $@
+# 	sudo bpftool prog loadall --debug $< $@ 2> .build/$*.loadall; echo $$? > .build/$*.loadall.exit-code || true
 
-.build/%.xlated: /sys/fs/bpf/spectector-bpf/%
-	sudo ./bpftool-dumpall.sh $< > $@; echo $$? > $@.exit-code || true
+# .build/%.xlated: /sys/fs/bpf/spectector-bpf/%
+# 	sudo ./bpftool-dumpall.sh $< > $@; echo $$? > $@.exit-code || true
 
-.build/%.jited: /sys/fs/bpf/spectector-bpf/%
-	sudo bpftool prog dump jited pinned $< 2> $@
+# .build/%.jited: /sys/fs/bpf/spectector-bpf/%
+# 	sudo bpftool prog dump jited pinned $< 2> $@
 
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector

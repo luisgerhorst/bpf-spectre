@@ -1,5 +1,8 @@
 VM=debian/hda
 
+T ?= vm
+include targets/$(T).mk
+
 RAMDISK=qemu-ramdisk.img
 
 LINUX=linux
@@ -46,13 +49,7 @@ $(BZIMAGE): linux/.config .build/linux.git_rev .build/linux.git_status
 	MAKE='$(LINUX_MAKE)' ./scripts/make-linux $(LINUX) bindeb-pkg $@/
 	touch $@
 
-$(LINUX_PERF_TARXZ): linux/.config .build/linux.git_rev .build/linux.git_status
-	rm -f linux/perf-*.tar.xz $@
-	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
-	$(LINUX_MAKE) -C $(LINUX) perf-tarxz-src-pkg
-	mkdir -p $(dir $@)
-	mv -f $$(find linux -name 'perf-*.tar.xz') $@
-	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
+.build/target-install-bpftool:
 
 $(RAMDISK):
 	/usr/sbin/mkinitramfs -o $(RAMDISK)

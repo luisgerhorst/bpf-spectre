@@ -31,9 +31,6 @@ then
     fi
 fi
 
-export PATH="$(pwd):$(pwd)/scripts/:${PATH}"
-qemu-debian-shutdown ${vm}
-
 kernel_flag=''
 append=''
 if [ ${kernel} != "/dev/null" ]

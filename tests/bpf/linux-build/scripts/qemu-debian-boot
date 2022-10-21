@@ -41,7 +41,6 @@ then
 fi
 
 ssh_port=$(random_port)
-hostname=$(basename ${vm_hda} .qcow2)
 echo -n ${ssh_port} > ${vm_ssh_port}
 
 qemu-system-x86_64 \
@@ -50,5 +49,5 @@ qemu-system-x86_64 \
 	-m 2048 \
     -nographic \
     -enable-kvm \
-    -netdev user,id=net0,net=10.0.2.0/24,hostname=$hostname,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
+    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
 	-device e1000,netdev=net0,mac=52:54:98:76:54:32

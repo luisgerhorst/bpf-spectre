@@ -18,7 +18,7 @@ random_port() {
 TFTP_PORT=$(random_port)
 LOG_PORT=$(random_port)
 
-TEMP=$(mktemp -d .qemu-debian-install.$(date --iso-8601=minutes).XXXXX)
+TEMP=$(mktemp -d .qemu-debian-install.XXXXX)
 
 mkdir -p ${TEMP}/tftp
 tar xzvf ${NETBOOT_TARGZ} -C ${TEMP}/tftp
@@ -71,7 +71,7 @@ qemu-system-x86_64 \
 	-m 2048 \
 	-nographic \
     -enable-kvm \
-    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian-vm,domainname=local,tftp=tftp,bootfile=pxelinux.0 \
+    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian,domainname=local,tftp=tftp,bootfile=pxelinux.0 \
 	-device e1000,netdev=net0,mac=52:54:98:76:54:32 \
 	-boot once=n \
         | tee qemu.log

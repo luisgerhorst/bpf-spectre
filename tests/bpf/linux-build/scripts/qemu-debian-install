@@ -18,7 +18,7 @@ random_port() {
 TFTP_PORT=$(random_port)
 LOG_PORT=$(random_port)
 
-TEMP=$(mktemp -d ${TARGET}.$(date --iso-8601=minutes).XXXXX)
+TEMP=$(mktemp -d .qemu-debian-install.$(date --iso-8601=minutes).XXXXX)
 
 mkdir -p ${TEMP}/tftp
 tar xzvf ${NETBOOT_TARGZ} -C ${TEMP}/tftp

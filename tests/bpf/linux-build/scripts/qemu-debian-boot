@@ -1,12 +1,12 @@
 #!/bin/env bash
-set -e
-set -u
+set -eu
 set -x
 
 # Brings the VM online such that it is reachable using SSH.
 
-vm=$1
-kernel=$2
+vm_ssh_port=$1
+vm_hda=$2
+kernel=$3
 
 random_port() {
     # https://unix.stackexchange.com/questions/55913/whats-the-easiest-way-to-find-an-unused-local-port
@@ -15,20 +15,19 @@ random_port() {
         | head -n 1
 }
 
-ssh_dst=root@localhost
-if [ -e ${vm}.ssh_port ]
+if [ -e ${vm_ssh_port} ]
 then
-    ssh_port=$(cat ${vm}.ssh_port)
+    echo "Warning: ${vm_ssh_port} already exists, checking if vm is reachable" > /dev/stderr
+
+    ssh_dst=root@localhost
+    ssh_port=$(cat ${vm_ssh_port})
     ssh="ssh ${ssh_dst} -p ${ssh_port} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
 
-    set +e
-    ${ssh} "true"
-    vm_online=$?
-    set -e
-    if [ ${vm_online} -eq 0 ]
+    if ${ssh} "true"
     then
-        exit 0
+        exit 1
     fi
+    rm -f ${vm_ssh_port}
 fi
 
 kernel_flag=''
@@ -42,14 +41,14 @@ then
 fi
 
 ssh_port=$(random_port)
-ssh="ssh ${ssh_dst} -p ${ssh_port} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
+hostname=$(basename ${vm_hda} .qcow2)
+echo -n ${ssh_port} > ${vm_ssh_port}
 
-echo -n ${ssh_port} > ${vm}.ssh_port
 qemu-system-x86_64 \
-    -hda ${vm}.qcow2 ${kernel_flag} -append "${append}" \
+    -hda ${vm_hda} ${kernel_flag} -append "${append}" \
     -smp cpus=2 \
 	-m 2048 \
     -nographic \
     -enable-kvm \
-    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian-vm,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
+    -netdev user,id=net0,net=10.0.2.0/24,hostname=$hostname,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
 	-device e1000,netdev=net0,mac=52:54:98:76:54:32

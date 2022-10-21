@@ -7,9 +7,14 @@ function usage_error() {
     exit 1
 }
 
+env_sh="$(dirname $(command -v $0))/../env.sh"
+if [ -e "$env_sh" ]
+then
+    . "$env_sh"
+fi
+
 working_dir_defined=0
 result_dir_defined=0
-TARGET_PREFIX=/home/$USER/.target-scpsh/$(hostname)
 
 while getopts "C:o:" opt
 do

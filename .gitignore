@@ -6,3 +6,5 @@ dist/
 /tests/bpf/prog/lbe_*.bpf.s
 /tests/bpf/prog/cilium_*.bpf.s
 /tests/bpf/.build/
+/tests/bpf/linux-build/.build/
+/tests/bpf/linux-build/.run/

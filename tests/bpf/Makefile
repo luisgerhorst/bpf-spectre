@@ -17,7 +17,7 @@ all: dump .build/test-results.tsv.gz
 .PHONY: dump
 dump: $(patsubst prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
-	$(patsubst prog/%.bpf.s,.build/%.xlated,$(ALL_S))
+	$(patsubst prog/%.bpf.s,.build/%.bpftool,$(ALL_S))
 
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
@@ -39,15 +39,12 @@ prog/cilium_%.bpf.s: | prog
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
 
-# /sys/fs/bpf/spectector-bpf/%: .build/%.bpf.o Makefile
-# 	sudo rm -rfd $@
-# 	sudo bpftool prog loadall --debug $< $@ 2> .build/$*.loadall; echo $$? > .build/$*.loadall.exit-code || true
+.build/%.bpftool.input: .build/%.bpf.o bpftool.sh
+	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
 
-# .build/%.xlated: /sys/fs/bpf/spectector-bpf/%
-# 	sudo ./bpftool-dumpall.sh $< > $@; echo $$? > $@.exit-code || true
-
-# .build/%.jited: /sys/fs/bpf/spectector-bpf/%
-# 	sudo bpftool prog dump jited pinned $< 2> $@
+.build/%.bpftool: .build/%.bpftool.input
+	rm -rfd $@
+	env -C linux-build ./scripts/target-scpsh -C ../$< -o ../$@ './bpftool.sh $*.bpf.o 2>&1 | tee ../result_dir/log'
 
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
@@ -69,21 +66,14 @@ clean:
 	rm -f prog/lbe_*.bpf.s
 	rm -f prog/cilium_*.bpf.s
 	rm -rfd .build
-	sudo rm -rfd /sys/fs/bpf/spectector-bpf/*
 
 .PHONY: get-pwned
 get-pwned:
 	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid
-	# sudo setcap cap_bpf+ep $(shell which bpftool)
-	sudo mkdir /sys/fs/bpf/spectector-bpf
-	sudo chgrp $(USER) /sys/fs/bpf/spectector-bpf
-	sudo chmod g+rwx /sys/fs/bpf/spectector-bpf
 
 .PHONY: lock-system
 lock-system:
 	echo "4" | sudo tee /proc/sys/kernel/perf_event_paranoid
-	# sudo setcap -r $(shell which bpftool)
-	sudo rm -rfd /sys/fs/bpf/spectector-bpf/
 
 .PHONY: install-deps
 install-deps:

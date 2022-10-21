@@ -1,5 +1,4 @@
-T ?= qemu-debian
-include targets/$(T).mk
+include env.mk
 
 RAMDISK=qemu-ramdisk.img
 

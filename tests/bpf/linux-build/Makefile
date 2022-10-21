@@ -23,7 +23,9 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .b
 
 LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 
+#
 # Linux Files
+#
 
 $(LINUX)/.config: $(CONFIG) .build/linux.git_rev .build/linux.git_status
 	cp $< $@
@@ -33,13 +35,21 @@ $(LINUX)/.config: $(CONFIG) .build/linux.git_rev .build/linux.git_status
 $(BZIMAGE): $(LINUX_TREE)
 	$(LINUX_MAKE) -C $(LINUX) bzImage
 
-.build/linux-deb: $(LINUX_TREE)
+.build/linux-bindeb: $(LINUX_TREE)
 	MAKE='$(LINUX_MAKE)' ./scripts/make-linux-deb $(LINUX) bindeb-pkg $@/
 	touch $@
 
-.build/linux-tools: $(LINUX_TREE) Makefile
-	rm -rfd $@ && mkdir -p $@
-	DESTDIR=$(shell pwd)/$@ $(LINUX_MAKE) -C $(LINUX)/tools bpf_install
+.build/linux-src.d: $(LINUX_TREE)
+	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
+	git clone --depth 1 $(LINUX) $@
+	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
+	make -C $@ mrproper
+	rm -rfd $@/.git
+	touch $@
+
+.build/linux-src/d.tar.gz: .build/linux-src.d
+	mkdir -p $(dir $@)
+	env -C $< tar cf - . | pigz > $@
 
 #
 # Debian Files
@@ -60,8 +70,14 @@ $(BZIMAGE): $(LINUX_TREE)
 # Target State
 #
 
-.build/target-state/$(T)/linux-tools: .build/linux-tools
-	./scripts/target-scpsh -C $< 'sudo cp -rf . /usr/local/stow/linux-tools.$(USER) && sudo env -C /usr/local/stow stow -t / linux-tools.$(USER)'
+.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
+	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
+	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
+	touch $@
+
+.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
+	./scripts/target-scpsh 'sudo apt-get --assume-yes install make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
+	./scripts/target-scpsh 'sudo make -C ../target_prefix/linux-src/tools bpf_install'
 	touch $@
 
 .PHONY: target

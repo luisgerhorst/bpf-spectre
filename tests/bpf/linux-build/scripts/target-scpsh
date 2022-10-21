@@ -48,8 +48,9 @@ then
     ${scp} -r ${working_dir} ${SSH_DEST}:${guest_temp}/working_dir
 else
     ${ssh} "mkdir ${guest_temp}/working_dir"
-    ${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
 fi
+${ssh} "mkdir -p ${TARGET_PREFIX}"
+${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
 
 command_sh=$(mktemp)
 echo "#!/bin/bash

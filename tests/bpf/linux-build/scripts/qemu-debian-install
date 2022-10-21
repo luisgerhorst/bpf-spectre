@@ -29,7 +29,7 @@ echo "d-i preseed/late_command string \
 in-target mkdir /root/.ssh ; \
 in-target chmod 0700 /root/.ssh ; \
 in-target wget -O /root/.ssh/authorized_keys http://10.0.2.2:${TFTP_PORT}/authorized_keys ; \
-in-target apt-get --yes install openssh-server ; \
+in-target apt-get --yes install openssh-server stow ; \
 " \
      >> ${TEMP}/tftp/preseed.cfg
 

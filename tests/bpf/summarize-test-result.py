@@ -13,9 +13,9 @@ def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('output', type=str)
     parser.add_argument('log', type=str) # spectector log
+    parser.add_argument('bpftool', type=str)
     parser.add_argument('source', type=str)
     parser.add_argument('perf', type=str)
-    parser.add_argument('loadall_exit_code', type=str)
     return parser.parse_args()
 
 def main():
@@ -23,15 +23,12 @@ def main():
     args = parseargs()
 
     log = Path(args.log).read_text()
-    source = Path(args.source).read_text()
-
     spectector_result = "NA"
     if log.__contains__("[program is safe]"):
         spectector_result = "safe"
     if log.__contains__("[program is unsafe]"):
         assert spectector_result == "NA"
         spectector_result = "unsafe"
-
     spectector_problem = "NA"
     if log.__contains__("{ERROR:"):
         assert spectector_result == "NA"
@@ -41,6 +38,7 @@ def main():
         spectector_result = "problem"
         spectector_problem = "unsupported_instruction"
 
+    source = Path(args.source).read_text()
     test_result = "NA"
     if source.__contains__("#![program is safe]"):
         if spectector_result == "safe":
@@ -58,7 +56,7 @@ def main():
         "spectector_result": spectector_result,
         "spectector_problem": spectector_problem,
         "test_result": test_result,
-        "bpftool_loadall_exit_code": Path(args.loadall_exit_code).read_text().strip(),
+        "bpftool_loadall_exit_code": (Path(args.bpftool) / 'loadall.exitcode').read_text().strip(),
     }
 
     perf = pd.read_csv(

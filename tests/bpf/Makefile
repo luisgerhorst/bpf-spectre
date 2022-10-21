@@ -56,7 +56,7 @@ $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH
 	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
 
 .build/%.test-result.yaml: .build/%.spectector.log
-	./summarize-test-result.py $@ $^ prog/$*.bpf.s .build/$*.perf .build/$*.loadall.exit-code
+	./summarize-test-result.py $@ $< .build/$*.bpftool prog/$*.bpf.s .build/$*.perf
 
 .build/test-results.tsv.gz: $(patsubst prog/%.bpf.s,.build/%.test-result.yaml,$(ALL_S))
 	./join-yamls.py --output $@ --yamls $^

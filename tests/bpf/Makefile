@@ -2,12 +2,12 @@
 LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
 
 # Cilium
-CILIUM_C = $(wildcard external/cilium/bpf/bpf_*.c)
-CILIUM_S = $(patsubst external/cilium/bpf/bpf_%.c,prog/cilium_%.bpf.s,$(CILIUM_C))
+CILIUM_C = $(wildcard external-samples/cilium/bpf/bpf_*.c)
+CILIUM_S = $(patsubst external-samples/cilium/bpf/bpf_%.c,prog/cilium_%.bpf.s,$(CILIUM_C))
 
 # vbpf
-VBPF_C = $(wildcard external/vbpf/src/*.c)
-VBPF_S = $(patsubst external/vbpf/src/%.c,prog/vbpf_%.bpf.s,$(VBPF_C))
+VBPF_C = $(wildcard external-samples/vbpf/src/*.c)
+VBPF_S = $(patsubst external-samples/vbpf/src/%.c,prog/vbpf_%.bpf.s,$(VBPF_C))
 
 # May contain duplicates.
 ALL_S = $(wildcard prog/*.bpf.s) $(VBPF_S) $(CILIUM_S) $(patsubst %,prog/lbe_%.bpf.s,$(LBE_APPS))
@@ -25,14 +25,14 @@ dump: $(patsubst prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
-	$(MAKE) -C external/libbpf-bootstrap/examples/c .output/$*.bpf.s
-	ln -fs ../external/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
+	$(MAKE) -C external-samples/libbpf-bootstrap/examples/c .output/$*.bpf.s
+	ln -fs ../external-samples/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
 
 # BUG: These currently do not load. Some tail-call map is missing.
 .PHONY: prog/cilium_%.bpf.s
 prog/cilium_%.bpf.s: Makefile | prog
-	$(MAKE) -C external/cilium/bpf bpf_$*.s
-	ln -fs ../external/cilium/bpf/bpf_$*.s $@
+	$(MAKE) -C external-samples/cilium/bpf bpf_$*.s
+	ln -fs ../external-samples/cilium/bpf/bpf_$*.s $@
 
 CLANG ?= clang
 ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's/ppc64le/powerpc/' | sed 's/mips.*/mips/')
@@ -47,7 +47,7 @@ ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's
 # build would have failed anyways.
 CLANG_BPF_SYS_INCLUDES = $(shell $(CLANG) -v -E - </dev/null 2>&1 \
 	| sed -n '/<...> search starts here:/,/End of search list./{ s| \(/.*\)|-idirafter \1|p }')
-prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
+prog/vbpf_%.bpf.s: external-samples/vbpf/src/%.c | prog
 	$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -S -o $@
 
 # https://pchaigno.github.io/bpf/2021/10/20/ebpf-instruction-sets.html
@@ -86,6 +86,8 @@ $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH
 clean:
 	rm -f prog/lbe_*.bpf.s
 	rm -f prog/cilium_*.bpf.s
+	rm -f prog/vbpf_*.bpf.s
+	rm -f prog/bcc_*.bpf.s
 	rm -rfd .build
 
 .PHONY: get-pwned

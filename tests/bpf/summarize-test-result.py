@@ -56,7 +56,8 @@ def main():
         "spectector_result": spectector_result,
         "spectector_problem": spectector_problem,
         "test_result": test_result,
-        "bpftool_loadall_exit_code": (Path(args.bpftool) / 'loadall.exitcode').read_text().strip(),
+        "bpftool_loadall_exitcode": (Path(args.bpftool) / 'loadall.exitcode').read_text().strip(),
+        "bpftool_loadall_inferred_type": (Path(args.bpftool) / 'loadall.inferred-type').read_text().strip(),
     }
 
     perf = pd.read_csv(

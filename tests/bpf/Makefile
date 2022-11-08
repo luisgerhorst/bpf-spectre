@@ -21,7 +21,8 @@ all: dump .build/test-results.tsv.gz
 .PHONY: dump
 dump: $(patsubst prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
-	$(patsubst prog/%.bpf.s,.build/%.bpftool,$(ALL_S))
+	$(patsubst prog/%.bpf.s,.build/%.bpftool-priv,$(ALL_S)) \
+	$(patsubst prog/%.bpf.s,.build/%.bpftool-unpriv,$(ALL_S))
 
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
@@ -63,9 +64,13 @@ prog/vbpf_%.bpf.s: external-samples/vbpf/src/%.c | prog
 .build/%.bpftool.input: .build/%.bpf.o bpftool.sh
 	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
 
-.build/%.bpftool: .build/%.bpftool.input
+.build/%.bpftool-priv: .build/%.bpftool.input
 	rm -rfd $@
-	env -C linux-build ./scripts/target-scpsh -C ../$< -o ../$@ './bpftool.sh $*.bpf.o 2>&1 | tee ../result_dir/log'
+	env -C linux-build ./scripts/target-scpsh -C ../$< -o ../$@ './bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
+
+.build/%.bpftool-unpriv: .build/%.bpftool.input
+	rm -rfd $@
+	env -C linux-build ./scripts/target-scpsh -C ../$< -o ../$@ './bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
 
 CIAOPATH=$(abspath ../../..)
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
@@ -77,6 +82,7 @@ $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH
 	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
 
 .build/%.test-result.yaml: .build/%.spectector.log
+	$(MAKE) .build/$*.bpftool-priv .build/$*.bpftool-unpriv
 	./summarize-test-result.py $@ $< .build/$*.bpftool prog/$*.bpf.s .build/$*.perf
 
 .build/test-results.tsv.gz: $(patsubst prog/%.bpf.s,.build/%.test-result.yaml,$(ALL_S))

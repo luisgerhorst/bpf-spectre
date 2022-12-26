@@ -230,10 +230,10 @@ LBB0_5:
 	r2 = 1   # needed to prevent dead-code-elim. for secret-based branch
 SCALAR_UNKNOWN:
     *(u64 *)(r10 - 64) = r6 # fp[-64] = ptr
-	# lfence added here because of prev. spill of ptr to stack.
+	# lfence added here because of ptr-spill to stack.
     r9 = r10 # fp alias for ssb
 	#
-	# Imagine dummy bpf_ringbuf_output() here to train predictor
+	# Imagine dummy bpf_ringbuf_output() here to train alias predictor
 	# for no r9/r10 dependency.
 	#
     *(u64 *)(r10 - 64) = r2  # fp[-64] = Y: arch. overwrite ptr with scalar, SSB may happen here

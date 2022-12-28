@@ -40,6 +40,8 @@ for prog in "$path"/*
 do
     bpftool prog dump xlated pinned "$prog" > ../result_dir/xlated.$(basename $prog)
     bpftool prog dump jited pinned "$prog" > ../result_dir/jited.$(basename $prog)
+    bpftool prog dump jited pinned "$prog" opcodes > ../result_dir/jited-opcodes.$(basename $prog)
+    bpftool prog dump jited pinned "$prog" linum > ../result_dir/jited-linum.$(basename $prog)
 done
 
 # TODO:

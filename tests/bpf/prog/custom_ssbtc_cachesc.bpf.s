@@ -233,7 +233,7 @@ LBB0_5:
 	# needed to prevent dead-code-elim. for secret-based branch
 	#
 SCALAR_UNKNOWN:
-	*(u64 *)(r10 - 64) = r6  # fp[-64] = ptr
+	*(u64 *)(r10 - 64) = r6         # fp[-64] = ptr
 	# lfence added here because of ptr-spill to stack.
 	#
 	r9 = r10
@@ -242,7 +242,7 @@ SCALAR_UNKNOWN:
 	# Imagine dummy bpf_ringbuf_output() here to train alias
 	# predictor for no r9/r10 dependency.
 	#
-	*(u64 *)(r10 - 64) = r2  # fp[-64] = scalar
+	*(u64 *)(r10 - 64) = r2         # fp[-64] = scalar
 	# Arch. overwrite ptr with scalar, SSB may happen here.
 	#
 	# No lfence added here because stack slot was not STACK_INVALID.
@@ -253,12 +253,13 @@ SCALAR_UNKNOWN:
 	# r8: arch. scalar, spec. ptr
 	#
 	# Leak ptr using cache side channel, weaken KASLR:
-	r8 &= 1                  # choose bit to leak
-	if r8 == 0 goto	SLOW     # secret-based branch
+	#
+	r8 &= 1                         # choose bit to leak
+	if r8 == 0 goto	SLOW            # secret-based branch
 	#
 	# Arch. dead code if r1 is 0, only executes spec.
 	# iff ptr bit is 1.
-	r2 = *(u32 *)(r7 + 20)   # encode bit in cache
+	r2 = *(u32 *)(r7 + 20)          # encode bit in cache
 SLOW:
 	#
 	# Spec. Gadget End

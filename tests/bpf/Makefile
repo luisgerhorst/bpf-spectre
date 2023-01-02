@@ -64,11 +64,15 @@ prog/vbpf_%.bpf.s: external-samples/vbpf/src/%.c | prog
 .build/%.bpftool.input: .build/%.bpf.o bpftool.sh
 	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
 
-.build/%.bpftool-priv: .build/%.bpftool.input
+LB := linux-build
+_dummy := $(shell make -C $(LB) all)
+LINUX_TREE := $(LB)/linux/.config $(LB)/.build/linux.git_rev $(LB)/.build/linux.git_status
+
+.build/%.bpftool-priv: .build/%.bpftool.input $(LINUX_TREE)
 	rm -rfd $@
 	env -C linux-build ./scripts/target-scpsh -C ../$< -o ../$@ './bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
 
-.build/%.bpftool-unpriv: .build/%.bpftool.input
+.build/%.bpftool-unpriv: .build/%.bpftool.input $(LINUX_TREE)
 	rm -rfd $@
 	env -C linux-build ./scripts/target-scpsh -C ../$< -o ../$@ './bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
 

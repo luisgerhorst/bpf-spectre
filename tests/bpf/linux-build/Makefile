@@ -22,6 +22,8 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .b
 
 LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 
+all: # TODO
+
 #
 # Linux Files
 #

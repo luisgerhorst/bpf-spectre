@@ -3,26 +3,6 @@
 # top-most EditorConfig file
 root = true
 
-[*]
-charset = utf-8
-end_of_line = lf
+[*.s]
 indent_style = tab
 indent_size = 8
-trim_trailing_whitespace = true
-insert_final_newline = true
-
-# C coding style based on Linux kernel.
-# https://www.kernel.org/doc/html/v5.0/process/coding-style.html
-
-[*.c]
-indent_style = tab
-indent_size = 8
-
-[*.h]
-indent_style = tab
-indent_size = 8
-
-[*.yaml]
-indent_style = space
-indent_size = 2
-insert_final_newline = false

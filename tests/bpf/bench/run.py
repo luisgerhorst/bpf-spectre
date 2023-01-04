@@ -35,7 +35,7 @@ def main():
         run_suite(suite_dir, suite_run_path, suite, reps, burst_len)
 
 def parse_args():
-    raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../data/.raw"))
+    raw_dir = Path(os.getenv("BENCHRUN_DATA", default=".data"))
 
     parser = argparse.ArgumentParser(description="Run each benchmark-burst in suite rep times.")
     parser.add_argument("-s", "--suite")
@@ -49,7 +49,7 @@ def parse_args():
     # Allow reproducible shuffling of the suite.
     random.seed(args.random_seed)
 
-    suite_path = Path("." + args.suite + ".yaml")
+    suite_path = Path(".build/" + args.suite + ".yaml")
     suite_run_path = Path(raw_dir.joinpath(
         "{}_{}{}".format(
             datetime.datetime.now().strftime("%y-%m-%d_%H-%M"),

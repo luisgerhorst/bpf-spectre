@@ -12,12 +12,12 @@ burst_len=$2
 CPUFREQ=${CPUFREQ:-max}
 PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e iTLB-load-misses -e dTLB-load-misses -e branch-misses"}
 
-pushd ../linux-build
+pushd linux-build
 
 # Set's default T and related variables.
 . ./env.sh
 
-# Prepares target with linux-build ready for target-scpsh.
+# Boots target with linux-build ready for target-scpsh.
 make all
 
 ./scripts/target-scpsh 'uname -a' > ${output_abs}/uname-a

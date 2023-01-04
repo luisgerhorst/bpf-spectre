@@ -22,7 +22,7 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .b
 
 LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 
-all: # TODO
+all: target
 
 #
 # Linux Files
@@ -83,6 +83,22 @@ $(BZIMAGE): $(LINUX_TREE)
 
 .PHONY: target
 target: .build/target-state/$(T)/linux-tools
+
+#
+# BPF Samples
+#
+
+.PHONY: bpf-samples/.build/%.bpftool.input
+bpf-samples/.build/%.bpftool.input:
+	$(MAKE) -C bpf-samples .build/$*.bpftool.input
+
+.build/bpf-samples/%.bpftool-priv: bpf-samples/.build/%.bpftool.input $(LINUX_TREE) | target
+	rm -rfd $@ && mkdir -p $(dir $@)
+	./scripts/target-scpsh -C $< -o $@ './bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
+
+.build/bpf-samples/%.bpftool-unpriv: bpf-samples/.build/%.bpftool.input $(LINUX_TREE) | target
+	rm -rfd $@ && mkdir -p $(dir $@)
+	./scripts/target-scpsh -C $< -o $@ './bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
 
 #
 # Linux Phony

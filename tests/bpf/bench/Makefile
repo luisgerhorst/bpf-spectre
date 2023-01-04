@@ -1,16 +1,19 @@
 suite_pys := $(wildcard *.suite.py)
-suite_py_yamls := $(patsubst %.suite.py,.%.yaml,$(suite_pys))
+suite_py_yamls := $(patsubst %.suite.py,.build/%.yaml,$(suite_pys))
 
 suite_defs := $(wildcard *.suite.yaml)
-suite_def_yamls := $(patsubst %.suite.yaml,.%.yaml,$(suite_defs))
+suite_def_yamls := $(patsubst %.suite.yaml,.build/%.yaml,$(suite_defs))
 
 .PHONY: all
 all: $(suite_def_yamls) $(suite_py_yamls)
 
-.%.yaml: %.suite.py
+.build:
+	mkdir -p $@
+
+.build/%.yaml: %.suite.py | .build
 	./$< > $@
 
-.%.yaml: %.suite.yaml
+.build/%.yaml: %.suite.yaml | .build
 	ln -s $< $@
 
 .PHONY: install-deps

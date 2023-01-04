@@ -81,24 +81,48 @@ $(BZIMAGE): $(LINUX_TREE)
 	./scripts/target-scpsh 'sudo make -C ../target_prefix/linux-src/tools bpf_install'
 	touch $@
 
-.PHONY: target
-target: .build/target-state/$(T)/linux-tools
+# Expected to fail if booted qemu runs outdated kernel.
+.run/debian.ssh_port: $(LINUX_TREE)
+	exit 1
+
+.build/target-state/qemu-debian/kernel: .run/debian.ssh_port
+	touch $@
+
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 
 #
 # BPF Samples
 #
 
-.PHONY: bpf-samples/.build/%.bpftool.input
-bpf-samples/.build/%.bpftool.input:
-	$(MAKE) -C bpf-samples .build/$*.bpftool.input
-
-.build/bpf-samples/%.bpftool-priv: bpf-samples/.build/%.bpftool.input $(LINUX_TREE) | target
+.build/bpf-samples/%.bpftool-priv: bpf-samples/.build/%.bpftool.input $(TARGET)
 	rm -rfd $@ && mkdir -p $(dir $@)
-	./scripts/target-scpsh -C $< -o $@ './bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
+	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o $@ './bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
 
-.build/bpf-samples/%.bpftool-unpriv: bpf-samples/.build/%.bpftool.input $(LINUX_TREE) | target
+.build/bpf-samples/%.bpftool-unpriv: bpf-samples/.build/%.bpftool.input $(TARGET)
 	rm -rfd $@ && mkdir -p $(dir $@)
-	./scripts/target-scpsh -C $< -o $@ './bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
+	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o $@ './bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
+
+# TODO: Fix dependencies.
+.PHONY: .build/bpf-samples/%.test-result.yaml
+.build/bpf-samples/%.test-result.yaml:
+	$(MAKE) -C bpf-samples all
+	$(MAKE) .build/bpf-samples/$*.bpftool-priv .build/bpf-samples/$*.bpftool-unpriv
+	./bpf-samples/summarize-test-result.py \
+		$@ \
+		.bpf-samples/.build/$*.spectector.log \
+		.build/bpf-samples/$*.bpftool \
+		bpf-samples/prog/$*.bpf.s \
+		bpf-samples/.build/$*.perf
+
+PREFIX = bpf-samples
+include bpf-samples/prog.mk
+
+.PHONY: .build/bpf-samples.tsv.gz
+.build/bpf-samples.tsv.gz: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/bpf-samples/%.test-result.yaml,$(ALL_S))
+	./bpf-samples/join-yamls.py --output $@ --yamls $^
+
+.PHONY: bpf-samples
+bpf-samples: .build/bpf-samples.tsv.gz
 
 #
 # Linux Phony

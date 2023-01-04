@@ -1,28 +1,15 @@
-# Libbpf Bootstrap Examples
-LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
-
-# Cilium
-CILIUM_C = $(wildcard external/cilium/bpf/bpf_*.c)
-CILIUM_S = $(patsubst external/cilium/bpf/bpf_%.c,prog/cilium_%.bpf.s,$(CILIUM_C))
-
-# vbpf
-VBPF_C = $(wildcard external/vbpf/src/*.c)
-VBPF_S = $(patsubst external/vbpf/src/%.c,prog/vbpf_%.bpf.s,$(VBPF_C))
-
-# May contain duplicates.
-ALL_S = $(wildcard prog/*.bpf.s) $(VBPF_S) $(CILIUM_S) $(patsubst %,prog/lbe_%.bpf.s,$(LBE_APPS))
+PREFIX = .
+include prog.mk
 
 # Don't remove intermediate results.
 .SECONDARY:
 
 .PHONY: all
-all: dump .build/test-results.tsv.gz
+all: dump
 
 .PHONY: dump
 dump: $(patsubst prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
-	$(patsubst prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
-	$(patsubst prog/%.bpf.s,.build/%.bpftool-priv,$(ALL_S)) \
-	$(patsubst prog/%.bpf.s,.build/%.bpftool-unpriv,$(ALL_S))
+	$(patsubst prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S))
 
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
@@ -65,7 +52,7 @@ prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
 	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
 
 # TODO
-CIAOPATH=spectector-root
+CIAOPATH=spectector-modules
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 
 $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH)/muasm_translator/src/*.pl)
@@ -73,13 +60,6 @@ $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH
 
 .build/%.spectector.log: prog/%.bpf.s $(SPECTECTOR) | .build
 	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
-
-.build/%.test-result.yaml: .build/%.spectector.log
-	$(MAKE) .build/$*.bpftool-priv .build/$*.bpftool-unpriv
-	./summarize-test-result.py $@ $< .build/$*.bpftool prog/$*.bpf.s .build/$*.perf
-
-.build/test-results.tsv.gz: $(patsubst prog/%.bpf.s,.build/%.test-result.yaml,$(ALL_S))
-	./join-yamls.py --output $@ --yamls $^
 
 .PHONY: clean
 clean:

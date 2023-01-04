@@ -1,0 +1,10 @@
+.DS_Store
+.idea
+*.log
+tmp/
+
+prog/lbe_*.bpf.s
+prog/cilium_*.bpf.s
+prog/vbpf_*.bpf.s
+prog/bcc_*.bpf.s
+.build/

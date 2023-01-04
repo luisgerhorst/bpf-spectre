@@ -9,5 +9,7 @@ CILIUM_S = $(patsubst $(PREFIX)/external/cilium/bpf/bpf_%.c,$(PREFIX)/prog/ciliu
 VBPF_C = $(wildcard $(PREFIX)/external/vbpf/src/*.c)
 VBPF_S = $(patsubst $(PREFIX)/external/vbpf/src/%.c,$(PREFIX)/prog/vbpf_%.bpf.s,$(VBPF_C))
 
-# May contain duplicates.
-ALL_S = $(wildcard $(PREFIX)/prog/*.bpf.s) $(VBPF_S) $(CILIUM_S) $(patsubst %,$(PREFIX)/prog/lbe_%.bpf.s,$(LBE_APPS))
+ALL_S = $(wildcard $(PREFIX)/prog/custom_*.bpf.s) \
+	$(VBPF_S) \
+	$(CILIUM_S) \
+	$(patsubst %,$(PREFIX)/prog/lbe_%.bpf.s,$(LBE_APPS))

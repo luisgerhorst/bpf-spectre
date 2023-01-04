@@ -1,15 +1,14 @@
-PREFIX = .
+PREFIX ?= .
 include prog.mk
 
 # Don't remove intermediate results.
 .SECONDARY:
 
 .PHONY: all
-all: dump
-
-.PHONY: dump
-dump: $(patsubst prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
-	$(patsubst prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S))
+all: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
+	$(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
+	$(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.bpftool.input,$(ALL_S)) \
+	$(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.spectector.log,$(ALL_S))
 
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
@@ -51,7 +50,6 @@ prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
 .build/%.bpftool.input: .build/%.bpf.o bpftool.sh
 	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
 
-# TODO
 CIAOPATH=spectector-modules
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 

@@ -16,7 +16,7 @@ LINUX_MAKE := LD_LIBRARY_PATH=/usr/local/lib $(MAKE) LOCALVERSION=$(LOCALVERSION
 # can then use them as dependencies to avoid recompilation of subprojects if
 # nothing changed in their file tree.
 REPOS := linux
-_dummy := $(shell mkdir -p .build .run .build/target-state/$(T))
+_dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(T))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .build/$(repo).git_rev))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
 
@@ -41,6 +41,7 @@ $(BZIMAGE): $(LINUX_TREE)
 	touch $@
 
 .build/linux-src.d: $(LINUX_TREE)
+	rm -rfd $@ && mkdir -p $(dir $@)
 	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
 	git clone --depth 1 $(LINUX) $@
 	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
@@ -83,7 +84,7 @@ $(BZIMAGE): $(LINUX_TREE)
 
 # Expected to fail if booted qemu runs outdated kernel.
 .run/debian.ssh_port: $(LINUX_TREE)
-	exit 1
+	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
 
 .build/target-state/qemu-debian/kernel: .run/debian.ssh_port
 	touch $@
@@ -94,22 +95,17 @@ TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 # BPF Samples
 #
 
-.build/bpf-samples/%.bpftool-priv: bpf-samples/.build/%.bpftool.input $(TARGET)
-	rm -rfd $@ && mkdir -p $(dir $@)
-	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o $@ './bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
+_dummy=$(shell $(MAKE) -C bpf-samples all)
 
-.build/bpf-samples/%.bpftool-unpriv: bpf-samples/.build/%.bpftool.input $(TARGET)
-	rm -rfd $@ && mkdir -p $(dir $@)
-	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o $@ './bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
-
-# TODO: Fix dependencies.
-.PHONY: .build/bpf-samples/%.test-result.yaml
-.build/bpf-samples/%.test-result.yaml:
-	$(MAKE) -C bpf-samples all
-	$(MAKE) .build/bpf-samples/$*.bpftool-priv .build/bpf-samples/$*.bpftool-unpriv
+.build/bpf-samples/%.test-result.yaml: bpf-samples/prog/%.bpf.s $(TARGET)
+	rm -rfd .build/bpf-samples/$*.*
+	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o .build/bpf-samples/$*.bpftool-priv \
+		'./bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
+	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o .build/bpf-samples/$*.bpftool-unpriv \
+		'./bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
 	./bpf-samples/summarize-test-result.py \
-		$@ \
-		.bpf-samples/.build/$*.spectector.log \
+		.build/bpf-samples/$*.test-result.yaml \
+		bpf-samples/.build/$*.spectector.log \
 		.build/bpf-samples/$*.bpftool \
 		bpf-samples/prog/$*.bpf.s \
 		bpf-samples/.build/$*.perf
@@ -117,9 +113,9 @@ TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 PREFIX = bpf-samples
 include bpf-samples/prog.mk
 
-.PHONY: .build/bpf-samples.tsv.gz
 .build/bpf-samples.tsv.gz: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/bpf-samples/%.test-result.yaml,$(ALL_S))
-	./bpf-samples/join-yamls.py --output $@ --yamls $^
+	./bpf-samples/join-yamls.py --output .build/bpf-samples.tsv.gz \
+		--yamls $^
 
 .PHONY: bpf-samples
 bpf-samples: .build/bpf-samples.tsv.gz

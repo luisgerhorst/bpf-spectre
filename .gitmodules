@@ -1,15 +1,15 @@
 [submodule "tests/libbpf-bootstrap"]
-	path = tests/bpf/bench/system/bpf-samples/external/libbpf-bootstrap
+	path = system/bpf-samples/external/libbpf-bootstrap
 	url = git@gitlab.cs.fau.de:un65esoq/libbpf-bootstrap.git
 [submodule "tests/bpf/cilium"]
-	path = tests/bpf/bench/system/bpf-samples/external/cilium
+	path = system/bpf-samples/external/cilium
 	url = git@github.com:cilium/cilium.git
 [submodule "tests/bpf/linux-build/linux"]
-	path = tests/bpf/bench/system/linux
+	path = system/linux
 	url = git@gitlab.cs.fau.de:un65esoq/linux.git
 [submodule "tests/bpf/samples/vbpf"]
-	path = tests/bpf/bench/system/bpf-samples/external/vbpf
+	path = system/bpf-samples/external/vbpf
 	url = git@github.com:vbpf/ebpf-samples.git
 [submodule "tests/bpf/external/bcc"]
-	path = tests/bpf/bench/system/bpf-samples/external/bcc
+	path = system/bpf-samples/external/bcc
 	url = git@github.com:iovisor/bcc.git

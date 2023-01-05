@@ -56,7 +56,7 @@ SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH)/muasm_translator/src/*.pl)
 	CIAOPATH=$(CIAOPATH) ciao build -r spectector
 
-.build/%.spectector.log: prog/%.bpf.s $(SPECTECTOR) | .build
+.build/%.spectector.log: prog/%.bpf.s $(SPECTECTOR) | .build .perf_event_paranoid_-1
 	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
 
 .PHONY: clean
@@ -67,17 +67,18 @@ clean:
 	rm -f prog/bcc_*.bpf.s
 	rm -rfd .build
 
-.PHONY: get-pwned
-get-pwned:
-	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid
-
-.PHONY: lock-system
-lock-system:
+.PHONY: mrproper
+mrproper: clean
 	echo "4" | sudo tee /proc/sys/kernel/perf_event_paranoid
+	rm -f .perf_event_paranoid_-1
 
 .PHONY: install-deps
-install-deps:
-	sudo apt install golang llvm python3-pandas
+install-deps: .perf_event_paranoid_-1:
+	sudo apt install golang llvm
+
+.perf_event_paranoid_-1:
+	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid
+	touch $@
 
 .build:
 	mkdir -p $@

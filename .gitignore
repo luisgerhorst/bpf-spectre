@@ -3,3 +3,4 @@
 *.itf
 *.asr
 dist/
+/system/bpf-samples/.perf_event_paranoid_-1

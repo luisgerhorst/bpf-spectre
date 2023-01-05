@@ -13,3 +13,6 @@
 [submodule "tests/bpf/external/bcc"]
 	path = system/bpf-samples/external/bcc
 	url = git@github.com:iovisor/bcc.git
+[submodule "spectector-proj"]
+	path = system/bpf-samples/spectector-proj
+	url = git@gitlab.cs.fau.de:un65esoq/spectector-bpf.git

@@ -12,7 +12,7 @@ burst_len=$2
 CPUFREQ=${CPUFREQ:-max}
 PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e iTLB-load-misses -e dTLB-load-misses -e branch-misses"}
 
-pushd system
+pushd ../system
 
 # Set's default T and related variables.
 . ./env.sh

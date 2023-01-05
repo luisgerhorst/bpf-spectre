@@ -22,7 +22,9 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .b
 
 LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 
-all: target
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
+
+all: bpf-samples $(TARGET)
 
 #
 # Linux Files
@@ -88,8 +90,6 @@ $(BZIMAGE): $(LINUX_TREE)
 
 .build/target-state/qemu-debian/kernel: .run/debian.ssh_port
 	touch $@
-
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 
 #
 # BPF Samples

@@ -20,6 +20,10 @@ def main():
     suite_path, suite_run_path, reps, burst_len = parse_args()
     suite_dir = Path(os.path.dirname(suite_path))
 
+    suite = None
+    with open(suite_path) as suite_yaml:
+        suite = yaml.safe_load(suite_yaml)
+
     # $ apt-get install trash-cli
     if suite_run_path.is_dir():
         subprocess.run(["trash", suite_run_path], check=True)
@@ -30,12 +34,10 @@ def main():
     os.dup2(suite_log_tee.stdin.fileno(), sys.stdout.fileno())
     os.dup2(suite_log_tee.stdin.fileno(), sys.stderr.fileno())
 
-    with open(suite_path) as suite_yaml:
-        suite = yaml.safe_load(suite_yaml)
-        run_suite(suite_dir, suite_run_path, suite, reps, burst_len)
+    run_suite(suite_dir, suite_run_path, suite, reps, burst_len)
 
 def parse_args():
-    raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../data/.bench"))
+    raw_dir = Path(os.getenv("BENCHRUN_DATA", default=".data"))
 
     parser = argparse.ArgumentParser(description="Run each benchmark-burst in suite rep times.")
     parser.add_argument("-s", "--suite")
@@ -86,9 +88,9 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len):
         for name, value in bench['run'].items():
             subproc_env[name] = value
         subprocess.run(
-            [os.getcwd() / suite_dir.joinpath(bench["command"]),
+            [os.getcwd() / Path(bench["command"]),
              bench_run_data.resolve(), str(burst_len)],
-            cwd=suite_dir, env=subproc_env,
+            env=subproc_env,
             stdout=bench_log_tee.stdin, stderr=bench_log_tee.stdin,
             check=True
         )

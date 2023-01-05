@@ -1,4 +1,4 @@
-PREFIX ?= .
+PREFIX = .
 include prog.mk
 
 # Don't remove intermediate results.
@@ -50,13 +50,13 @@ prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
 .build/%.bpftool.input: .build/%.bpf.o bpftool.sh
 	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
 
-CIAOPATH=spectector-modules
+CIAOPATH=$(shell pwd)/spectector-proj
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 
 $(SPECTECTOR): $(wildcard $(CIAOPATH)/spectector/src/*.pl) $(wildcard $(CIAOPATH)/muasm_translator/src/*.pl)
-	CIAOPATH=$(CIAOPATH) ciao build -r spectector
+	env -C $(CIAOPATH) CIAOPATH=$(CIAOPATH) ciao build -r spectector
 
-.build/%.spectector.log: prog/%.bpf.s $(SPECTECTOR) | .build .perf_event_paranoid_-1
+.build/%.spectector.log: prog/%.bpf.s $(SPECTECTOR) | .build
 	perf stat --output .build/$*.perf -x , -e duration_time -e task-clock $(SPECTECTOR) $< 2>&1 | tee $@
 
 .PHONY: clean
@@ -73,7 +73,7 @@ mrproper: clean
 	rm -f .perf_event_paranoid_-1
 
 .PHONY: install-deps
-install-deps: .perf_event_paranoid_-1:
+install-deps: .perf_event_paranoid_-1
 	sudo apt install golang llvm
 
 .perf_event_paranoid_-1:

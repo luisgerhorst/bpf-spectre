@@ -1,0 +1,17 @@
+* System Builder
+
+** Quick Start
+
+Boot the VM (or boot the real target):
+
+#+BEGIN_SRC sh
+make qemu
+#+END_SRC
+
+Other terminal:
+
+#+BEGIN_SRC sh
+make all
+#+END_SRC
+
+The latter installs the required software on the target system.

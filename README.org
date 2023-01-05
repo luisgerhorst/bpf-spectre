@@ -1,0 +1,21 @@
+* System Evaluator
+
+Clone with ~--recursive~.
+
+** Quick Start
+
+Build and boot the VM:
+
+#+BEGIN_SRC sh
+make -C system qemu
+#+END_SRC
+
+This might take some time the first time as it builds the kernel and installs Debian.
+
+In another terminal:
+
+#+BEGIN_SRC sh
+./bench/run.sh --suite default
+#+END_SRC
+
+The latter also installs all benchmark dependencies on the system.

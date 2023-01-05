@@ -20,11 +20,19 @@ _dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .build/$(repo).git_rev))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
 
+
 LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 
+.PHONY: all
 all: bpf-samples $(TARGET)
+
+.PHONY: clean
+clean:
+	$(MAKE) -C bpf-samples clean
+	$(MAKE) -C linux clean
+	rm -rfd .build .run
 
 #
 # Linux Files
@@ -95,9 +103,11 @@ $(BZIMAGE): $(LINUX_TREE)
 # BPF Samples
 #
 
-_dummy=$(shell $(MAKE) -C bpf-samples all)
+.PHONY: bpf-samples-all
+bpf-samples-all:
+	$(MAKE) -C bpf-samples all
 
-.build/bpf-samples/%.test-result.yaml: bpf-samples/prog/%.bpf.s $(TARGET)
+.build/bpf-samples/%.test-result.yaml: bpf-samples/prog/%.bpf.s $(TARGET) | bpf-samples-all
 	rm -rfd .build/bpf-samples/$*.*
 	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o .build/bpf-samples/$*.bpftool-priv \
 		'./bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
@@ -113,7 +123,7 @@ _dummy=$(shell $(MAKE) -C bpf-samples all)
 PREFIX = bpf-samples
 include bpf-samples/prog.mk
 
-.build/bpf-samples.tsv.gz: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/bpf-samples/%.test-result.yaml,$(ALL_S))
+.build/bpf-samples.tsv.gz: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/bpf-samples/%.test-result.yaml,$(ALL_S)) | bpf-samples-all
 	./bpf-samples/join-yamls.py --output .build/bpf-samples.tsv.gz \
 		--yamls $^
 

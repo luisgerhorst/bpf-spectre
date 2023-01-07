@@ -14,7 +14,7 @@ def main():
     target = "qemu-debian"
 
     suite.append({
-        "command": "run-workload.sh",
+        "command": "bench-workload.sh",
         "boot": {
             "T": target,
         },

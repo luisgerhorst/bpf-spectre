@@ -19,3 +19,4 @@ all: $(suite_def_yamls) $(suite_py_yamls)
 .PHONY: install-deps
 install-deps:
 	pip install pyyaml etaprogress
+	sudo apt-get install trash-cli

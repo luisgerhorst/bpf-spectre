@@ -19,3 +19,13 @@ In another terminal:
 #+END_SRC
 
 The latter also installs all benchmark dependencies on the system.
+
+* Data Flow
+
+#+BEGIN_SRC
+system/{linux, *}
+  -- make -C system --> System under Test (Target)
+  -- ./bench/run.sh --> bench/.data/*/
+  -- ./eval/tidy.py --> eval/.tidy/*.tsv.gz
+  -- ./eval/plot-*  --> eval/plots/**.pdf
+#+END_SRC

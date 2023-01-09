@@ -67,11 +67,11 @@ qemu-img create -f qcow2 hda.qcow2 32G
 echo "Running Debian Installer..." >&2
 qemu-system-x86_64 \
 	-hda hda.qcow2 \
-    -smp cpus=2 \
+	-smp cpus=2 \
 	-m 2048 \
 	-nographic \
-    -enable-kvm \
-    -netdev user,id=net0,net=10.0.2.0/24,hostname=debian,domainname=local,tftp=tftp,bootfile=pxelinux.0 \
+	-enable-kvm \
+	-netdev user,id=net0,net=10.0.2.0/24,hostname=debian,domainname=local,tftp=tftp,bootfile=pxelinux.0 \
 	-device e1000,netdev=net0,mac=52:54:98:76:54:32 \
 	-boot once=n \
         | tee qemu.log

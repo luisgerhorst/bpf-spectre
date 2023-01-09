@@ -47,11 +47,11 @@ set +e
 qemu-system-x86_64 \
     -hda ${vm_hda} ${kernel_flag} -append "${append}" \
     -smp cpus=2 \
-	-m 2048 \
+    -m 2048 \
     -nographic \
     -enable-kvm \
     -netdev user,id=net0,net=10.0.2.0/24,hostname=debian,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
-	-device e1000,netdev=net0,mac=52:54:98:76:54:32
+    -device e1000,netdev=net0,mac=52:54:98:76:54:32
 qemu_exit_code=$?
 
 rm -f ${vm_ssh_port}

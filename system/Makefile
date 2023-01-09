@@ -82,6 +82,9 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/qemu-debian-netboot.tar.gz:
 	curl --location --output $@ https://deb.debian.org/debian/dists/bullseye/main/installer-amd64/current/images/netboot/netboot.tar.gz
 
+# The default root password is empty. This is still secure because sshd defaults
+# to "PermitRootLogin prohibit-password". During install, the host authorized
+# keys are copied to the guest.
 .build/$(VM).clean-install/hda.qcow2: .build/qemu-debian-netboot.tar.gz qemu-debian-preseed.cfg
 	./scripts/qemu-debian-install $(dir $@) "" $^
 

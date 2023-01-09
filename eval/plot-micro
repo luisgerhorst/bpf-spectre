@@ -1,0 +1,27 @@
+#!/usr/bin/Rscript
+
+source("plotlib.R")
+
+DATA  <- DATA %>%
+  filter(startsWith(test_spec_args_0, "task_bulk")) %>%
+  mutate(variant = test_spec_args_1,
+         libbpf_bulk_reps = as.double(test_spec_args_2),
+         libbpf_bulk_prog_uses = as.double(test_spec_args_3),
+         libbpf_bulk_prog_size = as.double(test_spec_args_4))
+summary(DATA)
+
+for (e in unique(DATA$test_spec_args_0)) {
+  e_data <- DATA %>% filter(test_spec_args_0 == e)
+  cns <- colnames(e_data)
+  perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")]
+  for (m in perf_metrics) {
+    print(m)
+    ggplot(e_data, aes(x=libbpf_bulk_prog_uses, y=get(m), colour=variant)) +
+      geom_smooth(linetype = "dashed", method = "lm") +
+      geom_point() +
+      facet_grid(rows=vars(libbpf_bulk_prog_size, libbpf_bulk_reps, test_spec_env_T),
+                 cols=vars(test_spec_env_GRUB_CMDLINE_LINUX, test_spec_env_CPUFREQ),
+                 labeller=label_both, scales="free")
+    eval_save(paste0(e, "-", m, "-point"))
+  }
+}

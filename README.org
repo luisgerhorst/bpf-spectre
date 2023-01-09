@@ -1,6 +1,6 @@
 * System Evaluator
 
-Clone with ~--recursive~.
+Clone with ~--recursive~. Install [[https://git-lfs.com/][Git LFS]] for ~bench/data-archives~ and prebuilt plots.
 
 ** Quick Start
 

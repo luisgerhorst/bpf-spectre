@@ -20,10 +20,9 @@ _dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .build/$(repo).git_rev))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
 
-
 LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 .PHONY: all
 all: bpf-samples $(TARGET)
@@ -63,6 +62,16 @@ $(BZIMAGE): $(LINUX_TREE)
 	mkdir -p $(dir $@)
 	env -C $< tar cf - . | pigz > $@
 
+LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
+
+$(LINUX_PERF_TARXZ): $(LINUX_TREE)
+	rm -f linux/perf-*.tar.xz $@
+	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
+	$(LINUX_MAKE) -C $(LINUX) perf-tarxz-src-pkg
+	mkdir -p $(dir $@)
+	mv -f $$(find linux -name 'perf-*.tar.xz') $@
+	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
+
 #
 # Debian Files
 #
@@ -90,6 +99,20 @@ $(BZIMAGE): $(LINUX_TREE)
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
 	./scripts/target-scpsh 'sudo apt-get --assume-yes install make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
 	./scripts/target-scpsh 'sudo make -C ../target_prefix/linux-src/tools bpf_install'
+	touch $@
+
+# Could also be installed from ../target_prefix/linux-src on target, but this
+# was copied from AnyCall and works.
+#
+# Installs custom-kernel's perf as perf_$(uname -r) to dist. it from the systems
+# regular perf. To be used by bench-scripts.
+.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ)
+	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf'
+	./scripts/target-scpsh 'mkdir -p ../target_prefix/linux-perf'
+	./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf'
+	./scripts/target-scpsh 'sudo apt-get install --yes flex bison'
+	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/perf*/tools/perf'
+	./scripts/target-scpsh 'sudo ln -sf ../target_prefix/linux-perf/perf*/tools/perf/perf /usr/local/bin/perf_$$(uname -r)'
 	touch $@
 
 # Expected to fail if booted qemu runs outdated kernel.

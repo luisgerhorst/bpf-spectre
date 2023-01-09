@@ -14,7 +14,7 @@ PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e iTLB-load-misses -e dTLB-load-mis
 
 pushd ../system
 
-# Set's default T and related variables.
+# Also sets default SuT ($T) and related variables.
 . ./env.sh
 
 # Boots target with linux-build ready for target-scpsh.
@@ -25,6 +25,7 @@ make all
 
 ./scripts/target-scpsh "echo 0 > sudo tee /proc/sys/kernel/nmi_watchdog"
 
+# TODO: Find clean way to avoid this if/else based on $T.
 if [[ "${T}" != "qemu-debian" ]]
 then
 	old_governor=$(./scripts/target-scpsh 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor')
@@ -45,6 +46,7 @@ then
 fi
 
 ./scripts/target-scpsh 'grep . /sys/devices/system/cpu/vulnerabilities/*' > ${output_abs}/cpu-vulnerabilities
+./scripts/target-scpsh 'echo $PATH' > ${output_abs}/PATH
 
 set +e
 ./scripts/target-scpsh -o "${output_abs}/workload" "
@@ -53,7 +55,7 @@ echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 sleep 1
 for burst_pos in \$(seq 0 \$(expr ${burst_len} - 1))
 do
-env -i sudo perf_\$(uname -r) stat --output ../result_dir/\${burst_pos}.perf -x , \
+env -i sudo --preserve-env \$(which perf_\$(uname -r)) stat --output ../result_dir/\${burst_pos}.perf -x , \
 -e duration_time \
 -e task-clock \
 -e raw_syscalls:sys_enter \

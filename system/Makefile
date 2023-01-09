@@ -9,6 +9,9 @@ KERNEL_COMMIT := $(shell env -C $(LINUX) git rev-parse --short HEAD)
 KERNEL_STATUS_MD5SUM = $(shell bash -c "env -C $(LINUX) git status -vv | awk '\$$1 != \"index\" { print }' | md5sum | cut -c -6")
 KERNEL_CONFIG_MD5SUM = $(shell bash -c "md5sum $(CONFIG) | cut -c -6")
 LOCALVERSION := -$(USER)+$(KERNEL_COMMIT)+$(KERNEL_STATUS_MD5SUM)+$(KERNEL_CONFIG_MD5SUM)
+
+# Parallel make is OK for subdirectories. However, parallel target-scpsh calls may be
+# problematic because of apt, therefore only -j1 for this Makefile.
 MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
 LINUX_MAKE := LD_LIBRARY_PATH=/usr/local/lib $(MAKE) LOCALVERSION=$(LOCALVERSION)
 
@@ -25,7 +28,7 @@ LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 .PHONY: all
-all: bpf-samples $(TARGET)
+all: $(TARGET)
 
 .PHONY: clean
 clean:
@@ -73,7 +76,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
 
 #
-# Debian Files
+# Debian VM Files
 #
 
 .build/qemu-debian-netboot.tar.gz:
@@ -88,15 +91,15 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	cp $< $@
 
 #
-# Target State
+# Target SuT State
 #
 
-.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
+.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
-.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
+.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo apt-get --assume-yes install make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
 	./scripts/target-scpsh 'sudo make -C ../target_prefix/linux-src/tools bpf_install'
 	touch $@
@@ -104,15 +107,15 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 # Could also be installed from ../target_prefix/linux-src on target, but this
 # was copied from AnyCall and works.
 #
-# Installs custom-kernel's perf as perf_$(uname -r) to dist. it from the systems
-# regular perf. To be used by bench-scripts.
-.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ)
+# Installs custom's perf as perf_$(uname -r) into /usr/local to
+# distinguish it from the systems regular perf. To be used by bench-scripts.
+.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf'
 	./scripts/target-scpsh 'mkdir -p ../target_prefix/linux-perf'
 	./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf'
-	./scripts/target-scpsh 'sudo apt-get install --yes flex bison'
+	./scripts/target-scpsh 'sudo apt-get install --yes flex bison libtraceevent-dev'
 	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/perf*/tools/perf'
-	./scripts/target-scpsh 'sudo ln -sf ../target_prefix/linux-perf/perf*/tools/perf/perf /usr/local/bin/perf_$$(uname -r)'
+	./scripts/target-scpsh 'sudo ln -sf $$(realpath ../target_prefix/linux-perf/perf*/tools/perf/perf) /usr/local/bin/perf_$$(uname -r)'
 	touch $@
 
 # Expected to fail if booted qemu runs outdated kernel.
@@ -122,8 +125,13 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/qemu-debian/kernel: .run/debian.ssh_port
 	touch $@
 
+# TODO: Add .build/target-state/$(T)/kernel for physical targets based on grub-reboot.
+
 #
 # BPF Samples
+#
+# Convenience for testing. Not included in all-Target because it takes long and
+# is not required by most bench-scripts.
 #
 
 .PHONY: bpf-samples-all

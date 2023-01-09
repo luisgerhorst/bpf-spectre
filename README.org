@@ -2,25 +2,48 @@
 
 Clone with ~--recursive~. Install [[https://git-lfs.com/][Git LFS]] for ~bench/data-archives~ and prebuilt plots.
 
+** Features
+
+- Different programming languages for plotting.
+- Flexible benchmarks (microbenchmarks, real-world client/server benchmarks).
+- Flexible system under test (e.g., VM or physical machine), compare different SuTs.
+- Fully automatic setup of the SuT with the software to evaluate (kernel, ...).
+- Plot available benchmark results while the benchmark is still running.
+- Parallel plotting.
+- Separate running of the benchmarks and processing (e.g., plotting) their results.
+- Randomize benchmark execution order to avoid false conclusions.
+- Archive/share large benchmark results and prebuilt plots into Git LFS to avoid exceeding git limits.
+
 ** Quick Start
 
-Build and boot the VM:
+Install all dependencies, see ~make -C ** install-deps~.
+
+Boot the VM:
 
 #+BEGIN_SRC sh
 make -C system qemu
 #+END_SRC
 
-This might take some time the first time as it builds the kernel and installs Debian.
+This might take some time the first time as it builds the kernel and installs
+Debian. Alternatively boot the physical target machine (with any kernel) for the
+other benchmark suites.
 
 In another terminal:
 
 #+BEGIN_SRC sh
-./bench/run.sh --suite default
+./bench/run.sh --suite demo
 #+END_SRC
 
-The latter also installs all benchmark dependencies on the system.
+The latter also installs and sets up all benchmark dependencies (e.g., boot the kernel) on the target SuT.
 
-* Data Flow
+Plot and open the results:
+
+#+BEGIN_SRC sh
+make -C eval -j $(getconf _NPROCESSORS_ONLN) all
+open eval/plots/*-demo/
+#+END_SRC
+
+** Data Flow
 
 #+BEGIN_SRC
 system/{linux, *}
@@ -29,3 +52,5 @@ system/{linux, *}
   -- ./eval/tidy.py --> eval/.tidy/*.tsv.gz
   -- ./eval/plot-*  --> eval/plots/**.pdf
 #+END_SRC
+
+This does not mean that the above commands should be called directly.

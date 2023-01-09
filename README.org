@@ -54,3 +54,11 @@ system/{linux, *}
 #+END_SRC
 
 This does not mean that the above commands should be called directly.
+
+* License
+
+#+BEGIN_SRC
+SPDX-License-Identifier: GPL-2.0+
+#+END_SRC
+
+This is the default for this repo and all submodules unless explicitly set to something else (e.g., in external submodules).

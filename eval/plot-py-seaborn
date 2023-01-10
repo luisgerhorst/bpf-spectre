@@ -27,8 +27,10 @@ def main():
     plot(tidy_df, Path(args.plot_path))
 
 def plot(tidy_df, plot_path):
+    print(tidy_df)
     # TODO: Add a function to generate plot names
     # sns.relplot(data=tidy_df).savefig(plot_path.joinpath("0001-total.pdf"))
+    pass
 
 if __name__ == "__main__":
     main()

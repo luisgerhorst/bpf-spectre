@@ -1,4 +1,4 @@
-BENCHRUN_DATA ?= ../bench/data
+BENCHRUN_DATA ?= ../bench/.data
 
 ALL_MAKEFILES = Makefile data.mk
 RM=rm
@@ -25,9 +25,7 @@ clean:
 
 .PHONY: install-deps
 install-deps:
+	sudo apt install r-base cups libcurl4-openssl-dev
 	pip3 install pyyaml seaborn
-	Rscript -e 'install.packages(c("tidyverse", "argparse", "scriptName", "tikzDevice", "gghighlight", "ggpubr", "broom", "plyr"))'
-
-.PHONY: sudo-install-deps
-sudo-install-deps:
-	sudo apt install r-base cups
+	Rscript -e 'install.packages(c("tidyverse", "argparse", "scriptName", "tikzDevice", "gghighlight", "ggpubr", "broom", "plyr"))' \
+		|| echo "run 'R' interactively and call install.packages() manually to choose lib install path" && false

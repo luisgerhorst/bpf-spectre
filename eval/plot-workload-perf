@@ -1,0 +1,18 @@
+#!/usr/bin/Rscript
+
+source("plotlib.R")
+
+summary(DATA)
+
+cns <- colnames(DATA)
+perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")]
+for (m in perf_metrics) {
+  print(m)
+  ggplot(DATA, aes(x=run_WORKLOAD, y=get(m), colour=burst_pos)) +
+    geom_smooth(linetype = "dashed", method = "lm") +
+    geom_point() +
+    facet_grid(rows=vars(boot_T, workload_exitcode),
+               cols=vars(run_CPUFREQ, bench_script),
+               labeller=label_both, scales="free")
+  eval_save(paste0(m, "-point"))
+}

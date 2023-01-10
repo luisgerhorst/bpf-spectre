@@ -10,6 +10,7 @@ import logging
 import argparse
 import random
 import time
+import copy
 
 import yaml # Install with 'pip install pyyaml'
 from etaprogress.progress import ProgressBar
@@ -71,9 +72,9 @@ def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
         suite = sorted(suite, key=lambda bench:yaml.dump(bench['boot']))
         for bench in suite:
             bar.numerator = i
-            print("%s: %s" % (bar, bench), end="\r")
+            print("%s: %s" % (bar, bench), end="\n")
             sys.stdout.flush()
-            bench_list = [bench["command"]] + list(bench["boot"].values()) + list(bench["run"].values())
+            bench_list = [bench["bench_script"]] + list(bench["boot"].values()) + list(bench["run"].values())
             bench_foldername = '{:04d}-{}'.format(i, '-'.join(map(urllib.parse.quote_plus, map(str, bench_list))))
             run_bench(suite_dir, suite_run_path.joinpath(bench_foldername[0:128]), bench, burst_len)
             i += 1
@@ -89,7 +90,7 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len):
             subproc_env[name] = value
         # Sets up the target system for evaluation and runs the benchmark.
         subprocess.run(
-            [os.getcwd() / Path(bench["command"]),
+            [os.getcwd() / Path("bench-" + bench["bench_script"]),
              bench_run_data.resolve(), str(burst_len)],
             env=subproc_env,
             stdout=bench_log_tee.stdin, stderr=bench_log_tee.stdin,
@@ -99,11 +100,9 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len):
     bench_run_data.joinpath("burst_len").write_text(str(burst_len))
 
     with open(bench_run_data.joinpath("bench-run.yaml"), "w") as bench_run_yaml:
-        bench_run = {
-            "date": datetime.datetime.now().isoformat(),
-            "burst_len": burst_len,
-            "spec": bench,
-        }
+        bench_run = copy.deepcopy(bench)
+        bench_run["date"] = datetime.datetime.now().isoformat()
+        bench_run["burst_len"] = burst_len
         yaml.dump(bench_run, bench_run_yaml)
 
 if __name__ == "__main__":

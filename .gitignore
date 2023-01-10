@@ -6,3 +6,5 @@ dist/
 /system/bpf-samples/.perf_event_paranoid_-1
 /bench/.data/
 /bench/.build/
+/eval/plots/
+/eval/.tidy/

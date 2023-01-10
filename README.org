@@ -1,22 +1,26 @@
-* System Evaluator
+* Operating System Evaluator
 
 Clone with ~--recursive~. Install [[https://git-lfs.com/][Git LFS]] for ~bench/data-archives~ and prebuilt plots.
 
 ** Features
 
+... or, /why not to just write a custom script/.
+
 - Different programming languages for plotting.
 - Flexible benchmarks (microbenchmarks, real-world client/server benchmarks).
 - Flexible system under test (e.g., VM or physical machine), compare different SuTs.
-- Fully automatic setup of the SuT with the software to evaluate (kernel, ...).
+- Fully automatic setup of the SuT with the software to evaluate (boot kernel, ...).
 - Plot available benchmark results while the benchmark is still running.
+- ETA for long benchmark runs.
 - Parallel plotting.
-- Separate running of the benchmarks and processing (e.g., plotting) their results.
-- Randomize benchmark execution order to avoid false conclusions.
-- Archive/share large benchmark results and prebuilt plots into Git LFS to avoid exceeding git limits.
+- Separate running benchmarks and processing (e.g., plotting) their results.
+- Analyse [[https://vita.had.co.nz/papers/tidy-data.pdf][tidy]] data but still collect a lot of (dirty) data during the benchmark, decide later what to actually process.
+- Randomize benchmark execution order to avoid false conclusions and encourage reproducibility.
+- Archive/share large raw benchmark results and prebuilt plots with Git LFS to avoid exceeding Git limits.
 
 ** Quick Start
 
-Install all dependencies, see ~make -C ** install-deps~.
+Install all dependencies, see ~make install-deps~ in the subdirectories.
 
 Boot the VM:
 
@@ -31,16 +35,16 @@ other benchmark suites.
 In another terminal:
 
 #+BEGIN_SRC sh
-./bench/run.sh --suite demo
+./bench/run.sh --suite idle
 #+END_SRC
 
 The latter also installs and sets up all benchmark dependencies (e.g., boot the kernel) on the target SuT.
 
-Plot and open the results (untested/buggy as of 2023-01-09):
+Plot and open the results:
 
 #+BEGIN_SRC sh
-make -C eval -j $(getconf _NPROCESSORS_ONLN) all
-open eval/plots/*-demo/
+make -C eval -k -j $(getconf _NPROCESSORS_ONLN) all
+open eval/plots/*-idle.pdf
 #+END_SRC
 
 ** Data Flow

@@ -70,7 +70,9 @@ eval_save_tikz <- function(plot_name) {
   tikz(file = eval_path(plot_name, 0, ".tex"), width = TEXT_COL_WIDTH_INCH, height = 0.68*TEXT_COL_WIDTH_INCH)
 }
 
-eval_save <- function(plot_name, eval_id = plotlib_eval_id, title=plot_name, subtitle=paste0("eval-id = ", eval_id), width_cm=16*3, height_cm=9*3) {
+eval_save <- function(plot_name, eval_id = plotlib_eval_id,
+                      title=plot_name, subtitle=paste0("eval-id = ", eval_id),
+                      width_cm=16*3, height_cm=9*3) {
   ## dev.off() # close tikz device
 
   lp <- last_plot()
@@ -98,8 +100,8 @@ ALL_DATA <- read_tsv(
 DATA <- ALL_DATA %>%
   mutate(
     CPU = factor(case_when(
-      test_spec_env_T == "easy16" ~ "AMD 3950X",
-      test_spec_env_T == "nuc" ~ "Intel i5-6260U",
+      boot_T == "easy16" ~ "AMD 3950X",
+      boot_T == "nuc" ~ "Intel i5-6260U",
       ), levels = c("AMD 3950X", "Intel i5-6260U")),
     Caches = factor(case_when(
       burst_pos == 0 ~ "Cold Caches",

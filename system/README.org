@@ -16,6 +16,15 @@ make all
 
 The latter installs the required software on the target system under test and ensures that the kernel checked out in the subdirectory is booted. That is, the system is ready for evaluation. May be called repeatedly by bench-scripts to evaluate different configurations.
 
+** Setup
+
+Requires sudo without a password:
+
+#+BEGIN_SRC txt
+# Luis Gerhorst
+gerhorst faui49easy*=(ALL:ALL) NOPASSWD: ALL
+#+END_SRC
+
 ** Related Work
 
 Could maybe be in part simplified / replaced with something like ~salt~ or ~cfengine~.

@@ -1,3 +1,3 @@
 * Benchmark Result Analyzer
 
-Reads from ~BENCHRUN_DATA~ (~../bench/.data~ by default).
+Reads from ~BENCHRUN_DATA~.

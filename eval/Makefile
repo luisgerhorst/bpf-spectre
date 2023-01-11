@@ -1,4 +1,4 @@
-BENCHRUN_DATA ?= ../bench/.data
+BENCHRUN_DATA ?= .raw
 
 ALL_MAKEFILES = Makefile data.mk
 RM=rm

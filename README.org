@@ -52,9 +52,9 @@ open eval/plots/*-idle.pdf
 #+BEGIN_SRC
 system/{linux, *}
   -- make -C system --> System under Test (Target)
-  -- ./bench/run.sh --> bench/.data/*/
+  -- ./bench/run.sh --> eval/.raw/*/
   -- ./eval/tidy.py --> eval/.tidy/*.tsv.gz
-  -- ./eval/plot-*  --> eval/plots/**.pdf
+  -- ./eval/plot-*  --> eval/plots/*.pdf
 #+END_SRC
 
 This does not mean that the above commands should be called directly.

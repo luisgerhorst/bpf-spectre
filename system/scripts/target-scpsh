@@ -54,8 +54,8 @@ ${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
 
 command_sh=$(mktemp)
 echo "#!/bin/bash
-set -euo pipefail" > "${command_sh}"
-echo "${command}" >> "${command_sh}"
+set -euo pipefail
+${command}" > "${command_sh}"
 chmod +x "${command_sh}"
 ${scp} ${command_sh} ${SSH_DEST}:${guest_temp}/command.sh
 

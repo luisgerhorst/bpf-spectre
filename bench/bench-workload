@@ -17,16 +17,30 @@ pushd ../system
 # Also sets default SuT ($T) and related variables.
 . ./env.sh
 
+# https://gitlab.cs.fau.de/i4/infra/wake-on-lan
+if [[ $T = faui49* ]]
+then
+	ssh faui49man1 wake $T
+fi
+
 # Boots target with linux-build ready for target-scpsh.
 make all
+
+# https://www4.cs.fau.de/dokuwiki/labor:systeme?s[]=system&s[]=mode#tips_und_tricks_zur_exklusiven_nutzung_der_fai_laborinstallation
+#
+# Mabe move this into lib for use in other bench scripts.
+if ./scripts/target-scpsh "which set-system-mode"
+then
+	./scripts/target-scpsh "set-system-mode evaluation"
+	export SSH_PORT=23
+fi
 
 ./scripts/target-scpsh 'uname -a' > ${output_abs}/uname-a
 ./scripts/target-scpsh 'lscpu'    > ${output_abs}/lscpu
 
 ./scripts/target-scpsh "echo 0 > sudo tee /proc/sys/kernel/nmi_watchdog"
 
-# TODO: Find clean way to avoid this if/else based on $T.
-if [[ "${T}" != "qemu-debian" ]]
+if ./scripts/target-scpsh 'ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null'
 then
 	old_governor=$(./scripts/target-scpsh 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor')
 
@@ -34,11 +48,17 @@ then
 	then
 		cpufreq_khz=$(./scripts/target-scpsh 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq')
 	else
-		if [[ "${T}" == easy7 ]] # base_frequency file does not exist here
+		if ./scripts/target-scpsh "cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency > /dev/null"
+		then
+			cpufreq_khz=$(./scripts/target-scpsh "cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency")
+		elif [ $T = faui49easy7 ]
 		then
 			cpufreq_khz=2800000 # highest available non-boost freq
 		else
-			cpufreq_khz=$(./scripts/target-scpsh "cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency")
+			set +e
+			./scripts/target-scpsh "set-system-mode normal"
+			set -e
+			exit 1
 		fi
 	fi
 	./scripts/target-scpsh "sudo cpupower frequency-set --min ${cpufreq_khz}kHz --max ${cpufreq_khz}kHz --governor performance"
@@ -46,7 +66,6 @@ then
 fi
 
 ./scripts/target-scpsh 'grep . /sys/devices/system/cpu/vulnerabilities/*' > ${output_abs}/cpu-vulnerabilities
-./scripts/target-scpsh 'echo $PATH' > ${output_abs}/PATH
 
 set +e
 ./scripts/target-scpsh -o "${output_abs}/workload" "
@@ -74,13 +93,22 @@ rm -rfd ${td}
 
 ./scripts/target-scpsh "sudo dmesg" > ${output_abs}/dmesg
 
+
+# TODO: Always do the following reset commands, even if something else failed.
+
 ./scripts/target-scpsh "echo 1 > sudo tee /proc/sys/kernel/nmi_watchdog"
 
-if [[ "${T}" != "qemu-debian" ]]
+if ./scripts/target-scpsh 'ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null'
 then
 	min_freq_khz=$(./scripts/target-scpsh "cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq")
 	max_freq_khz=$(./scripts/target-scpsh "cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
 	./scripts/target-scpsh "sudo cpupower frequency-set --min ${min_freq_khz}kHz --max ${max_freq_khz}kHz --governor ${old_governor}"
+fi
+
+if ./scripts/target-scpsh "which set-system-mode"
+then
+	./scripts/target-scpsh "set-system-mode normal"
+	export SSH_PORT=22
 fi
 
 echo -n $exitcode > ${output_abs}/workload-exitcode

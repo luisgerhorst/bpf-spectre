@@ -97,6 +97,26 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 # Target SuT State
 #
 
+# Expected to fail if booted qemu runs outdated kernel.
+.run/debian.ssh_port: $(LINUX_TREE)
+	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
+
+.build/target-state/$(T)/deb-install: .build/linux-bindeb $(wildcard .build/linux-bindeb/*.deb)
+	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-headers")' || true
+	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-image" | grep -e "-dbg")' || true
+	./scripts/target-scpsh 'sudo apt-get -y autoremove' || true
+	./scripts/target-scpsh -C $< 'cp -rdf . ../target-prefix/deb'
+	./scripts/target-scpsh 'sudo dpkg -i ../target-prefix/deb/*.deb' || true # announce deps
+	./scripts/target-scpsh 'sudo apt-get -y --fix-broken install' # install deps
+	./scripts/target-scpsh 'sudo dpkg -i ../target-prefix/deb/*.deb'
+	touch $@
+
+.build/target-state/qemu-debian/kernel: .run/debian.ssh_port
+	touch $@
+
+.build/target-state/faui49%/kernel: .build/target-state/faui49%/deb-install
+	./scripts/target-boot -r "$$(cat .build/linux-bindeb/kernel.release)"
+
 .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
@@ -120,15 +140,6 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/perf*/tools/perf'
 	./scripts/target-scpsh 'sudo ln -sf $$(realpath ../target_prefix/linux-perf/perf*/tools/perf/perf) /usr/local/bin/perf_$$(uname -r)'
 	touch $@
-
-# Expected to fail if booted qemu runs outdated kernel.
-.run/debian.ssh_port: $(LINUX_TREE)
-	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
-
-.build/target-state/qemu-debian/kernel: .run/debian.ssh_port
-	touch $@
-
-# TODO: Add .build/target-state/$(T)/kernel for physical targets based on grub-reboot.
 
 #
 # BPF Samples

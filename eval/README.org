@@ -1,3 +1,5 @@
 * Benchmark Result Analyzer
 
 Reads from ~BENCHRUN_DATA~.
+
+To get started writing evaluation scripts in R, read "R for Data Science": https://r4ds.had.co.nz/

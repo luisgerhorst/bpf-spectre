@@ -11,7 +11,7 @@ def main():
 
     suite = []
 
-    target = "qemu-debian"
+    target = "faui49easy7"
 
     for i in range(0, 10):
         suite.append({

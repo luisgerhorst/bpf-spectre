@@ -20,7 +20,7 @@ pushd ../system
 # https://gitlab.cs.fau.de/i4/infra/wake-on-lan
 if [[ $T = faui49* ]]
 then
-	ssh faui49man1 wake $T
+	ssh i4lab1 wake $T
 fi
 
 # Boots target with linux-build ready for target-scpsh.
@@ -33,6 +33,11 @@ if ./scripts/target-scpsh "which set-system-mode"
 then
 	./scripts/target-scpsh "set-system-mode evaluation"
 	export SSH_PORT=23
+fi
+
+if ./scripts/target-scpsh 'cat /var/run/fai/fai*_is_running'
+then
+   exit 1
 fi
 
 ./scripts/target-scpsh 'uname -a' > ${output_abs}/uname-a
@@ -92,7 +97,6 @@ mv ${td}/result_dir/trace ${output_abs}/trace
 rm -rfd ${td}
 
 ./scripts/target-scpsh "sudo dmesg" > ${output_abs}/dmesg
-
 
 # TODO: Always do the following reset commands, even if something else failed.
 

@@ -37,7 +37,7 @@ set -e
 
 # Compress with xz even on Ubuntu to avoid
 # https://github.com/yktoo/indicator-sound-switcher/issues/113
-env - CCACHE_DIR=${CCACHE_DIR} PATH=${PATH} \
+env - PATH=${PATH} \
 	KDEB_COMPRESS=xz \
 	${MAKE} -C ${LINUX} ${TARGET}
 ccache -s

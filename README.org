@@ -4,8 +4,6 @@ Clone with ~--recursive~. Install [[https://git-lfs.com/][Git LFS]] for ~bench/d
 
 ** Features
 
-... or, /why not to just write a custom script/.
-
 - Different programming languages for plotting.
 - Flexible benchmarks (microbenchmarks, real-world client/server benchmarks).
 - Flexible system under test (e.g., VM or physical machine), compare different SuTs.

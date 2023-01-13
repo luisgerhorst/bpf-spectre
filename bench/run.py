@@ -41,12 +41,12 @@ def main():
 def parse_args():
     raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../eval/.raw"))
 
-    parser = argparse.ArgumentParser(description="Run each benchmark-burst in suite rep times.")
+    parser = argparse.ArgumentParser(description="Run each benchmark burst_len times in a row, repeat suite rep times.")
     parser.add_argument("-s", "--suite")
-    parser.add_argument("-n", "--data-name")
-    parser.add_argument("-p", "--data-path")
+    parser.add_argument("-n", "--data-name", help="Suffix appended to auto-generated path.")
+    parser.add_argument("-p", "--data-path", help="Relative to BENCHRUN_DATA. For example, set this to 'scratch' for test-runs.")
     parser.add_argument("-r", "--reps", default=1, type=int)
-    parser.add_argument("-b", "--burst", default=2, type=int)
+    parser.add_argument("-b", "--burst-len", default=2, type=int)
     parser.add_argument("--random-seed", default=0, type=int)
     args = parser.parse_args()
 
@@ -61,7 +61,7 @@ def parse_args():
             "_" + args.data_name if args.data_name is not None else "",
         ) if args.data_path is None else args.data_path))
 
-    return suite_path, suite_run_path, args.reps, args.burst
+    return suite_path, suite_run_path, args.reps, args.burst_len
 
 def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
     i = 0

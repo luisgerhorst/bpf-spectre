@@ -11,7 +11,7 @@ def main():
 
     suite = []
 
-    for T in ["qemu-debian"]:
+    for T in ["faui49easy6", "faui49easy7"]:
         for i in range(0, 10):
             suite.append({
                 "bench_script": "workload",

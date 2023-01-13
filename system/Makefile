@@ -36,6 +36,10 @@ clean:
 	$(MAKE) -C linux clean
 	rm -rfd .build .run
 
+.PHONY: install-deps
+install-deps:
+	sudo apt install autossh
+
 #
 # Linux Files
 #
@@ -105,10 +109,10 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-headers")' || true
 	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-image" | grep -e "-dbg")' || true
 	./scripts/target-scpsh 'sudo apt-get -y autoremove' || true
-	./scripts/target-scpsh -C $< 'cp -rdf . ../target-prefix/deb'
-	./scripts/target-scpsh 'sudo dpkg -i ../target-prefix/deb/*.deb' || true # announce deps
+	./scripts/target-scpsh -C $< 'cp -rdf . ../target_prefix/deb'
+	./scripts/target-scpsh 'sudo dpkg -i ../target_prefix/deb/*.deb' || true # announce deps
 	./scripts/target-scpsh 'sudo apt-get -y --fix-broken install' # install deps
-	./scripts/target-scpsh 'sudo dpkg -i ../target-prefix/deb/*.deb'
+	./scripts/target-scpsh 'sudo dpkg -i ../target_prefix/deb/*.deb'
 	touch $@
 
 .build/target-state/qemu-debian/kernel: .run/debian.ssh_port
@@ -116,15 +120,16 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 
 .build/target-state/faui49%/kernel: .build/target-state/faui49%/deb-install
 	./scripts/target-boot -r "$$(cat .build/linux-bindeb/kernel.release)"
+	touch $@
 
 .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
-	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
+	./scripts/target-scpsh 'sudo rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
-	./scripts/target-scpsh 'sudo apt-get --assume-yes install make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
-	./scripts/target-scpsh 'sudo make -C ../target_prefix/linux-src/tools bpf_install'
+	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
+	./scripts/target-scpsh 'sudo make STATIC=true -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
 	touch $@
 
 # Could also be installed from ../target_prefix/linux-src on target, but this

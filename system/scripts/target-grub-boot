@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set -x
+
+
+. ./env.sh
+
+release=undefined
+cmdline=${GRUB_CMDLINE_LINUX:-}
+
+usage() {
+    echo "Usage: $0 -r KERNEL_RELEASE -t REBOOT_MARKER [-c CMDLINE]
+
+Reboot marker is touched whenever the system was rebooted with the new kernel, to be used as a make dependency." >&2
+    exit 1
+}
+
+while getopts "r:c:t:" opt; do
+	case "${opt}" in
+		r)
+			release=${OPTARG}
+			;;
+		c)
+			cmdline=${OPTARG}
+			;;
+		t)
+			rebootmarker=${OPTARG}
+			;;
+		*)
+			usage
+			;;
+	esac
+done
+shift $((OPTIND-1))
+
+# TODO: Refactor and remove these legacy aliases.
+tssh() {
+    ./scripts/target-scpsh "$@"
+}
+TARGET_EXEC=./scripts/target-scpsh
+
+booted_cmdline=$(tssh cat /proc/cmdline)
+booted_release=$(tssh uname -r)
+if [[ "${booted_release}" = "${release}" ]] && [[ "${booted_cmdline}" = *${cmdline}* ]]
+then
+	if [ ! -e $rebootmarker ]
+	then
+		touch $rebootmarker
+	fi
+	exit 0
+fi
+echo "Booting ${release} from ${booted_release}" >&2
+
+tssh sudo mv -n /etc/default/grub /etc/default/grub.$USER-backup || true
+echo "# Generated on $(hostname) in $(pwd) by $0, previous contents have been moved to ./grub.$USER-backup
+GRUB_DEFAULT=saved
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR='Debian'
+GRUB_CMDLINE_LINUX_DEFAULT='panic=30'
+GRUB_CMDLINE_LINUX='${cmdline}'" | tssh sudo tee /etc/default/grub
+tssh sudo update-grub
+
+# I don´t know where to get this value or why grub-reboot needs this in the first place.
+distro="Debian GNU/Linux"
+if ! ./scripts/target-scpsh "grep '$distro' /boot/grub/grub.cfg"
+then
+   distro="GNU/Linux" # maybe thats on Debian 11
+fi
+if ! ./scripts/target-scpsh "grep '$distro' /boot/grub/grub.cfg"
+then
+   distro="Ubuntu"
+fi
+
+# Set the fallback kernel in case the new custom kernel panics. That's also why
+# we set panic=30 and GRUB_DEFAULT=saved in grub config above.
+${TARGET_EXEC} "sudo grub-set-default \"Advanced options for ${distro}>${distro}, with Linux \$(uname -r)\""
+
+# Sanity check, does the fallback boot entry exist?
+${TARGET_EXEC} "sudo grep \"Advanced options for ${distro}\" /boot/grub/grub.cfg"
+${TARGET_EXEC} "sudo grep \"${distro}, with Linux \$(uname -r)\" /boot/grub/grub.cfg"
+
+# Set the new kernel, effective only for the next reboot. Otherwise it falls
+# back to the default kernel.
+${TARGET_EXEC} "sudo grub-reboot \"Advanced options for ${distro}>${distro}, with Linux ${release}\""
+${TARGET_EXEC} 'sudo reboot' || true
+
+# Allow it to shut down.
+sleep 10
+
+new_release=$(AUTOSSH_POLL=5 AUTOSSH_GATETIME=1 autossh -p ${SSH_PORT} ${SSH_DEST} 'uname -r')
+if [ "${new_release}" = "${release}" ]
+then
+	touch $rebootmarker
+	exit 0
+else
+	echo "Failed to boot ${release} on ${SSH_DEST}:${SSH_PORT}" >&2
+	exit 1
+fi

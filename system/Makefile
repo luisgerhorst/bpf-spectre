@@ -119,8 +119,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	touch $@
 
 .build/target-state/faui49%/kernel: .build/target-state/faui49%/deb-install
-	./scripts/target-boot -r "$$(cat .build/linux-bindeb/kernel.release)"
-	touch $@
+	./scripts/target-grub-boot -r "$$(cat .build/linux-bindeb/kernel.release)" -t $@
 
 .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
@@ -129,7 +128,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
-	./scripts/target-scpsh 'sudo make STATIC=true -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
+	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
 	touch $@
 
 # Could also be installed from ../target_prefix/linux-src on target, but this

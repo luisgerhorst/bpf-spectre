@@ -99,10 +99,10 @@ ALL_DATA <- read_tsv(
 )
 DATA <- ALL_DATA %>%
   mutate(
-    CPU = factor(case_when(
-      boot_T == "easy16" ~ "AMD 3950X",
-      boot_T == "nuc" ~ "Intel i5-6260U",
-      ), levels = c("AMD 3950X", "Intel i5-6260U")),
+    ## CPU = factor(case_when(
+    ##   boot_T == "easy16" ~ "AMD 3950X",
+    ##   boot_T == "nuc" ~ "Intel i5-6260U",
+    ##   ), levels = c("AMD 3950X", "Intel i5-6260U")),
     Caches = factor(case_when(
       burst_pos == 0 ~ "Cold Caches",
       burst_pos == max(burst_pos) ~ "Hot Caches",

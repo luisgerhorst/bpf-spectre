@@ -100,7 +100,14 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len):
     bench_run_data.joinpath("burst_len").write_text(str(burst_len))
 
     with open(bench_run_data.joinpath("bench-run.yaml"), "w") as bench_run_yaml:
-        bench_run = copy.deepcopy(bench)
+        bench_cp = copy.deepcopy(bench)
+
+        # Merge boot/run for eval, were only needed to avoid reboots here.
+        bench_run = {}
+        bench_run.update(bench_cp.pop('boot'))
+        bench_run.update(bench_cp.pop('run'))
+        bench_run.update(bench_cp)
+
         bench_run["date"] = datetime.datetime.now().isoformat()
         bench_run["burst_len"] = burst_len
         yaml.dump(bench_run, bench_run_yaml)

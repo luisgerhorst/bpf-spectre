@@ -3,37 +3,42 @@ set -euo pipefail
 bash -n "$(command -v "$0")"
 
 function usage_error() {
-    echo "Usage: $0 [-C <working_dir>] [-o <result_dir_dest>] [-p <target_prefix>] <command...>" >&2
-    exit 1
+	echo "Usage: $0 [-C <working_dir>] [-f <file>] [-o <result_dir_dest>] [-p <target_prefix>] <command...>" >&2
+	exit 1
 }
 
 env_sh="$(dirname $(command -v $0))/../env.sh"
 if [ -e "$env_sh" ]
 then
-    . "$env_sh"
+	. "$env_sh"
 fi
 
 working_dir_defined=0
+file_defined=0
 result_dir_defined=0
 
-while getopts "C:o:" opt
+while getopts "C:f:o:p:" opt
 do
-    case ${opt} in
-        C)
-            working_dir_defined=1
-            working_dir=${OPTARG}
-            ;;
-        o)
-            result_dir_defined=1
-            result_dir=${OPTARG}
-            ;;
-        p)
-            TARGET_PREFIX=${OPTARG}
-            ;;
-        *)
-            usage_error
-            ;;
-    esac
+	case ${opt} in
+		C)
+			working_dir_defined=1
+			working_dir=${OPTARG}
+			;;
+		f)
+			file_defined=1
+			file=${OPTARG}
+			;;
+		o)
+			result_dir_defined=1
+			result_dir=${OPTARG}
+			;;
+		p)
+			TARGET_PREFIX=${OPTARG}
+			;;
+		*)
+			usage_error
+			;;
+	esac
 done
 
 command="${@:$OPTIND+0}"
@@ -45,10 +50,16 @@ guest_temp=$(${ssh} mktemp -d)
 
 if [ $working_dir_defined -eq 1 ]
 then
-    ${scp} -r ${working_dir} ${SSH_DEST}:${guest_temp}/working_dir
+	${scp} -r ${working_dir} ${SSH_DEST}:${guest_temp}/working_dir
 else
-    ${ssh} "mkdir ${guest_temp}/working_dir"
+	${ssh} "mkdir ${guest_temp}/working_dir"
 fi
+
+if [ $file_defined -eq 1 ]
+then
+	${scp} "${file}" "${SSH_DEST}:${guest_temp}/file"
+fi
+
 ${ssh} "mkdir -p ${TARGET_PREFIX}"
 ${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
 
@@ -68,7 +79,7 @@ set -e
 
 if [ $result_dir_defined -eq 1 ]
 then
-    ${scp} -r "${SSH_DEST}:${guest_temp}/result_dir" "${result_dir}"
+	${scp} -r "${SSH_DEST}:${guest_temp}/result_dir" "${result_dir}"
 fi
 
 ${ssh} "rm -rd ${guest_temp}"

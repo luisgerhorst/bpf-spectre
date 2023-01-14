@@ -87,7 +87,7 @@ ${TARGET_EXEC} 'sudo reboot' || true
 # Allow it to shut down.
 sleep 10
 
-new_release=$(AUTOSSH_POLL=5 AUTOSSH_GATETIME=1 autossh -p ${SSH_PORT} ${SSH_DEST} 'uname -r')
+new_release=$(AUTOSSH_POLL=5 AUTOSSH_GATETIME=0 autossh -p ${SSH_PORT} ${SSH_DEST} 'uname -r')
 if [ "${new_release}" = "${release}" ]
 then
 	touch $rebootmarker

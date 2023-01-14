@@ -91,7 +91,7 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len):
         # Sets up the target system for evaluation and runs the benchmark.
         subprocess.run(
             [os.getcwd() / Path("bench-" + bench["bench_script"]),
-             bench_run_data.resolve(), str(burst_len)],
+             bench_run_data, str(burst_len)],
             env=subproc_env,
             stdout=bench_log_tee.stdin, stderr=bench_log_tee.stdin,
             check=True

@@ -14,7 +14,7 @@ def main():
     for T in ["qemu-debian"]:
         for i in range(0, 10):
             suite.append({
-                "bench_script": "workload",
+                "bench_script": "workload-perf",
                 "boot": {},
                 "run": {
                     "T": T,

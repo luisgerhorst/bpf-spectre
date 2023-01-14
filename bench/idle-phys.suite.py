@@ -12,9 +12,9 @@ def main():
     suite = []
 
     for T in ["faui49easy6", "faui49easy7"]:
-        for i in range(0, 10):
+        for i in range(0, 2):
             suite.append({
-                "bench_script": "workload",
+                "bench_script": "workload-perf",
                 "boot": {},
                 "run": {
                     "T": T,

@@ -1,0 +1,72 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+dst="$1"
+burst_len=$2
+
+values_dst=${dst}/values
+bpftool_dst=${dst}/bpftool
+mkdir -p ${dst}/values ${bpftool_dst}
+
+obj="$BPF_OBJ"
+capsh_args="$CAPSH_ARGS"
+
+cs="sudo capsh $capsh_args -- -c"
+
+bpftool --version > ${dst}/bpftool-version
+$cs 'capsh --print' > ${dst}/capsh-print
+
+hostname --short > ${values_dst}/hostname_short
+
+path=/sys/fs/bpf/$(basename $obj .bpf.o)
+
+set +e
+$cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
+exitcode=$?
+set -e
+
+echo $exitcode > ${values_dst}/bpftool_loadall_guesstype_exitcode
+echo -n "NA" > ${values_dst}/bpf_obj_inferred_type
+if [ $exitcode != "0" ]
+then
+    # Types supported by bpftool v7.0.0, libbpf v1.0
+    mkdir ${bpftool_dst}/loadall
+    for type in socket sk_reuseport/migrate sk_reuseport kprobe+ uprobe+ uprobe.s+ kretprobe+ uretprobe+ uretprobe.s+ kprobe.multi+ kretprobe.multi+ ksyscall+ kretsyscall+ usdt+ tc classifier action tracepoint+ tp+ raw_tracepoint+ raw_tp+ raw_tracepoint.w+ raw_tp.w+ tp_btf+ fentry+ fmod_ret+ fexit+ fentry.s+ fmod_ret.s+ fexit.s+ freplace+ lsm+ lsm.s+ lsm_cgroup+ iter+ iter.s+ syscall xdp.frags/devmap xdp/devmap xdp.frags/cpumap xdp/cpumap xdp.frags xdp perf_event lwt_in lwt_out lwt_xmit lwt_seg6local sockops sk_skb/stream_parser sk_skb/stream_verdict sk_skb sk_msg lirc_mode2 flow_dissector cgroup_skb/ingress cgroup_skb/egress cgroup/skb cgroup/sock_create cgroup/sock_release cgroup/sock cgroup/post_bind4 cgroup/post_bind6 cgroup/bind4 cgroup/bind6 cgroup/connect4 cgroup/connect6 cgroup/sendmsg4 cgroup/sendmsg6 cgroup/recvmsg4 cgroup/recvmsg6 cgroup/getpeername4 cgroup/getpeername6 cgroup/getsockname4 cgroup/getsockname6 cgroup/sysctl cgroup/getsockopt cgroup/setsockopt cgroup/dev struct_ops+ sk_lookup
+    do
+        type_path=$(echo $type | tr '/+.' "___")
+
+	set +e
+        $cs "bpftool --debug prog loadall $obj $path type $type" \
+		2>> ${bpftool_dst}/loadall/$type_path.log
+        exitcode=$?
+	set -e
+
+        echo $exitcode > ${bpftool_dst}/loadall/$type_path.exitcode
+        if [ $exitcode == "0" ]
+        then
+            echo -n $type > ${values_dst}/bpf_obj_inferred_type
+            break
+        fi
+    done
+fi
+echo -n $exitcode > ${values_dst}/bpftool_loadall_exitcode
+if [ $exitcode != "0" ]
+then
+	exit $exitcode
+fi
+
+shopt -s nullglob
+for prog in "$path"/*
+do
+    sudo bpftool prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog)
+    sudo bpftool prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog)
+    sudo bpftool prog dump jited pinned "$prog" opcodes > ${bpftool_dst}/jited-opcodes.$(basename $prog)
+    sudo bpftool prog dump jited pinned "$prog" linum > ${bpftool_dst}/jited-linum.$(basename $prog)
+done
+
+# TODO:
+# bpftool prog run PROG data_in FILE
+# bpftool prog profile PROG [duration DURATION] METRICs
+
+sudo rm -rfd $path

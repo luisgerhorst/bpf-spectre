@@ -2,4 +2,6 @@
 T ?= qemu-debian
 include targets/$(T).mk
 
-TARGET_PREFIX ?= /srv/scratch/$(USER)/.oseval/$(shell hostname)
+# Where to persistenly store data on the target.
+PROJ_NAME=oseval
+TARGET_PREFIX ?= /srv/scratch/$(USER)/.$(PROJ_NAME)/$(shell hostname -s)

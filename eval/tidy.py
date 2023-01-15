@@ -28,10 +28,14 @@ def main():
     for bench_run_path in sorted(raw_path.iterdir()):
         if not bench_run_path.joinpath("bench-run.yaml").exists():
             continue;
-        burst = int(bench_run_path.joinpath("burst_len").read_text())
-        for burst_pos in range(0, burst):
-            df = tidy_bench_run(bench_run_path, burst_pos);
-            df = tidy_bench_run_yaml(bench_run_path, df)
+        values = load_values(bench_run_path)
+        yaml = load_yaml(bench_run_path)
+        burst_len = int(values["burst_len"])
+        for burst_pos in range(0, burst_len):
+            df = tidy_bench_run(bench_run_path, values, yaml, burst_pos);
+            for key, value in values.items():
+                df[key] = value
+            df = yaml_into_df(df, None, yaml)
             df["bench_run_name"] = bench_run_path.name
             df["burst_pos"] = burst_pos
             tidy_dfs.append(df)
@@ -42,31 +46,38 @@ def main():
     tidy_path.parent.mkdir(parents=True, exist_ok=True)
     tidy_df.to_csv(tidy_path, sep="\t")
 
-def tidy_bench_run(bench_run_path, burst_pos):
-    # TODO: If needed, switch/case based on bench_run.yaml's bench_script here.
-    return tidy_workload_perf(bench_run_path, burst_pos)
+def load_values(bench_run_path):
+    d = {}
+    for key_path in bench_run_path.joinpath("values").glob("*"):
+        d[key_path.name] = key_path.read_text()
+    return d
 
-def tidy_bench_run_yaml(bench_run_path, df):
+def load_yaml(bench_run_path):
     with open(bench_run_path.joinpath("bench-run.yaml")) as bench_run_yaml:
-        bench_run = yaml.safe_load(bench_run_yaml)
-        df = yaml_to_df(df, None, bench_run)
-    return df
+        return yaml.safe_load(bench_run_yaml)
 
-def yaml_to_df(df, prefix, value):
+def yaml_into_df(df, prefix, value):
     sep = "_"
     ps = "" if prefix is None else prefix + sep
     if isinstance(value, dict):
         for subkey, subvalue in value.items():
-            df = yaml_to_df(df, ps + subkey, subvalue)
+            df = yaml_into_df(df, ps + subkey, subvalue)
     elif isinstance(value, list):
         for i, subvalue in enumerate(value):
-            df = yaml_to_df(df, ps + str(i), subvalue)
+            df = yaml_into_df(df, ps + str(i), subvalue)
         df[prefix] = " ".join(map(str, value))
     else:
         df[prefix] = value
     return df
 
+def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
+    if yaml["bench_script"] == "workload-perf":
+        return tidy_workload_perf(bench_run_path, burst_pos)
+    else:
+        return pd.DataFrame({ "dummy": ["dummy"] }) # TODO
+
 def tidy_workload_perf(bench_run_path, burst_pos):
+    # TODO: Move to values directory.
     exitcode = bench_run_path.joinpath("workload-exitcode").read_text()
     df = pd.DataFrame({
         "workload_exitcode": [exitcode]

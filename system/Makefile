@@ -121,12 +121,12 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/faui49%/kernel: .build/target-state/faui49%/deb-install
 	./scripts/target-grub-boot -r "$$(cat .build/linux-bindeb/kernel.release)" -t $@
 
-.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
+.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
 	./scripts/target-scpsh 'sudo rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
-.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
+.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
 	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
 	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
 	touch $@
@@ -136,7 +136,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 #
 # Installs custom's perf as perf_$(uname -r) into /usr/local to
 # distinguish it from the systems regular perf. To be used by bench-scripts.
-.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
+.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ)
 	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf'
 	./scripts/target-scpsh 'mkdir -p ../target_prefix/linux-perf'
 	./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf'

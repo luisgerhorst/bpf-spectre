@@ -21,6 +21,9 @@ hostname --short > ${values_dst}/hostname_short
 
 path=/sys/fs/bpf/$(basename $obj .bpf.o)
 
+# Clean up leftovers from failed previous runs.
+sudo rm -rfd $path
+
 set +e
 $cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
 exitcode=$?
@@ -53,19 +56,23 @@ fi
 echo -n $exitcode > ${values_dst}/bpftool_loadall_exitcode
 if [ $exitcode != "0" ]
 then
-	exit $exitcode
+	exit 0
 fi
 
-shopt -s nullglob
-for prog in "$path"/*
+IFS=$'\n'
+for prog in $(sudo find "$path" -type f)
 do
     sudo bpftool prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog)
     sudo bpftool prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog)
     sudo bpftool prog dump jited pinned "$prog" opcodes > ${bpftool_dst}/jited-opcodes.$(basename $prog)
     sudo bpftool prog dump jited pinned "$prog" linum > ${bpftool_dst}/jited-linum.$(basename $prog)
 done
+unset IFS
 
 # TODO:
+#
+# ensure reproduceability (see bench-workload-perf)
+#
 # bpftool prog run PROG data_in FILE
 # bpftool prog profile PROG [duration DURATION] METRICs
 

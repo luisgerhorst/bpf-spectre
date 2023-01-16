@@ -3,6 +3,8 @@
 import sys
 import logging
 import math
+import subprocess
+from pathlib import Path
 
 import yaml # pyyaml
 
@@ -11,20 +13,31 @@ def main():
 
     suite = []
 
+    T="faui49easy7"
+
     priv="--drop="
     unpriv="--drop=cap_sys_admin --drop=cap_perfmon"
 
-    for T in ["faui49easy7"]:
-        for i in range(0, 2):
+    priv_spec_mit="configs/priv-spec-mit.defconfig"
+
+    subprocess.run(["make", "-C", "../system/bpf-samples"], check=True,
+                   stdout=sys.stderr.buffer)
+    for prog_path in Path("../system/bpf-samples/prog").iterdir():
+        prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
+
+        # Skip priv_spec_mit with unpriv user because it will be the same as
+        # regular unpriv.
+        for (mcs, ca) in [(priv_spec_mit, priv), ("", priv), ("", unpriv)]:
             suite.append({
                 "bench_script": "bpftool",
-                # TODO: Allow setting kernel Kconfig options here (priv. spectre mit.).
-                "boot": {},
+                "boot": {
+                    "MERGE_CONFIGS": mcs
+                },
                 "run": {
                     "T": T,
                     "CPUFREQ": "max",
-                    "CAPSH_ARGS": priv,
-                    "BPF_PROG": "lbe_sockfilter",
+                    "CAPSH_ARGS": ca,
+                    "BPF_PROG": prog,
                 },
             })
 

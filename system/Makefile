@@ -1,19 +1,17 @@
 include env.mk
 
+# Files to be merged into $(CONFIG) to create final $(LINUX)/.config
+MERGE_CONFIGS ?=
+
 RAMDISK=qemu-ramdisk.img
 
 LINUX=linux
 BZIMAGE=$(LINUX)/arch/x86_64/boot/bzImage
 
-KERNEL_COMMIT := $(shell env -C $(LINUX) git rev-parse --short HEAD)
-KERNEL_STATUS_MD5SUM = $(shell bash -c "env -C $(LINUX) git status -vv | awk '\$$1 != \"index\" { print }' | md5sum | cut -c -6")
-KERNEL_CONFIG_MD5SUM = $(shell bash -c "md5sum $(CONFIG) | cut -c -6")
-LOCALVERSION := -$(USER)+$(KERNEL_COMMIT)+$(KERNEL_STATUS_MD5SUM)+$(KERNEL_CONFIG_MD5SUM)
-
 # Parallel make is OK for subdirectories. However, parallel target-scpsh calls may be
 # problematic because of apt, therefore only -j1 for this Makefile.
 MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
-LINUX_MAKE := LD_LIBRARY_PATH=/usr/local/lib $(MAKE) LOCALVERSION=$(LOCALVERSION)
+LINUX_MAKE := LD_LIBRARY_PATH=/usr/local/lib $(MAKE)
 
 # HACK: Before running the rules, update *.git_{rev|status} for each repo. We
 # can then use them as dependencies to avoid recompilation of subprojects if
@@ -23,7 +21,8 @@ _dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .build/$(repo).git_rev))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
 
-LINUX_TREE := linux/.config .build/linux.git_rev .build/linux.git_status
+LINUX_SRC = .build/linux.git_rev .build/linux.git_status
+LINUX_TREE := linux/.config $(LINUX_SRC)
 
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
@@ -44,8 +43,16 @@ install-deps:
 # Linux Files
 #
 
-$(LINUX)/.config: $(CONFIG) .build/linux.git_rev .build/linux.git_status
-	cp $< $@
+# To initially create the file.
+.build/merge_configs_value:
+	echo -n '$(MERGE_CONFIGS)' > $@
+#
+# To detect when the variable value was changed.
+_dummy := $(shell test "$(shell cat .build/merge_configs_value)" = '$(MERGE_CONFIGS)' \
+	|| echo -n '$(MERGE_CONFIGS)' > .build/merge_configs_value)
+
+$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/linux.git_rev .build/linux.git_status
+	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
 	yes '' | $(LINUX_MAKE) -C $(LINUX) oldconfig
 	$(LINUX_MAKE) -C $(LINUX) prepare
 
@@ -56,7 +63,7 @@ $(BZIMAGE): $(LINUX_TREE)
 	MAKE='$(LINUX_MAKE)' ./scripts/make-linux-deb $(LINUX) bindeb-pkg $@/
 	touch $@
 
-.build/linux-src.d: $(LINUX_TREE)
+.build/linux-src.d: $(LINUX_SRC)
 	rm -rfd $@ && mkdir -p $(dir $@)
 	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
 	git clone --depth 1 $(LINUX) $@

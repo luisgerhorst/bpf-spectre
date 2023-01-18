@@ -1,39 +1,17 @@
 * System Builder
 
-** Setup
-
-*** Put Target SuT into Evaluation Mode
-
-Reserve the target for exclusive access and disable automatic (re-)configuration, for example:
-
-#+BEGIN_SRC txt
-# To be run on the target SuT.
-
-# If supported:
-set-system-mode evaluation
-
-# Fallback:
-sudo systemctl disable fai-boot.timer'
-sudo systemctl disable run-fai.timer'
-
-# Undo:
-set-system-mode normal
-sudo systemctl enable run-fai.timer
-sudo systemctl enable fai-boot.timer
-#+END_SRC
-
-Resources: [[https://www4.cs.fau.de/dokuwiki/labor:systeme?s\[\]=system&s\[\]=mode#tips_und_tricks_zur_exklusiven_nutzung_der_fai_laborinstallation][I4 Dokuwiki]]
+** Physical SuT Setup
 
 *** sudo
 
-Requires sudo without a password, for I4 lab add the following to FAI config:
+Requires sudo without a password (on the target only), for I4 lab add the following to FAI config:
 
 #+BEGIN_SRC txt
 # Luis Gerhorst
 gerhorst faui49easy*=(ALL:ALL) NOPASSWD: ALL
 #+END_SRC
 
-*** Wake-on-LAN and Autosuspend
+*** Wake-on-LAN
 
 SSH config must auto-wake the target SuT using WoL if it is suspended, for I4 lab add the following to ~~/.ssh/config~:
 
@@ -52,6 +30,24 @@ Match originalhost faui49* exec "bash -c 'ssh i4lab1 wake %n | grep --invert-mat
 	Hostname %h.cs.fau.de
 	Port 22
 	ProxyJump i4lab1
+#+END_SRC
+
+*** Evaluation Mode
+
+Reserve the target for exclusive access and disable automatic (re-)configuration, for example:
+
+#+BEGIN_SRC txt
+# If supported:
+set-system-mode evaluation
+
+# Fallback:
+sudo systemctl disable fai-boot.timer'
+sudo systemctl disable run-fai.timer'
+
+# Undo:
+set-system-mode normal
+sudo systemctl enable run-fai.timer
+sudo systemctl enable fai-boot.timer
 #+END_SRC
 
 ** Quick Start

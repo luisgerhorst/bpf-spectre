@@ -20,6 +20,8 @@ def main():
 
     priv_spec_mit="configs/priv-spec-mit.defconfig"
 
+    # TODO: Also test with/without /proc/sys/net/core/bpf_jit_harden set.
+
     subprocess.run(["make", "-C", "../system/bpf-samples"], check=True,
                    stdout=sys.stderr.buffer)
     for prog_path in Path("../system/bpf-samples/prog").iterdir():

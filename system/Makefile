@@ -63,12 +63,13 @@ $(BZIMAGE): $(LINUX_TREE)
 	MAKE='$(LINUX_MAKE)' ./scripts/make-linux-deb $(LINUX) bindeb-pkg $@/
 	touch $@
 
-.build/linux-src.d: $(LINUX_SRC)
+.build/linux-src.d: $(LINUX_TREE)
 	rm -rfd $@ && mkdir -p $(dir $@)
 	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
 	git clone --depth 1 $(LINUX) $@
 	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
 	make -C $@ mrproper
+	cp $(LINUX)/.config $@/.config
 	rm -rfd $@/.git
 	touch $@
 
@@ -136,6 +137,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
 	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
 	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
+	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools/testing/selftests install' # Usage: ./tools/testing/selftests/kselftest_install/run_kselftest.sh
 	touch $@
 
 # Could also be installed from ../target_prefix/linux-src on target, but this

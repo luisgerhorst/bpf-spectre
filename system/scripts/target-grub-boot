@@ -11,7 +11,7 @@ cmdline=${GRUB_CMDLINE_LINUX:-}
 usage() {
     echo "Usage: $0 -r KERNEL_RELEASE -t REBOOT_MARKER [-c CMDLINE]
 
-Reboot marker is touched whenever the system was rebooted with the new kernel, to be used as a make dependency." >&2
+Reboot marker is touched whenever the system is booted with the new kernel, to be used as a make dependency." >&2
     exit 1
 }
 
@@ -43,10 +43,7 @@ booted_cmdline=$(tssh cat /proc/cmdline)
 booted_release=$(tssh uname -r)
 if [[ "${booted_release}" = "${release}" ]] && [[ "${booted_cmdline}" = *${cmdline}* ]]
 then
-	if [ ! -e $rebootmarker ]
-	then
-		touch $rebootmarker
-	fi
+	touch $rebootmarker
 	exit 0
 fi
 echo "Booting ${release} from ${booted_release}" >&2

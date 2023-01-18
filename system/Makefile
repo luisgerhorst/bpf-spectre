@@ -57,19 +57,20 @@ $(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/l
 	$(LINUX_MAKE) -C $(LINUX) prepare
 
 $(BZIMAGE): $(LINUX_TREE)
-	$(LINUX_MAKE) -C $(LINUX) bzImage
+	$(LINUX_MAKE) -C $(LINUX) bzImage vmlinux
 
 .build/linux-bindeb: $(LINUX_TREE)
 	MAKE='$(LINUX_MAKE)' ./scripts/make-linux-deb $(LINUX) bindeb-pkg $@/
 	touch $@
 
-.build/linux-src.d: $(LINUX_TREE)
+.build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
 	rm -rfd $@ && mkdir -p $(dir $@)
 	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
 	git clone --depth 1 $(LINUX) $@
 	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
 	make -C $@ mrproper
 	cp $(LINUX)/.config $@/.config
+	cp $(LINUX)/vmlinux $@/vmlinux
 	rm -rfd $@/.git
 	touch $@
 
@@ -129,15 +130,24 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/faui49%/kernel: .build/target-state/faui49%/deb-install
 	./scripts/target-grub-boot -r "$$(cat .build/linux-bindeb/kernel.release)" -t $@
 
+# TODO: Use debian source package instead.
 .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
 	./scripts/target-scpsh 'sudo rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
-	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
+	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
 	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
-	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools/testing/selftests install' # Usage: ./tools/testing/selftests/kselftest_install/run_kselftest.sh
+	./scripts/target-scpsh '\
+		make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src  oldconfig \
+		&& make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src prepare \
+		&& make \
+			SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
+			-j $$(getconf _NPROCESSORS_ONLN) \
+			-k -C ../target_prefix/linux-src/tools/testing/selftests \
+			install \
+		|| ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help'
 	touch $@
 
 # Could also be installed from ../target_prefix/linux-src on target, but this
@@ -158,7 +168,8 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 # BPF Samples
 #
 # Convenience for testing. Not included in all-Target because it takes long and
-# is not required by most bench-scripts.
+# is not required by most bench-scripts. Consider using './bench/run.sh --suite
+# bpf' instead.
 #
 
 .PHONY: bpf-samples-all

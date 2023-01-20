@@ -6,6 +6,7 @@ from pathlib import Path
 import logging
 import argparse
 import glob
+import re
 
 import numpy as np
 import pandas as pd
@@ -72,19 +73,18 @@ def yaml_into_df(df, prefix, value):
 
 def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
-        return tidy_workload_perf(bench_run_path, burst_pos)
+        return tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
     else:
-        return pd.DataFrame({ "dummy": ["dummy"] }) # TODO
+        return pd.DataFrame({ "observation": ["bench_run"] }) # TODO
 
-def tidy_workload_perf(bench_run_path, burst_pos):
-    # TODO: Move to values directory.
-    exitcode = bench_run_path.joinpath("workload-exitcode").read_text()
-    df = pd.DataFrame({
-        "workload_exitcode": [exitcode]
-    })
+def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
+    avail = exitcode == "0"
+    df = pd.DataFrame({ "observation": ["workload_run" if avail else "bench_run"] })
+    if not avail:
+        return df
 
-    if exitcode != "0":
-        return df;
+    if "/tools/testing/selftests/bpf/bench" in yaml["WORKLOAD"]:
+        df = tidy_kselftest_bpf_bench(bench_run_path, burst_pos)
 
     perf = pd.read_csv(
         bench_run_path.joinpath("workload/%d.perf" % burst_pos), sep=",", comment="#",
@@ -101,6 +101,33 @@ def tidy_workload_perf(bench_run_path, burst_pos):
             mu = str(row.metric_unit).lower().replace(" ", "_").replace("/", "p")
             df["perf_" + counter_name + "_" + mu] = row.metric_value
 
+    return df
+
+def tidy_kselftest_bpf_bench(br_path, burst_pos):
+    df = pd.DataFrame({ "observation": ["workload_run"] })
+    try:
+        lines = br_path.joinpath("workload/%d.stdout" % burst_pos).read_text().splitlines()
+    except:
+        lines = []
+    for line in lines:
+        colon_tokens = line.split(":")
+        if colon_tokens[0] == "Summary":
+            measurements = colon_tokens[1]
+            for measurement in measurements.split(","):
+                [name_value, var_unit_etc] = measurement.split("±")
+
+                n = name_value.split()[0:-1]
+                name = "_".join(n)
+                value = name_value.split()[-1]
+
+                var_unit = var_unit_etc.split()[0]
+                var = re.split('[^0-9\.]+', var_unit)[0]
+                unit = re.split('\d+', var_unit)[2]
+
+                u = str(unit).lower().replace(" ", "_").replace("/", "p")
+                df["bpf_bench_summary_" + name + "_" + u] = value
+                df["bpf_bench_summary_" + name + "_" + u + "_variation"] = var
+            break
     return df
 
 if __name__ == "__main__":

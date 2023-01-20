@@ -115,11 +115,11 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
 
 .build/target-state/$(T)/deb-install: .build/linux-bindeb $(wildcard .build/linux-bindeb/*.deb)
-	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-headers")' || true
+	./scripts/target-scpsh 'sudo --non-interactive dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-headers")' || true
 	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-image" | grep -e "-dbg")' || true
 	./scripts/target-scpsh 'sudo apt-get -y autoremove' || true
 	./scripts/target-scpsh -C $< 'cp -rdf . ../target_prefix/deb'
-	./scripts/target-scpsh 'sudo dpkg -i ../target_prefix/deb/*.deb' || true # announce deps
+	./scripts/target-scpsh 'sudo --non-interactive dpkg -i ../target_prefix/deb/*.deb' || true # announce deps
 	./scripts/target-scpsh 'sudo apt-get -y --fix-broken install' # install deps
 	./scripts/target-scpsh 'sudo dpkg -i ../target_prefix/deb/*.deb'
 	touch $@
@@ -132,13 +132,14 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 
 # TODO: Use debian source package instead.
 .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
-	./scripts/target-scpsh 'sudo rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
+	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
-	./scripts/target-scpsh 'sudo apt-get --assume-yes install libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
-	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install cpupower_install turbostat_install'
+	./scripts/target-scpsh 'sudo --non-interactive apt-get --assume-yes install clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
+	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install'
+	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install turbostat_install' || true
 	./scripts/target-scpsh '\
 		make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src  oldconfig \
 		&& make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src prepare \

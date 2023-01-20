@@ -8,9 +8,12 @@ set -x
 dst=$1
 burst_len=$2
 
+mkdir -p $dst/workload $dst/values
+
 # Environment from suite definition:
 export CPUFREQ=${CPUFREQ:-max}
-export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e iTLB-load-misses -e dTLB-load-misses -e branch-misses"}
+export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
+export PERF_FLAGS=${PERF_FLAGS:-} # e.g. --all-cpus
 
 if cat /var/run/fai/fai*_is_running
 then
@@ -26,7 +29,8 @@ then
 	if [[ "${CPUFREQ}" == 'max' ]]
 	then
 		cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq)
-	else
+	elif [[ "${CPUFREQ}" == 'base' ]]
+	then
 		if cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency > /dev/null
 		then
 			cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency)
@@ -36,6 +40,8 @@ then
 		else
 			exit 1
 		fi
+	else
+		exit 1
 	fi
 	sudo cpupower frequency-set \
 		--min ${cpufreq_khz}kHz --max ${cpufreq_khz}kHz \
@@ -45,9 +51,10 @@ fi
 
 lscpu > ${dst}/lscpu
 grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities
-uname -a > ${dst}/uname-a
 
-mkdir -p ${dst}/workload
+uname -a > ${dst}/values/uname_a
+hostname --short > ${dst}/values/hostname_short
+
 sync
 echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 sleep 1
@@ -86,4 +93,4 @@ then
 		--governor ${old_governor}
 fi
 
-echo -n $exitcode > ${dst}/workload-exitcode
+echo -n $exitcode > ${dst}/values/workload_exitcode

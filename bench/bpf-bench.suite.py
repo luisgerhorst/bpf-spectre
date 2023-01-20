@@ -13,7 +13,7 @@ def main():
 
     suite = []
 
-    T="faui49easy6"
+    T="qemu-debian"
 
     priv="--drop="
     unpriv="--drop=cap_sys_admin --drop=cap_perfmon"
@@ -29,19 +29,26 @@ def main():
                     "trig-fentry-sleep", "trig-fmodret", "trig-uprobe-base",
                     "trig-uprobe-with-nop", "trig-uretprobe-with-nop",
                     "trig-uprobe-without-nop", "trig-uretprobe-without-nop",
-                    "rb-libbpf", "rb-custom", "pb-libbpf", "pb-custom",
-                    "bloom-lookup", "bloom-update", "bloom-false-positive",
-                    "hashmap-without-bloom", "hashmap-with-bloom", "bpf-loop",
-                    "strncmp-no-helper", "strncmp-helper",
-                    "bpf-hashmap-ful-update", "local-storage-cache-seq-get",
-                    "local-storage-cache-int-get",
-                    "local-storage-cache-hashmap-control",
-                    "local-storage-tasks-trace"]
+                    # "rb-libbpf",
+                    # "rb-custom",
+                    # "pb-libbpf", "pb-custom",
+                    # "bloom-lookup", "bloom-update", "bloom-false-positive",
+                    # "hashmap-without-bloom",
+                    # "hashmap-with-bloom",
+                    # "bpf-loop",
+                    # "strncmp-no-helper", "strncmp-helper",
+                    "bpf-hashmap-ful-update",
+                    # "local-storage-cache-seq-get",
+                    # "local-storage-cache-int-get",
+                    # BUG: locked up easy6 "local-storage-cache-hashmap-control",
+                    # "local-storage-tasks-trace"
+                    ]
 
     bpf_bench = "../target_prefix/linux-src/tools/testing/selftests/bpf/bench"
 
-    for args in ["-p16 -c8 count-local",
-                 "-p16 -c8 count-global"] + avail_benchs:
+    for args in [# "-p16 -c8 count-local",
+                 # "-p16 -c8 count-global"
+                 ] + avail_benchs:
         for mcs in [priv_spec_mit, ""]:
             suite.append({
                 "bench_script": "workload-perf",
@@ -51,6 +58,7 @@ def main():
                 "run": {
                     "T": T,
                     "CPUFREQ": "max",
+                    "PERF_FLAGS": "--all-cpus",
                     "WORKLOAD": bpf_bench + " " + args,
                 },
             })

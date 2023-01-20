@@ -16,6 +16,6 @@ Checks out repos and compiles parts of `../system`. Connects to remote SuTs.
 
 ### Benchmarks
 
-- kernel bpf selftests?
 - gen. hubble flows using https://github.com/cilium/fake
+- perf stat --bpf-prog, --bpf-counters, --bpf-attr-map
 - cilium layer 7 filter benchmark https://docs.cilium.io/en/stable/policy/language/#layer-7-examples 

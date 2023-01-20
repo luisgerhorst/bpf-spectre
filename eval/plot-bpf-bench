@@ -1,0 +1,18 @@
+#!/usr/bin/Rscript
+
+source("plotlib.R")
+
+summary(DATA)
+
+cns <- colnames(DATA)
+metrics <- cns[startsWith(cns, "bpf_bench_")]
+for (m in metrics) {
+  print(m)
+  ggplot(DATA, aes(y=sub("^.+/bench ", "", WORKLOAD), x=get(m), colour=burst_pos)) +
+    geom_smooth(linetype = "dashed", method = "lm") +
+    geom_point() +
+    facet_grid(rows=vars(T, MERGE_CONFIGS, workload_exitcode),
+               cols=vars(CPUFREQ, bench_script),
+               labeller=label_both, scales="free")
+  eval_save(paste0(m, "-point"))
+}

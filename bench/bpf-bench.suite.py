@@ -13,7 +13,7 @@ def main():
 
     suite = []
 
-    T="qemu-debian"
+    T="faui49easy6"
 
     priv="--drop="
     unpriv="--drop=cap_sys_admin --drop=cap_perfmon"

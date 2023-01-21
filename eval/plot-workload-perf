@@ -8,7 +8,7 @@ cns <- colnames(DATA)
 perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")]
 for (m in perf_metrics) {
   print(m)
-  ggplot(DATA, aes(x=WORKLOAD, y=get(m), colour=burst_pos)) +
+  ggplot(DATA, aes(y=WORKLOAD, x=get(m), colour=burst_pos)) +
     geom_smooth(linetype = "dashed", method = "lm") +
     geom_point() +
     facet_grid(rows=vars(T, workload_exitcode),

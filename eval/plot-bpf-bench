@@ -2,16 +2,24 @@
 
 source("plotlib.R")
 
+
+DATA <- DATA %>%
+  group_by(T, workload_exitcode, burst_pos, CPUFREQ, bench_script,
+           WORKLOAD) %>%
+  mutate(across(where(is.numeric), ~ .x / min(.x, na.rm = TRUE), .names = "norm_{.col}")) %>%
+  ungroup() %>%
+  filter(burst_pos > 0)
+
 summary(DATA)
 
 cns <- colnames(DATA)
-metrics <- cns[startsWith(cns, "bpf_bench_")]
+metrics <- cns[startsWith(cns, "norm_bpf_bench_")]
+
 for (m in metrics) {
   print(m)
-  ggplot(DATA, aes(y=sub("^.+/bench ", "", WORKLOAD), x=get(m), colour=burst_pos)) +
-    geom_smooth(linetype = "dashed", method = "lm") +
+  ggplot(DATA, aes(y=paste(sub("^.+/bench ", "", WORKLOAD)), x=get(m), colour=MERGE_CONFIGS)) +
     geom_point() +
-    facet_grid(rows=vars(T, MERGE_CONFIGS, workload_exitcode),
+    facet_grid(rows=vars(T, workload_exitcode),
                cols=vars(CPUFREQ, bench_script),
                labeller=label_both, scales="free")
   eval_save(paste0(m, "-point"))

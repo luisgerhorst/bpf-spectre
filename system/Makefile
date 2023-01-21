@@ -136,6 +136,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
+# selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
 	./scripts/target-scpsh 'sudo --non-interactive apt-get --assume-yes install clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
 	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install'

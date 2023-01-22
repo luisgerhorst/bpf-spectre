@@ -4,11 +4,11 @@ source("plotlib.R")
 
 
 DATA <- DATA %>%
+  filter(burst_pos > 0) %>%
   group_by(T, workload_exitcode, burst_pos, CPUFREQ, bench_script,
            WORKLOAD) %>%
-  mutate(across(where(is.numeric), ~ .x / min(.x, na.rm = TRUE), .names = "norm_{.col}")) %>%
-  ungroup() %>%
-  filter(burst_pos > 0)
+  mutate(across(where(is.numeric), ~ .x / mean(.x, na.rm = TRUE), .names = "norm_{.col}")) %>%
+  ungroup()
 
 summary(DATA)
 
@@ -18,7 +18,7 @@ metrics <- cns[startsWith(cns, "norm_bpf_bench_")]
 for (m in metrics) {
   print(m)
   ggplot(DATA, aes(y=paste(sub("^.+/bench ", "", WORKLOAD)), x=get(m), colour=MERGE_CONFIGS)) +
-    geom_point() +
+    geom_boxplot() +
     facet_grid(rows=vars(T, workload_exitcode),
                cols=vars(CPUFREQ, bench_script),
                labeller=label_both, scales="free")

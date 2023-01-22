@@ -56,12 +56,3 @@ This does not mean that the above commands should be called directly.
     SPDX-License-Identifier: GPL-2.0+
 
 This is the default for this repo and all submodules unless explicitly set to something else (e.g., in external submodules).
-
-# Todos
-
-## BPF Spectre Mitigation Benchmarks
-
-- xdp benchmarks (comp. k2 / xdp paper): facebook katran load balancer, trex load generator, ...
-- gen. hubble flows using https://github.com/cilium/fake
-- perf stat --bpf-prog, --bpf-counters, --bpf-attr-map
-- cilium layer 7 filter benchmark https://docs.cilium.io/en/stable/policy/language/#layer-7-examples 

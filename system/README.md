@@ -1,12 +1,6 @@
 # System Builder
 
-
-<a id="org1cc4dea"></a>
-
 ## Physical SuT Setup
-
-
-<a id="orgdd06512"></a>
 
 ### sudo
 
@@ -15,8 +9,7 @@ Requires sudo without a password (on the target only), for I4 lab add the follow
     # Luis Gerhorst
     gerhorst faui49easy*=(ALL:ALL) NOPASSWD: ALL
 
-
-<a id="orgfad8b95"></a>
+Without FAI, add it to `/etc/sudoers` on the target.
 
 ### Wake-on-LAN
 
@@ -36,9 +29,6 @@ SSH config must auto-wake the target SuT using WoL if it is suspended, for I4 la
     	Hostname %h.cs.fau.de
     	Port 22
     	ProxyJump i4lab1
-
-
-<a id="org30cd941"></a>
 
 ### Evaluation Mode
 

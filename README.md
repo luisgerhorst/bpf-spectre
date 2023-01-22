@@ -1,6 +1,6 @@
 # Operating System Evaluator
 
-Clone with `--recursive`. Install [Git LFS](https://git-lfs.com/) for `bench/data-archives` and prebuilt plots.
+Clone with `--recursive`. Install [Git LFS](https://git-lfs.com/) for raw data archives and prebuilt plots.
 
 ## Features
 

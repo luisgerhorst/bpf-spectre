@@ -38,13 +38,13 @@ Reserve the target for exclusive access and disable automatic (re-)configuration
     set-system-mode evaluation
     
     # Fallback:
-    sudo systemctl disable fai-boot.timer
+    sudo systemctl disable fai-boot.service
     sudo systemctl disable run-fai.timer
     
     # Undo:
     set-system-mode normal
     sudo systemctl enable run-fai.timer
-    sudo systemctl enable fai-boot.timer
+    sudo systemctl enable fai-boot.service
 
 
 ## Quick Start

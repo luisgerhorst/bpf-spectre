@@ -87,8 +87,20 @@ unset IFS
 # those runs. The duration printed out at the end of the runs is an average over
 # all runs performed by the command.
 #
-# bpftool prog run PROG data_in FILE
-#
 # bpftool prog profile PROG [duration DURATION] METRICs
+IFS=$'\n'
+for prog in $(sudo find "$path" -type f)
+do
+	set +e
+	echo -n "" \
+		| sudo bpftool --json prog run pinned "$prog" data_in - repeat $burst_len \
+		> ${bpftool_dst}/run.$(basename $prog).json
+	ec=$?
+	set -e
+	echo -n "$ec " >> ${values_dst}/bpftool_run_exitcodes
+	echo -n "$(basename $prog) " >> ${values_dst}/bpftool_progs
+	echo -n $ec > ${values_dst}/bpftool_run_exitcode.$(basename $prog)
+done
+unset IFS
 
 sudo rm -rfd $path

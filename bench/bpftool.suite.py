@@ -24,9 +24,13 @@ def main():
 
     subprocess.run(["make", "-C", "../system/bpf-samples"], check=True,
                    stdout=sys.stderr.buffer)
+
+    # All programs:
     for prog_path in Path("../system/bpf-samples/prog").iterdir():
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
 
+    # Programs runnable with empty input:
+    # for prog in ["lbe_fentry"]:
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
         for (mcs, ca) in [(priv_spec_mit, priv), ("", priv), ("", unpriv)]:

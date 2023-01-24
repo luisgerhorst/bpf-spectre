@@ -5,6 +5,12 @@ set -x
 dst="$1"
 burst_len=$2
 
+set +e
+sudo systemctl status fai-boot.service > $dst/fai_status
+sudo systemctl status run-fai.service >> $dst/fai_status
+sudo systemctl status run-fai.timer >> $dst/fai_status
+set -e
+
 values_dst=${dst}/values
 bpftool_dst=${dst}/bpftool
 mkdir -p ${dst}/values ${bpftool_dst}
@@ -30,7 +36,7 @@ set +e
 $cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
 exitcode=$?
 set -e
-echo $exitcode > ${values_dst}/bpftool_loadall_type_inferred_exitcode
+echo -n $exitcode > ${values_dst}/bpftool_loadall_type_inferred_exitcode
 
 echo -n "NA" > ${values_dst}/bpftool_loadall_type
 if [ $exitcode != "0" ]
@@ -47,7 +53,7 @@ then
 		exitcode=$?
 		set -e
 
-		echo $exitcode > ${bpftool_dst}/loadall_type/$type_path.exitcode
+		echo -n $exitcode > ${bpftool_dst}/loadall_type/$type_path.exitcode
 
 		if [ $exitcode == "0" ]
 		then
@@ -71,8 +77,8 @@ for prog in $(sudo find "$path" -type f)
 do
 	sudo bpftool prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog)
 	sudo bpftool prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog)
-	sudo bpftool --json prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog).json
-	sudo bpftool --json prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog).json
+	sudo bpftool --json --pretty prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog).json
+	sudo bpftool --json --pretty prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog).json
 	# sudo bpftool --json prog dump jited pinned "$prog" opcodes > ${bpftool_dst}/jited-opcodes.$(basename $prog)
 	# sudo bpftool prog dump jited pinned "$prog" linum > ${bpftool_dst}/jited-linum.$(basename $prog)
 done
@@ -92,8 +98,9 @@ IFS=$'\n'
 for prog in $(sudo find "$path" -type f)
 do
 	set +e
-	echo -n "" \
-		| sudo bpftool --json prog run pinned "$prog" data_in - repeat $burst_len \
+	# 32b garbage to be put into xdp_md.data for section(xdp) programs:
+	echo -n "01234567012345670123456701234567" \
+		| sudo bpftool --json --pretty prog run pinned "$prog" data_in - repeat $burst_len \
 		> ${bpftool_dst}/run.$(basename $prog).json
 	ec=$?
 	set -e

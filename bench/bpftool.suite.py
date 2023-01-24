@@ -26,14 +26,14 @@ def main():
                    stdout=sys.stderr.buffer)
 
     # All programs:
-    for prog_path in Path("../system/bpf-samples/prog").iterdir():
-        prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
+    # for prog_path in Path("../system/bpf-samples/prog").iterdir():
+        # prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
 
     # Programs runnable with empty input:
-    # for prog in ["lbe_fentry"]:
+    for prog in ["vbpf_packet_start_ok", "vbpf_ptr_spill"]:
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (mcs, ca) in [(priv_spec_mit, priv), ("", priv), ("", unpriv)]:
+        for (mcs, ca) in [(priv_spec_mit, priv), ("", priv)]:
             suite.append({
                 "bench_script": "bpftool",
                 "boot": {
@@ -43,7 +43,7 @@ def main():
                     "T": T,
                     "CPUFREQ": "max",
                     "CAPSH_ARGS": ca,
-                    "BPF_PROG": prog,
+                    "BPF_OBJ": prog + ".bpf.o",
                 },
             })
 

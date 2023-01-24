@@ -11,7 +11,7 @@ all: $(suite_def_yamls) $(suite_py_yamls)
 	mkdir -p $@
 
 .build/%.yaml: %.suite.py | .build
-	./$< > $@
+	./$< > $@ || rm -f $@
 
 .build/%.yaml: %.suite.yaml | .build
 	ln -s $< $@

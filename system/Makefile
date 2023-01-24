@@ -59,6 +59,7 @@ $(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/l
 $(BZIMAGE): $(LINUX_TREE)
 	$(LINUX_MAKE) -C $(LINUX) bzImage vmlinux
 
+# TODO: Build deb-pkg here, use linux-source (170MB) for perf/bpftool, reuse mult. installed linux-source on target.
 .build/linux-bindeb: $(LINUX_TREE)
 	MAKE='$(LINUX_MAKE)' ./scripts/make-linux-deb $(LINUX) bindeb-pkg $@/
 	touch $@
@@ -115,14 +116,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
 
 .build/target-state/$(T)/deb-install: .build/linux-bindeb $(wildcard .build/linux-bindeb/*.deb)
-	./scripts/target-scpsh 'sudo --non-interactive dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-headers")' || true
-	./scripts/target-scpsh 'sudo dpkg -r $(dpkg -l | awk \'{ print $2 }\' | grep -e "linux-image" | grep -e "-dbg")' || true
-	./scripts/target-scpsh 'sudo apt-get -y autoremove' || true
-	./scripts/target-scpsh -C $< 'cp -rdf . ../target_prefix/deb'
-	./scripts/target-scpsh 'sudo --non-interactive dpkg -i ../target_prefix/deb/*.deb' || true # announce deps
-	./scripts/target-scpsh 'sudo apt-get -y --fix-broken install' # install deps
-	./scripts/target-scpsh 'sudo dpkg -i ../target_prefix/deb/*.deb'
-	touch $@
+	./scripts/target-linux-deb-install $< $@
 
 .build/target-state/qemu-debian/kernel: .run/debian.ssh_port
 	touch $@

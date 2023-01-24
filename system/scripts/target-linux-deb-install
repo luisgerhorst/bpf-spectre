@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+bash -n "$(command -v "$0")"
+set -x
+
+LINUX_DEB_DIR=$1
+MARKER_FILE=$2
+
+kernel_release=$(cat $LINUX_DEB_DIR/kernel.release)
+
+if ./scripts/target-scpsh "dpkg -l | grep '$kernel_release'"
+then
+   exit 0
+   touch $MARKER_FILE
+fi
+
+# clean up
+./scripts/target-scpsh '
+set +e
+# Disabled because of install reuse. TODO: Only keep last N installed kernels.
+# sudo --non-interactive dpkg -r $(dpkg -l | awk "{ print $2 }" | grep -e "linux-headers")
+# sudo dpkg -r $(dpkg -l | awk "{ print $2 }" | grep -e "linux-image" | grep -e "-dbg")
+sudo --non-interactive apt-get -y autoremove
+set -e
+'
+
+# install
+./scripts/target-scpsh -C $LINUX_DEB_DIR '
+sudo --non-interactive dpkg -i *.deb # announce deps
+sudo --non-interactive apt-get -y --fix-broken install # install deps
+sudo --non-interactive dpkg -i *.deb # install
+'
+
+touch $MARKER_FILE

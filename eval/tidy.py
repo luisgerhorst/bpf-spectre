@@ -7,6 +7,7 @@ import logging
 import argparse
 import glob
 import re
+import json
 
 import numpy as np
 import pandas as pd
@@ -36,7 +37,7 @@ def main():
             df = tidy_bench_run(bench_run_path, values, yaml, burst_pos);
             for key, value in values.items():
                 df[key] = value
-            df = yaml_into_df(df, None, yaml)
+            df = dict_into_df(df, None, yaml)
             df["bench_run_name"] = bench_run_path.name
             df["burst_pos"] = burst_pos
             tidy_dfs.append(df)
@@ -57,15 +58,15 @@ def load_yaml(bench_run_path):
     with open(bench_run_path.joinpath("bench-run.yaml")) as bench_run_yaml:
         return yaml.safe_load(bench_run_yaml)
 
-def yaml_into_df(df, prefix, value):
+def dict_into_df(df, prefix, value):
     sep = "_"
     ps = "" if prefix is None else prefix + sep
     if isinstance(value, dict):
         for subkey, subvalue in value.items():
-            df = yaml_into_df(df, ps + subkey, subvalue)
+            df = dict_into_df(df, ps + subkey, subvalue)
     elif isinstance(value, list):
         for i, subvalue in enumerate(value):
-            df = yaml_into_df(df, ps + str(i), subvalue)
+            df = dict_into_df(df, ps + str(i), subvalue)
         df[prefix] = " ".join(map(str, value))
     else:
         df[prefix] = value
@@ -75,7 +76,25 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
     else:
-        return pd.DataFrame({ "observation": ["bench_run"] }) # TODO
+        return tidy_bpftool(bench_run_path, values, yaml, burst_pos)
+
+def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
+    if burst_pos != int(values["burst_len"])-1 or values["bpftool_loadall_exitcode"] != "0":
+        # bpftool only exports data for the last repetition (burst_pos == repeat argument).
+        return pd.DataFrame({ "observation": ["bench_run"] })
+
+    print(values)
+    dfs = []
+    for prog in values["bpftool_progs"].split():
+        df = pd.DataFrame({
+            "observation": ["bpftool_prog_run"],
+            "bpftool_prog": [prog],
+            "bpftool_run_exitcode": [values["bpftool_run_exitcode." + prog]]
+        })
+        run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + ".json").open())
+        df = dict_into_df(df, "bpftool_run", run_json)
+        dfs.append(df)
+    return pd.concat(dfs)
 
 def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
     avail = exitcode == "0"

@@ -9,7 +9,7 @@
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
 [submodule "tests/bpf/samples/vbpf"]
 	path = system/bpf-samples/external/vbpf
-	url = git@github.com:vbpf/ebpf-samples.git
+	url = git@gitlab.cs.fau.de:un65esoq/vbpf-ebpf-samples.git
 [submodule "tests/bpf/external/bcc"]
 	path = system/bpf-samples/external/bcc
 	url = git@github.com:iovisor/bcc.git

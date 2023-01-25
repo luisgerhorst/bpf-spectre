@@ -27,8 +27,8 @@ env - PATH=${PATH} KDEB_COMPRESS=xz \
     ${MAKE} -C ${LINUX} include/config/kernel.release
 KERNEL_RELEASE=`cat ${LINUX}/include/config/kernel.release`
 
-mkdir -p .build/linux-deb-cache/
-cached=.build/linux-deb-cache/$KERNEL_RELEASE
+mkdir -p .build/$(basename $0)-cache/
+cached=.build/$(basename $0)-cache/$KERNEL_RELEASE
 if [ -d $cached ]
 then
    rm -rfd "${DST}"

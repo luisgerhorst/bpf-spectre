@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set -x
+
+linux_pkg=$1
+
+kernel_release=$(cat $linux_pkg/kernel.release)
+
+. ./env.sh
+
+./scripts/target-linux-deb-install $linux_pkg
+./scripts/target-grub-boot -r $kernel_release
+
+# .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
+# 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
+# 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
+# 	touch $@
+
+# selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
+# .build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
+# 	./scripts/target-scpsh 'sudo --non-interactive apt-get --assume-yes install clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
+# 	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install'
+# 	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install turbostat_install' || true
+# 	./scripts/target-scpsh '\
+# # 		make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src  oldconfig \
+# # 		&& make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src prepare \
+# # 		&& make \
+# # 			SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
+# # 			-j $$(getconf _NPROCESSORS_ONLN) \
+# # 			-k -C ../target_prefix/linux-src/tools/testing/selftests \
+# # 			install \
+# # 		|| ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help'
+# 	touch $@
+
+# Could also be installed from ../target_prefix/linux-src on target, but this
+# was copied from AnyCall and works.
+
+# # Installs custom's perf as perf_$(uname -r) into /usr/local to
+# # distinguish it from the systems regular perf. To be used by bench-scripts.
+# .build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ)
+# 	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf'
+# 	./scripts/target-scpsh 'mkdir -p ../target_prefix/linux-perf'
+# 	./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf'
+# 	./scripts/target-scpsh 'sudo apt-get install --yes flex bison libtraceevent-dev'
+# 	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/perf*/tools/perf'
+# 	./scripts/target-scpsh 'sudo ln -sf $$(realpath ../target_prefix/linux-perf/perf*/tools/perf/perf) /usr/local/bin/perf_$$(uname -r)'
+# 	touch $@

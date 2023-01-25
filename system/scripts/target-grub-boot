@@ -2,29 +2,23 @@
 set -euo pipefail
 set -x
 
-
 . ./env.sh
 
 release=undefined
 cmdline=${GRUB_CMDLINE_LINUX:-}
 
 usage() {
-    echo "Usage: $0 -r KERNEL_RELEASE -t REBOOT_MARKER [-c CMDLINE]
-
-Reboot marker is touched whenever the system is booted with the new kernel, to be used as a make dependency." >&2
+    echo "Usage: $0 -r KERNEL_RELEASE [-c CMDLINE]" >&2
     exit 1
 }
 
-while getopts "r:c:t:" opt; do
+while getopts "r:c:" opt; do
 	case "${opt}" in
 		r)
 			release=${OPTARG}
 			;;
 		c)
 			cmdline=${OPTARG}
-			;;
-		t)
-			rebootmarker=${OPTARG}
 			;;
 		*)
 			usage
@@ -43,7 +37,6 @@ booted_cmdline=$(tssh cat /proc/cmdline)
 booted_release=$(tssh uname -r)
 if [[ "${booted_release}" = "${release}" ]] && [[ "${booted_cmdline}" = *${cmdline}* ]]
 then
-	touch $rebootmarker
 	exit 0
 fi
 echo "Booting ${release} from ${booted_release}" >&2
@@ -87,7 +80,6 @@ sleep 10
 new_release=$(AUTOSSH_POLL=5 AUTOSSH_GATETIME=0 autossh -p ${SSH_PORT} ${SSH_DEST} 'uname -r')
 if [ "${new_release}" = "${release}" ]
 then
-	touch $rebootmarker
 	exit 0
 else
 	echo "Failed to boot ${release} on ${SSH_DEST}:${SSH_PORT}" >&2

@@ -8,8 +8,7 @@ RAMDISK=qemu-ramdisk.img
 LINUX=linux
 BZIMAGE=$(LINUX)/arch/x86_64/boot/bzImage
 
-# Parallel make is OK for subdirectories. However, parallel target-scpsh calls may be
-# problematic because of apt, therefore only -j1 for this Makefile.
+# Parallel make is OK.
 MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
 LINUX_MAKE := LD_LIBRARY_PATH=/usr/local/lib $(MAKE)
 
@@ -24,7 +23,7 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .b
 LINUX_SRC = .build/linux.git_rev .build/linux.git_status
 LINUX_TREE := linux/.config $(LINUX_SRC)
 
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
+TARGET = .build/target-state/$(T)
 
 .PHONY: all
 all: $(TARGET)
@@ -43,11 +42,10 @@ install-deps:
 # Linux Files
 #
 
-# To initially create the file.
+# To initially create the file:
 .build/merge_configs_value:
 	echo -n '$(MERGE_CONFIGS)' > $@
-#
-# To detect when the variable value was changed.
+# To detect when the variable value was changed:
 _dummy := $(shell test "$(shell cat .build/merge_configs_value)" = '$(MERGE_CONFIGS)' \
 	|| echo -n '$(MERGE_CONFIGS)' > .build/merge_configs_value)
 
@@ -59,16 +57,17 @@ $(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/l
 $(BZIMAGE): $(LINUX_TREE)
 	$(LINUX_MAKE) -C $(LINUX) bzImage vmlinux
 
-# TODO: Build deb-pkg here, use linux-source (170MB) for perf/bpftool, reuse mult. installed linux-source on target.
-.build/linux-bindeb: $(LINUX_TREE)
-	MAKE='$(LINUX_MAKE)' ./scripts/make-linux-deb $(LINUX) bindeb-pkg $@/
-	touch $@
+.build/linux-pkg: $(LINUX_TREE)
+	MAKE='$(LINUX_MAKE)' flock .build/linux.lock \
+		./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/ \
+	&& touch $@
 
 .build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
 	rm -rfd $@ && mkdir -p $(dir $@)
-	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
-	git clone --depth 1 $(LINUX) $@
-	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
+	flock .build/linux.lock bash -c '\
+		cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"; \
+		git clone --depth 1 $(LINUX) $@; \
+	    cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^'
 	make -C $@ mrproper
 	cp $(LINUX)/.config $@/.config
 	cp $(LINUX)/vmlinux $@/vmlinux
@@ -83,11 +82,12 @@ LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
 
 $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	rm -f linux/perf-*.tar.xz $@
-	cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"
-	$(LINUX_MAKE) -C $(LINUX) perf-tarxz-src-pkg
+	flock .build/linux.lock bash -c '\
+		cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"; \
+		$(LINUX_MAKE) -C $(LINUX) perf-tarxz-src-pkg \
+	    cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^'
 	mkdir -p $(dir $@)
 	mv -f $$(find linux -name 'perf-*.tar.xz') $@
-	cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^
 
 #
 # Debian VM Files
@@ -107,58 +107,19 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/$(VM).qcow2: .build/$(VM).clean-install/hda.qcow2
 	cp $< $@
 
-#
-# Target SuT State
-#
-
 # Expected to fail if booted qemu runs outdated kernel.
 .run/debian.ssh_port: $(LINUX_TREE)
 	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
 
-.build/target-state/$(T)/deb-install: .build/linux-bindeb $(wildcard .build/linux-bindeb/*.deb)
-	./scripts/target-linux-deb-install $< $@
-
-.build/target-state/qemu-debian/kernel: .run/debian.ssh_port
-	touch $@
-
-.build/target-state/faui49%/kernel: .build/target-state/faui49%/deb-install
-	./scripts/target-grub-boot -r "$$(cat .build/linux-bindeb/kernel.release)" -t $@
-
-# TODO: Use debian source package instead.
-.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
-	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
-	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
-	touch $@
-
-# selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
-.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src
-	./scripts/target-scpsh 'sudo --non-interactive apt-get --assume-yes install clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
-	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install'
-	./scripts/target-scpsh 'sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install turbostat_install' || true
-	./scripts/target-scpsh '\
-		make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src  oldconfig \
-		&& make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src prepare \
-		&& make \
-			SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
-			-j $$(getconf _NPROCESSORS_ONLN) \
-			-k -C ../target_prefix/linux-src/tools/testing/selftests \
-			install \
-		|| ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help'
-	touch $@
-
-# Could also be installed from ../target_prefix/linux-src on target, but this
-# was copied from AnyCall and works.
 #
-# Installs custom's perf as perf_$(uname -r) into /usr/local to
-# distinguish it from the systems regular perf. To be used by bench-scripts.
-.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ)
-	./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf'
-	./scripts/target-scpsh 'mkdir -p ../target_prefix/linux-perf'
-	./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf'
-	./scripts/target-scpsh 'sudo apt-get install --yes flex bison libtraceevent-dev'
-	./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/perf*/tools/perf'
-	./scripts/target-scpsh 'sudo ln -sf $$(realpath ../target_prefix/linux-perf/perf*/tools/perf/perf) /usr/local/bin/perf_$$(uname -r)'
+# Target SuT State
+#
+
+.build/target-state/qemu-debian: .run/debian.ssh_port
 	touch $@
+
+.build/target-state/faui49%: .build/linux-pkg $(wildcard .build/linux-pkg/*)
+	./scripts/target-setup $< && touch $@
 
 #
 # BPF Samples

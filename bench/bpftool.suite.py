@@ -13,6 +13,7 @@ def main():
 
     suite = []
 
+    # TODO: Read default from environment.
     T="faui49easy6"
 
     priv="--drop="

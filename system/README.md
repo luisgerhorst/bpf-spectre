@@ -39,6 +39,7 @@ Reserve the target for exclusive access and disable automatic (re-)configuration
     
     # Fallback:
     sudo systemctl disable fai-boot.service
+    sudo systemctl disable run-fai.service
     sudo systemctl disable run-fai.timer
     
     # Undo:

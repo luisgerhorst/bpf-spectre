@@ -11,6 +11,8 @@ kernel_release=$(cat $linux_pkg/kernel.release)
 ./scripts/target-linux-deb-install $linux_pkg
 ./scripts/target-grub-boot -r $kernel_release
 
+# TODO: Install bpftool etc. as previously done by the Makefile:
+
 # .build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz
 # 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 # 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'

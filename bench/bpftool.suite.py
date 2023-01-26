@@ -30,7 +30,7 @@ def main():
         # prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
 
     # Programs runnable with empty input:
-    for prog in ["vbpf_write_read_stack_slot"]:
+    for prog in ["vbpf_write_read_stack_slot", "vbpf_loop_init_stack_slot"]:
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
         for (mcs, ca) in [(priv_spec_mit, priv), ("", priv)]:

@@ -41,37 +41,7 @@ then
 fi
 echo "Booting ${release} from ${booted_release}" >&2
 
-tssh sudo mv -n /etc/default/grub /etc/default/grub.$USER-backup || true
-echo "# Generated on $(hostname) in $(pwd) by $0, previous contents have been moved to ./grub.$USER-backup
-GRUB_DEFAULT=saved
-GRUB_TIMEOUT=5
-GRUB_DISTRIBUTOR='Debian'
-GRUB_CMDLINE_LINUX_DEFAULT='panic=30'
-GRUB_CMDLINE_LINUX='${cmdline}'" | tssh sudo tee /etc/default/grub
-tssh sudo update-grub
-
-# I don´t know where to get this value or why grub-reboot needs this in the first place.
-distro="Debian GNU/Linux"
-if ! ./scripts/target-scpsh "grep '$distro' /boot/grub/grub.cfg"
-then
-   distro="GNU/Linux" # maybe thats on Debian 11
-fi
-if ! ./scripts/target-scpsh "grep '$distro' /boot/grub/grub.cfg"
-then
-   distro="Ubuntu"
-fi
-
-# Set the fallback kernel in case the new custom kernel panics. That's also why
-# we set panic=30 and GRUB_DEFAULT=saved in grub config above.
-${TARGET_EXEC} "sudo grub-set-default \"Advanced options for ${distro}>${distro}, with Linux \$(uname -r)\""
-
-# Sanity check, does the fallback boot entry exist?
-${TARGET_EXEC} "sudo grep \"Advanced options for ${distro}\" /boot/grub/grub.cfg"
-${TARGET_EXEC} "sudo grep \"${distro}, with Linux \$(uname -r)\" /boot/grub/grub.cfg"
-
-# Set the new kernel, effective only for the next reboot. Otherwise it falls
-# back to the default kernel.
-${TARGET_EXEC} "sudo grub-reboot \"Advanced options for ${distro}>${distro}, with Linux ${release}\""
+./scripts/target-scpsh -C target-scripts "./grub-reboot.sh $release '$cmdline'"
 ${TARGET_EXEC} 'sudo reboot' || true
 
 # Allow it to shut down.

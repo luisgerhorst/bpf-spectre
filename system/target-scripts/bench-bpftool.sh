@@ -97,6 +97,8 @@ unset IFS
 IFS=$'\n'
 for prog in $(sudo find "$path" -type f)
 do
+	# TODO: bash loop for bursts, bpftool_repeat for repeat (== warmup)
+
 	set +e
 	# 32b garbage to be put into xdp_md.data for section(xdp) programs:
 	echo -n "01234567012345670123456701234567" \

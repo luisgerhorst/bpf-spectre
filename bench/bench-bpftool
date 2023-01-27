@@ -1,37 +1,42 @@
 #!/usr/bin/env bash
-set -euo pipefail
-bash -n "$(command -v "$0")"
+{
+    set -euo pipefail
+    bash -n "$(command -v "$0")"
 
-set -x
+    set -x
 
-# Arguments from suite runner:
-dst=$(realpath $1)
-burst_len=$2
+    # Arguments from suite runner:
+    dst=$(realpath $1)
+    burst_len=$2
 
-# TODO: Maybe it's not a good idea to send the whole env to the target. Use
-# make-style var=value args instead.
-set +x
-env_exports="$(export -p)"
+    # TODO: Maybe it's not a good idea to send the whole env to the target. Use
+    # make-style var=value args instead.
+    set +x
+    env_exports="$(export -p)"
 
-pushd ../system
+    pushd ../system
 
-# Also sets default SuT ($T) and related variables.
-. ./env.sh
+    # Also sets default SuT ($T) and related variables.
+    . ./env.sh
 
-# Boots target with linux-build ready for target-scpsh.
-make all
+    # Boots target with linux-build ready for target-scpsh.
+    # make all
+    make -j $(getconf _NPROCESSORS_ONLN) all
 
-make -C bpf-samples .build/$BPF_OBJ
+    make -C bpf-samples .build/$BPF_OBJ
 
-wd=$(mktemp -d)
-cp bpf-samples/.build/$BPF_OBJ $wd/$BPF_OBJ
-./scripts/target-scpsh -o ${dst}/.tmp-$(basename $0) -C $wd -f ./target-scripts/bench-bpftool.sh "
+    wd=$(mktemp -d)
+    cp bpf-samples/.build/$BPF_OBJ $wd/$BPF_OBJ
+    ./scripts/target-scpsh -o ${dst}/.tmp-$(basename $0) -C $wd -f ./target-scripts/bench-bpftool.sh "
 ${env_exports}
 chmod +x ../file
 ../file ../result_dir ${burst_len}
 "
-set -x
-rm -rfd $wd
+    set -x
+    rm -rfd $wd
 
-mv --no-clobber --target-directory=${dst} ${dst}/.tmp-$(basename $0)/*
-rm -d ${dst}/.tmp-$(basename $0)
+    mv --no-clobber --target-directory=${dst} ${dst}/.tmp-$(basename $0)/*
+    rm -d ${dst}/.tmp-$(basename $0)
+
+    exit
+}

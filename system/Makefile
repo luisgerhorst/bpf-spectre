@@ -23,7 +23,7 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .b
 LINUX_SRC = .build/linux.git_rev .build/linux.git_status
 LINUX_TREE := linux/.config $(LINUX_SRC)
 
-TARGET = .build/target-state/$(T)
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 .PHONY: all
 all: $(TARGET)
@@ -36,7 +36,7 @@ clean:
 
 .PHONY: install-deps
 install-deps:
-	sudo apt install autossh
+	sudo apt install autossh dwarves
 
 #
 # Linux Files
@@ -64,10 +64,11 @@ $(BZIMAGE): $(LINUX_TREE)
 
 .build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
 	rm -rfd $@ && mkdir -p $(dir $@)
-	flock .build/linux.lock bash -c '\
-		cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"; \
-		git clone --depth 1 $(LINUX) $@; \
-	    cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^'
+	flock .build/linux.lock bash -c ' \
+		pushd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
+		&& popd && git clone --depth 1 $(LINUX) $@ \
+	    && pushd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
+	'
 	make -C $@ mrproper
 	cp $(LINUX)/.config $@/.config
 	cp $(LINUX)/vmlinux $@/vmlinux
@@ -82,10 +83,12 @@ LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
 
 $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	rm -f linux/perf-*.tar.xz $@
-	flock .build/linux.lock bash -c '\
-		cd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged"; \
-		$(LINUX_MAKE) -C $(LINUX) perf-tarxz-src-pkg \
-	    cd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^'
+	flock .build/linux.lock bash -c ' \
+		cd $(LINUX) \
+		&& git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
+		&& $(LINUX_MAKE) perf-tarxz-src-pkg \
+	    && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
+	'
 	mkdir -p $(dir $@)
 	mv -f $$(find linux -name 'perf-*.tar.xz') $@
 
@@ -118,8 +121,44 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/qemu-debian: .run/debian.ssh_port
 	touch $@
 
-.build/target-state/faui49%: .build/linux-pkg $(wildcard .build/linux-pkg/*)
-	./scripts/target-setup $< && touch $@
+.build/target-state/faui49%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
+	./scripts/target-linux-deb-boot $< && touch $@
+
+.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
+	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
+	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
+	touch $@
+
+# selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
+.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
+	./scripts/target-scpsh 'sudo --non-interactive apt-get --assume-yes install clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
+	./scripts/target-scpsh 'sudo --non-interactive bpftool --help || sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install'
+	./scripts/target-scpsh 'sudo --non-interactive cpupower frequency-info || sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install' || true
+	./scripts/target-scpsh ' \
+		../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help \
+		|| make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig \
+		&& make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src prepare \
+		&& make \
+		SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
+			-j $$(getconf _NPROCESSORS_ONLN) \
+			-k -C ../target_prefix/linux-src/tools/testing/selftests \
+			install \
+		|| ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help'
+	touch $@
+
+# Could also be installed from ../target_prefix/linux-src on target, but this
+# was copied from AnyCall and works.
+
+# Installs custom's perf as perf_$(uname -r) into /usr/local to
+# distinguish it from the systems regular perf. To be used by bench-scripts.
+.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
+	./scripts/target-scpsh 'sudo perf_$$(uname -r) stat true' \
+	|| ./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf/$$(uname -r) && mkdir -p ../target_prefix/linux-perf/$$(uname -r)' \
+	&& ./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf/$$(uname -r)' \
+	&& ./scripts/target-scpsh 'sudo apt-get install --yes flex bison libtraceevent-dev' \
+	&& ./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/$$(uname -r)/perf*/tools/perf' \
+	&& ./scripts/target-scpsh 'sudo ln -sf $$(realpath ../target_prefix/linux-perf/$$(uname -r)/perf*/tools/perf/perf) /usr/local/bin/perf_$$(uname -r)'
+	touch $@
 
 #
 # BPF Samples

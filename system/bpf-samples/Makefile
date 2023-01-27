@@ -1,6 +1,11 @@
 PREFIX = .
 include prog.mk
 
+LLVM_BIN = /usr/lib/llvm-15/bin
+ifneq ($(wildcard $(LLVM_BIN)/*),)
+	export PATH := $(LLVM_BIN):$(PATH)
+endif
+
 # Don't remove intermediate results.
 .SECONDARY:
 
@@ -75,6 +80,7 @@ mrproper: clean
 .PHONY: install-deps
 install-deps: .perf_event_paranoid_-1
 	sudo apt install golang llvm
+	echo "On Debian Bullseye, follow https://apt.llvm.org/ to install llvm-15" && false
 
 .perf_event_paranoid_-1:
 	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid

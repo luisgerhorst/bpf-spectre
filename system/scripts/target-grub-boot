@@ -1,57 +1,61 @@
 #!/usr/bin/env bash
-set -euo pipefail
-set -x
+{
+	set -euo pipefail
+	set -x
 
-. ./env.sh
+	. ./env.sh
 
-release=undefined
-cmdline=${GRUB_CMDLINE_LINUX:-}
+	release=undefined
+	cmdline=${GRUB_CMDLINE_LINUX:-}
 
-usage() {
-    echo "Usage: $0 -r KERNEL_RELEASE [-c CMDLINE]" >&2
-    exit 1
+	usage() {
+		echo "Usage: $0 -r KERNEL_RELEASE [-c CMDLINE]" >&2
+		exit 1
+	}
+
+	while getopts "r:c:" opt; do
+		case "${opt}" in
+			r)
+				release=${OPTARG}
+				;;
+			c)
+				cmdline=${OPTARG}
+				;;
+			*)
+				usage
+				;;
+		esac
+	done
+	shift $((OPTIND-1))
+
+	# TODO: Refactor and remove these legacy aliases.
+	tssh() {
+		./scripts/target-scpsh "$@"
+	}
+	TARGET_EXEC=./scripts/target-scpsh
+
+	booted_cmdline=$(tssh cat /proc/cmdline)
+	booted_release=$(tssh uname -r)
+	if [[ "${booted_release}" = "${release}" ]] && [[ "${booted_cmdline}" = *${cmdline}* ]]
+	then
+		exit 0
+	fi
+	echo "Booting ${release} from ${booted_release}" >&2
+
+	./scripts/target-scpsh -C target-scripts "./grub-reboot.sh $release '$cmdline'"
+	${TARGET_EXEC} 'sudo reboot' || true
+
+	# Allow it to shut down.
+	sleep 10
+
+	new_release=$(AUTOSSH_POLL=5 AUTOSSH_GATETIME=0 autossh -p ${SSH_PORT} ${SSH_DEST} 'uname -r')
+	if [ "${new_release}" = "${release}" ]
+	then
+		exit 0
+	else
+		echo "Failed to boot ${release} on ${SSH_DEST}:${SSH_PORT}" >&2
+		exit 1
+	fi
+
+	exit
 }
-
-while getopts "r:c:" opt; do
-	case "${opt}" in
-		r)
-			release=${OPTARG}
-			;;
-		c)
-			cmdline=${OPTARG}
-			;;
-		*)
-			usage
-			;;
-	esac
-done
-shift $((OPTIND-1))
-
-# TODO: Refactor and remove these legacy aliases.
-tssh() {
-    ./scripts/target-scpsh "$@"
-}
-TARGET_EXEC=./scripts/target-scpsh
-
-booted_cmdline=$(tssh cat /proc/cmdline)
-booted_release=$(tssh uname -r)
-if [[ "${booted_release}" = "${release}" ]] && [[ "${booted_cmdline}" = *${cmdline}* ]]
-then
-	exit 0
-fi
-echo "Booting ${release} from ${booted_release}" >&2
-
-./scripts/target-scpsh -C target-scripts "./grub-reboot.sh $release '$cmdline'"
-${TARGET_EXEC} 'sudo reboot' || true
-
-# Allow it to shut down.
-sleep 10
-
-new_release=$(AUTOSSH_POLL=5 AUTOSSH_GATETIME=0 autossh -p ${SSH_PORT} ${SSH_DEST} 'uname -r')
-if [ "${new_release}" = "${release}" ]
-then
-	exit 0
-else
-	echo "Failed to boot ${release} on ${SSH_DEST}:${SSH_PORT}" >&2
-	exit 1
-fi

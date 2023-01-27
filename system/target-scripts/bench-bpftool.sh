@@ -20,7 +20,7 @@ capsh_args="$CAPSH_ARGS"
 
 cs="sudo capsh $capsh_args -- -c"
 
-bpftool --version > ${bpftool_dst}/version
+sudo bpftool --version > ${bpftool_dst}/version
 $cs 'capsh --print' > ${dst}/capsh-print
 mkdir ${bpftool_dst}/loadall_type
 

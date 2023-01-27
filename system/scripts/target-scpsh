@@ -1,6 +1,12 @@
 #!/bin/env bash
-set -euo pipefail
-bash -n "$(command -v "$0")"
+#
+# https://stackoverflow.com/questions/2336977/can-a-shell-script-indicate-that-its-lines-be-loaded-into-memory-initially
+{
+    set -euo pipefail
+    bash -n "$(command -v "$0")"
 
-# Avoid concurrent apt install commands on target.
-flock .build/target-scpsh $0.sh "$@"
+    # Avoid concurrent apt install commands on target.
+    flock .build/$(basename $0) $0.sh "$@"
+
+    exit
+}

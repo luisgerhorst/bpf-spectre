@@ -3,6 +3,7 @@
 import sys
 import logging
 import math
+import os
 import subprocess
 from pathlib import Path
 
@@ -13,8 +14,7 @@ def main():
 
     suite = []
 
-    # TODO: Read default from environment.
-    T="faui49easy6"
+    T = os.getenv("BENCHRUN_DEFAULT_SUT", default="faui49easy6")
 
     priv="--drop="
     unpriv="--drop=cap_sys_admin --drop=cap_perfmon"

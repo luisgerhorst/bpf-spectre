@@ -20,10 +20,9 @@ pushd ../system
 # Boots target with linux-build ready for target-scpsh.
 make all
 
-./scripts/target-scpsh -o ${dst}/.tmp -f ./target-scripts/bench-workload-perf.sh "
+./scripts/target-scpsh -o ${dst}/.tmp -C ./target-scripts "
 ${env_exports}
-chmod +x ../file
-../file ../result_dir ${burst_len}
+./bench-workload-perf.sh ../result_dir ${burst_len}
 "
 
 mv --no-clobber --target-directory=${dst} ${dst}/.tmp/*

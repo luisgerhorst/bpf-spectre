@@ -13,7 +13,7 @@ metrics <- cns[startsWith(cns, "bpftool_run_duration")]
 
 for (m in metrics) {
   print(m)
-  ggplot(DATA, aes(y=paste(BPF_OBJ, bpftool_prog), x=get(m), colour=MERGE_CONFIGS)) +
+  ggplot(DATA, aes(y=paste(BPF_OBJ, bpftool_prog, burst_pos), x=get(m), colour=MERGE_CONFIGS)) +
     geom_boxplot() +
     scale_x_log10() +
     facet_grid(rows=vars(T, bpftool_run_exitcode),

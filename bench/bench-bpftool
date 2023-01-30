@@ -25,15 +25,15 @@
 
     make -C bpf-samples .build/$BPF_OBJ
 
-    wd=$(mktemp -d)
-    cp bpf-samples/.build/$BPF_OBJ $wd/$BPF_OBJ
-    ./scripts/target-scpsh -o ${dst}/.tmp-$(basename $0) -C $wd -f ./target-scripts/bench-bpftool.sh "
+    tempd=$(mktemp -d)
+    cp -r target-scripts $tempd/dir
+    cp bpf-samples/.build/$BPF_OBJ $tempd/dir/$BPF_OBJ
+    ./scripts/target-scpsh -o ${dst}/.tmp-$(basename $0) -C $tempd/dir "
 ${env_exports}
-chmod +x ../file
-../file ../result_dir ${burst_len}
+./bench-bpftool.sh ../result_dir ${burst_len}
 "
     set -x
-    rm -rfd $wd
+    rm -rfd $tempd
 
     mv --no-clobber --target-directory=${dst} ${dst}/.tmp-$(basename $0)/*
     rm -d ${dst}/.tmp-$(basename $0)

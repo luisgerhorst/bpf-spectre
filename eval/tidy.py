@@ -79,7 +79,7 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
         return tidy_bpftool(bench_run_path, values, yaml, burst_pos)
 
 def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
-    if burst_pos != int(values["burst_len"])-1 or values["bpftool_loadall_exitcode"] != "0":
+    if values["bpftool_loadall_exitcode"] != "0":
         # bpftool only exports data for the last repetition (burst_pos == repeat argument).
         return pd.DataFrame({ "observation": ["bench_run"] })
 
@@ -91,7 +91,7 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
             "bpftool_prog": [prog],
             "bpftool_run_exitcode": [values["bpftool_run_exitcode." + prog]]
         })
-        run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + ".json").open())
+        run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + "." + str(burst_pos) + ".json").open())
         df = dict_into_df(df, "bpftool_run", run_json)
         dfs.append(df)
     return pd.concat(dfs)

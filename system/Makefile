@@ -21,7 +21,8 @@ _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .buil
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
 
 LINUX_SRC = .build/linux.git_rev .build/linux.git_status
-LINUX_TREE := linux/.config $(LINUX_SRC)
+LINUX_TREE = linux/.config $(LINUX_SRC)
+KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
 
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
@@ -51,11 +52,19 @@ _dummy := $(shell test "$(shell cat .build/merge_configs_value)" = '$(MERGE_CONF
 
 $(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/linux.git_rev .build/linux.git_status
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	yes '' | $(LINUX_MAKE) -C $(LINUX) oldconfig
-	$(LINUX_MAKE) -C $(LINUX) prepare
+	yes '' | $(LINUX_MAKE) -C $(LINUX) oldconfig prepare
+	$(eval KERNEL_RELEASE=$$(shell ./scripts/linux-release.sh $(LINUX)))
 
 $(BZIMAGE): $(LINUX_TREE)
 	$(LINUX_MAKE) -C $(LINUX) bzImage vmlinux
+
+#
+# Linux Release Files
+#
+# Can be reused if they exist for $(KERNEL_RELEASE)
+#
+# TODO: Is there some generic cache for make, like ccache for cc?
+#
 
 .build/linux-pkg: $(LINUX_TREE)
 	MAKE='$(LINUX_MAKE)' flock .build/linux.lock \
@@ -82,15 +91,14 @@ $(BZIMAGE): $(LINUX_TREE)
 LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
 
 $(LINUX_PERF_TARXZ): $(LINUX_TREE)
-	rm -f linux/perf-*.tar.xz $@
-	flock .build/linux.lock bash -c ' \
+	rm -f linux/perf-*.tar.xz $@ \
+	&& flock .build/linux.lock bash -c ' \
 		cd $(LINUX) \
 		&& git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
 		&& $(LINUX_MAKE) perf-tarxz-src-pkg \
 	    && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
-	'
-	mkdir -p $(dir $@)
-	mv -f $$(find linux -name 'perf-*.tar.xz') $@
+	' \
+	&& mkdir -p $(dir $@) && mv -f $$(find linux -name 'perf-*.tar.xz') $@
 
 #
 # Debian VM Files
@@ -124,26 +132,16 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/faui49%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 	./scripts/target-linux-deb-boot $< && touch $@
 
-.build/target-state/$(T)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
+TS = .build/target-state/$(T)
+
+$(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
-.build/target-state/$(T)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
-	./scripts/target-scpsh 'sudo --non-interactive apt-get --assume-yes install clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev'
-	./scripts/target-scpsh 'sudo --non-interactive bpftool --help || sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install'
-	./scripts/target-scpsh 'sudo --non-interactive cpupower frequency-info || sudo make STATIC=true -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install' || true
-	./scripts/target-scpsh ' \
-		../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help \
-		|| make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig \
-		&& make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src prepare \
-		&& make \
-		SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
-			-j $$(getconf _NPROCESSORS_ONLN) \
-			-k -C ../target_prefix/linux-src/tools/testing/selftests \
-			install \
-		|| ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help'
+$(TS)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
+	./scripts/target-scpsh -C target-scripts "./linux-tools-install.sh"
 	touch $@
 
 # Could also be installed from ../target_prefix/linux-src on target, but this
@@ -151,7 +149,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 
 # Installs custom's perf as perf_$(uname -r) into /usr/local to
 # distinguish it from the systems regular perf. To be used by bench-scripts.
-.build/target-state/$(T)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
+$(TS)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo perf_$$(uname -r) stat true' \
 	|| ./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf/$$(uname -r) && mkdir -p ../target_prefix/linux-perf/$$(uname -r)' \
 	&& ./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf/$$(uname -r)' \

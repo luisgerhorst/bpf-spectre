@@ -24,6 +24,7 @@ LINUX_SRC = .build/linux.git_rev .build/linux.git_status
 LINUX_TREE = linux/.config $(LINUX_SRC)
 KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
 
+# BUG: linux sync problem if making target with -j32
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 .PHONY: all

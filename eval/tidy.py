@@ -86,15 +86,34 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
     print(values)
     dfs = []
     for prog in values["bpftool_progs"].split():
+        rec = int(values["bpftool_run_exitcode." + prog])
+
         df = pd.DataFrame({
             "observation": ["bpftool_prog_run"],
             "bpftool_prog": [prog],
-            "bpftool_run_exitcode": [values["bpftool_run_exitcode." + prog]]
+            "bpftool_run_exitcode": [rec]
         })
-        run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + "." + str(burst_pos) + ".json").open())
-        df = dict_into_df(df, "bpftool_run", run_json)
+
+        df = tidy_bpftool_jited_into_df(bench_run_path, prog, df)
+
+        if rec == 0:
+            run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + "." + str(burst_pos) + ".json").open())
+            run_json["duration_ns"] = run_json["duration"] # https://qmonnet.github.io/whirl-offload/2021/09/23/bpftool-features-thread/
+            df = dict_into_df(df, "bpftool_run", run_json)
+
         dfs.append(df)
     return pd.concat(dfs)
+
+def tidy_bpftool_jited_into_df(brp, prog, df):
+    jited = json.load(brp.joinpath("bpftool/jited." + prog + ".json").open())
+    counts = {}
+    for insn in jited[0]["insns"]:
+        o = insn["operation"]
+        counts[o] =  counts.get(o, 0) + 1
+    for k, v in counts.items():
+        df["bpftool_jited_" + k + "_count"] = [v]
+    df["bpftool_jited_total_count"] = [len(jited[0]["insns"])]
+    return df
 
 def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
     avail = exitcode == "0"

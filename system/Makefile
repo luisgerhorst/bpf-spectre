@@ -159,41 +159,6 @@ $(TS)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
 	touch $@
 
 #
-# BPF Samples
-#
-# Convenience for testing. Not included in all-Target because it takes long and
-# is not required by most bench-scripts. Consider using './bench/run.sh --suite
-# bpf' instead.
-#
-
-.PHONY: bpf-samples-all
-bpf-samples-all:
-	$(MAKE) -C bpf-samples all
-
-.build/bpf-samples/%.test-result.yaml: bpf-samples/prog/%.bpf.s $(TARGET) | bpf-samples-all
-	rm -rfd .build/bpf-samples/$*.*
-	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o .build/bpf-samples/$*.bpftool-priv \
-		'./bpftool.sh $*.bpf.o --drop= 2>&1 | tee ../result_dir/log'
-	./scripts/target-scpsh -C bpf-samples/.build/$*.bpftool.input -o .build/bpf-samples/$*.bpftool-unpriv \
-		'./bpftool.sh $*.bpf.o "--drop=cap_sys_admin --drop=cap_perfmon" 2>&1 | tee ../result_dir/log'
-	./bpf-samples/summarize-test-result.py \
-		.build/bpf-samples/$*.test-result.yaml \
-		bpf-samples/.build/$*.spectector.log \
-		.build/bpf-samples/$*.bpftool \
-		bpf-samples/prog/$*.bpf.s \
-		bpf-samples/.build/$*.perf
-
-PREFIX = bpf-samples
-include bpf-samples/prog.mk
-
-.build/bpf-samples.tsv.gz: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/bpf-samples/%.test-result.yaml,$(ALL_S)) | bpf-samples-all
-	./bpf-samples/join-yamls.py --output .build/bpf-samples.tsv.gz \
-		--yamls $^
-
-.PHONY: bpf-samples
-bpf-samples: .build/bpf-samples.tsv.gz
-
-#
 # Linux Phony
 #
 

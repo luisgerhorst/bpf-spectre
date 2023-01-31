@@ -27,14 +27,11 @@ def main():
                    stdout=sys.stderr.buffer)
 
     # All programs:
-    # for prog_path in Path("../system/bpf-samples/prog").iterdir():
-        # prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
-
-    # Programs runnable with empty input:
-    for prog in ["vbpf_init_stack", "vbpf_loop_init_stack_slot", "vbpf_write_read_stack_slot"]:
+    for prog_path in Path("../system/bpf-samples/prog").iterdir():
+        prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (mcs, ca) in [(priv_spec_mit, priv), ("", priv)]:
+        for (mcs, ca) in [("", unpriv), (priv_spec_mit, priv), ("", priv)]:
             suite.append({
                 "bench_script": "bpftool",
                 "boot": {

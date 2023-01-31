@@ -52,9 +52,6 @@ prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
 .build/%.bpf.readelf: .build/%.bpf.o | .build
 	llvm-readelf --all $< > $@
 
-.build/%.bpftool.input: .build/%.bpf.o bpftool.sh
-	rm -rfd $@ && mkdir -p $@ && cp -f $^ $@/
-
 CIAOPATH=$(shell pwd)/spectector-proj
 SPECTECTOR=$(CIAOPATH)/build/bin/spectector
 

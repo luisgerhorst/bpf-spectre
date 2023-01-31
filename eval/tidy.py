@@ -118,7 +118,7 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
         counts[o] = counts.get(o, 0) + 1
     for k, v in counts.items():
         df["bpftool_jited_insncnt_" + k] = [v]
-    df["bpftool_jited_insncnt"] = [len(jited[0]["insns"])]
+    df["bpftool_jited_insncnt_total"] = [len(jited[0]["insns"])]
     return df
 
 def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):

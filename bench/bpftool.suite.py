@@ -18,23 +18,19 @@ def main():
 
     priv="--drop="
     unpriv="--drop=cap_sys_admin --drop=cap_perfmon"
-
     priv_spec_mit="configs/priv-spec-mit.defconfig"
 
-    # TODO: Also test with/without /proc/sys/net/core/bpf_jit_harden set.
-
-    subprocess.run(["make", "-C", "../system/bpf-samples"], check=True,
-                   stdout=sys.stderr.buffer)
+    subprocess.run(["make", "-C", "../system/bpf-samples", "clean", "all"],
+                   check=True, stdout=sys.stderr.buffer)
 
     # All programs:
-    # for prog_path in Path("../system/bpf-samples/prog").iterdir():
-        # prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
-
-    # Programs runnable with empty input:
-    for prog in ["vbpf_init_stack", "vbpf_loop_init_stack_slot", "vbpf_write_read_stack_slot"]:
+    for prog_path in Path("../system/bpf-samples/prog").iterdir():
+        prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (mcs, ca) in [(priv_spec_mit, priv), ("", priv)]:
+        for (mcs, ca, bjh) in [("", unpriv, "1"), ("", unpriv, "0"),
+                               (priv_spec_mit, priv, "0"),
+                               ("", priv, "1"), ("", priv, "0")]:
             suite.append({
                 "bench_script": "bpftool",
                 "boot": {
@@ -42,8 +38,9 @@ def main():
                 },
                 "run": {
                     "T": T,
-                    "CPUFREQ": "max",
+                    "CPUFREQ": "base",
                     "CAPSH_ARGS": ca,
+                    "BPF_JIT_HARDEN": bjh,
                     "BPF_OBJ": prog + ".bpf.o",
                 },
             })

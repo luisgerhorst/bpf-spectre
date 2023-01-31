@@ -26,14 +26,23 @@ then
 	if [[ "${CPUFREQ}" == 'max' ]]
 	then
 		cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq)
+	elif [[ "${CPUFREQ}" == 'min' ]]
+	then
+		cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq)
 	elif [[ "${CPUFREQ}" == 'base' ]]
 	then
 		if cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency > /dev/null
 		then
 			cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency)
-		elif [ $T = faui49easy7 ]
+		elif lscpu | grep 'AMD Ryzen 9 3950X' > /dev/null
 		then
-			cpufreq_khz=2800000 # Ryzen 3950X highest available non-boost freq
+			cpufreq_khz=2800000
+		elif lscpu | grep 'CPU @ 3.30GHz' > /dev/null
+		then
+			cpufreq_khz=3300000
+		elif lscpu | grep 'CPU @ 2.80GHz' > /dev/null
+		then
+			cpufreq_khz=2800000
 		else
 			exit 1
 		fi

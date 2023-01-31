@@ -52,6 +52,13 @@ grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities
 uname -a > ${dst}/values/uname_a
 hostname --short > ${dst}/values/hostname_short
 
+IFS=$'\n'
+for p in $(sudo find "/proc/sys/net/core/" -type f)
+do
+	sudo cat $p > ${dst}/values/net_core_$(basename $p)
+done
+unset IFS
+
 set +e
 sudo systemctl status fai-boot.service > $dst/fai_status
 sudo systemctl status run-fai.service >> $dst/fai_status

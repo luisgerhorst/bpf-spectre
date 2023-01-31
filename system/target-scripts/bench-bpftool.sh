@@ -25,6 +25,8 @@
 	sudo rm -rfd $path
 	# sudo bpftool --bpffs > ${bpftool_dst}/bpffs-init
 
+	echo "$BPF_JIT_HARDEN" | sudo tee /proc/sys/net/core/bpf_jit_harden
+
 	set +e
 	$cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
 	exitcode=$?
@@ -57,11 +59,12 @@
 		set -x
 	fi
 
-	# sudo bpftool --bpffs > ${bpftool_dst}/bpffs
+	./bench-runtime-begin.sh $@
 
 	echo -n $exitcode > ${values_dst}/bpftool_loadall_exitcode
 	if [ $exitcode != "0" ]
 	then
+		./bench-runtime-end.sh $@
 		exit 0
 	fi
 
@@ -76,8 +79,6 @@
 		# sudo bpftool prog dump jited pinned "$prog" linum > ${bpftool_dst}/jited-linum.$(basename $prog)
 	done
 	unset IFS
-
-	./bench-runtime-begin.sh $@
 
 	# TODO: bpftool prog profile PROG [duration DURATION] METRICs
 

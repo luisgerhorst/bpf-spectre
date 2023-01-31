@@ -24,6 +24,7 @@
     make -j $(getconf _NPROCESSORS_ONLN) all
 
     make -C bpf-samples .build/$BPF_OBJ
+    cp -f bpf-samples/.build/$BPF_OBJ $dst/$BPF_OBJ
 
     tempd=$(mktemp -d)
     cp -r target-scripts $tempd/dir

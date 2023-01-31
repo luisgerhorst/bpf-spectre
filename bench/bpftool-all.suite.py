@@ -23,15 +23,15 @@ def main():
 
     # TODO: Also test with/without /proc/sys/net/core/bpf_jit_harden set.
 
-    subprocess.run(["make", "-C", "../system/bpf-samples"], check=True,
-                   stdout=sys.stderr.buffer)
+    subprocess.run(["make", "-C", "../system/bpf-samples", "clean", "all"],
+                   check=True, stdout=sys.stderr.buffer)
 
     # All programs:
     for prog_path in Path("../system/bpf-samples/prog").iterdir():
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (mcs, ca) in [("", unpriv), (priv_spec_mit, priv), ("", priv)]:
+        for (mcs, ca, bjh) in [("", unpriv, "1"), ("", unpriv, "0"), (priv_spec_mit, priv, "0"), ("", priv, "0")]:
             suite.append({
                 "bench_script": "bpftool",
                 "boot": {
@@ -41,6 +41,7 @@ def main():
                     "T": T,
                     "CPUFREQ": "max",
                     "CAPSH_ARGS": ca,
+                    "BPF_JIT_HARDEN": bjh,
                     "BPF_OBJ": prog + ".bpf.o",
                 },
             })

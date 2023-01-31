@@ -106,13 +106,19 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
 
 def tidy_bpftool_jited_into_df(brp, prog, df):
     jited = json.load(brp.joinpath("bpftool/jited." + prog + ".json").open())
+    # Init actually used fields here, otherwise 0 is NA.
     counts = {}
+    for o in ["lfence",           # san. stack slot, SSB
+              "rorw", "xorl", "subq", "addq", "andq", "orq", # ptr-alu-trunc
+              "callq", "je", "jne", "movq", "movl" # Generic
+              ]:
+        counts[o] = 0
     for insn in jited[0]["insns"]:
         o = insn["operation"]
-        counts[o] =  counts.get(o, 0) + 1
+        counts[o] = counts.get(o, 0) + 1
     for k, v in counts.items():
-        df["bpftool_jited_" + k + "_count"] = [v]
-    df["bpftool_jited_total_count"] = [len(jited[0]["insns"])]
+        df["bpftool_jited_insncnt_" + k] = [v]
+    df["bpftool_jited_insncnt"] = [len(jited[0]["insns"])]
     return df
 
 def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):

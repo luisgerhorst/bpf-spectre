@@ -10,7 +10,7 @@ BZIMAGE=$(LINUX)/arch/x86_64/boot/bzImage
 
 # Parallel make is OK.
 MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
-LINUX_MAKE := LD_LIBRARY_PATH=/usr/local/lib $(MAKE)
+export LD_LIBRARY_PATH=/usr/local/lib
 
 # HACK: Before running the rules, update *.git_{rev|status} for each repo. We
 # can then use them as dependencies to avoid recompilation of subprojects if
@@ -52,11 +52,11 @@ _dummy := $(shell test "$(shell cat .build/merge_configs_value)" = '$(MERGE_CONF
 
 $(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/linux.git_rev .build/linux.git_status
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	yes '' | $(LINUX_MAKE) -C $(LINUX) oldconfig prepare
+	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
 	$(eval KERNEL_RELEASE=$$(shell ./scripts/linux-release.sh $(LINUX)))
 
 $(BZIMAGE): $(LINUX_TREE)
-	$(LINUX_MAKE) -C $(LINUX) bzImage vmlinux
+	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage vmlinux
 
 #
 # Linux Release Files
@@ -67,7 +67,7 @@ $(BZIMAGE): $(LINUX_TREE)
 #
 
 .build/linux-pkg: $(LINUX_TREE)
-	MAKE='$(LINUX_MAKE)' flock .build/linux.lock \
+	MAKE='$(MAKE)' flock .build/linux.lock \
 		./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/ \
 	&& touch $@
 
@@ -95,7 +95,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	&& flock .build/linux.lock bash -c ' \
 		cd $(LINUX) \
 		&& git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
-		&& $(LINUX_MAKE) perf-tarxz-src-pkg \
+		&& $(MAKE) perf-tarxz-src-pkg \
 	    && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
 	' \
 	&& mkdir -p $(dir $@) && mv -f $$(find linux -name 'perf-*.tar.xz') $@
@@ -167,12 +167,12 @@ bzImage: $(BZIMAGE)
 
 .PHONY: menuconfig
 menuconfig: linux/.config
-	$(LINUX_MAKE) -C $(LINUX) menuconfig
+	$(MAKE) -C $(LINUX) menuconfig
 	cp linux/.config $(CONFIG)
 
 .PHONY: tags
 tags: linux/.config
-	$(LINUX_MAKE) -C $(LINUX) tags
+	$(MAKE) -C $(LINUX) tags
 
 #
 # QEMU Debian Phony

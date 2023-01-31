@@ -12,7 +12,6 @@ endif
 .PHONY: all
 all: $(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.bpf.objdump,$(ALL_S)) \
 	$(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.bpf.readelf,$(ALL_S)) \
-	$(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.bpftool.input,$(ALL_S)) \
 	$(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.spectector.log,$(ALL_S))
 
 .PHONY: prog/lbe_%.bpf.s

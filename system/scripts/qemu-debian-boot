@@ -49,7 +49,6 @@ qemu-system-x86_64 \
     -smp cpus=2 \
     -m 2048 \
     -nographic \
-    -enable-kvm \
     -netdev user,id=net0,net=10.0.2.0/24,hostname=debian,domainname=local,hostfwd=tcp::${ssh_port}-:22 \
     -device e1000,netdev=net0,mac=52:54:98:76:54:32
 qemu_exit_code=$?

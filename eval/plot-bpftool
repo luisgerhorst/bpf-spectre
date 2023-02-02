@@ -2,8 +2,9 @@
 
 source("plotlib.R")
 
-## DATA <- DATA %>%
-##   filter(!str_detect(BPF_OBJ, ".*custom_.*"))
+DATA <- DATA %>%
+  filter(!str_detect(BPF_OBJ, ".*custom_.*"),
+         T == "faui49easy6")
 
 cns <- colnames(DATA)
 metrics <- cns[cns == "bpftool_loadall_exitcode"]

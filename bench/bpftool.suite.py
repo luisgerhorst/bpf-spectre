@@ -18,8 +18,9 @@ def main():
     # T = os.getenv("BENCHRUN_DEFAULT_SUT", default="faui49easy6")
 
     suite = []
-    for T in ["faui49easy6", "faui49man1"]:
-        append_T(suite, T)
+    # for T in ["faui49easy6", "faui49man1"]:
+    #     append_T(suite, T)
+    append_T(suite, "faui49easy6")
     yaml.dump(suite, sys.stdout)
 
 def append_T(suite, T):

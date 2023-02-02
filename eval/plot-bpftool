@@ -2,8 +2,8 @@
 
 source("plotlib.R")
 
-DATA <- DATA %>%
-  filter(!str_detect(BPF_OBJ, ".*custom_.*"))
+## DATA <- DATA %>%
+##   filter(!str_detect(BPF_OBJ, ".*custom_.*"))
 
 cns <- colnames(DATA)
 metrics <- cns[cns == "bpftool_loadall_exitcode"]
@@ -20,7 +20,7 @@ for (m in metrics) {
 DATA <- DATA %>%
   filter(bpftool_loadall_exitcode == 0)
 cns <- colnames(DATA)
-metrics <- cns[startsWith(cns, "bpftool_jited_insncnt") |
+metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_") |
                cns == "bpftool_run_exitcode"]
 for (m in metrics) {
   print(m)

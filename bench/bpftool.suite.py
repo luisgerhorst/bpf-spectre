@@ -12,16 +12,20 @@ import yaml # pyyaml
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
+    subprocess.run(["make", "-C", "../system/bpf-samples", "clean", "all"],
+                   check=True, stdout=sys.stderr.buffer)
+
+    # T = os.getenv("BENCHRUN_DEFAULT_SUT", default="faui49easy6")
+
     suite = []
+    for T in ["faui49easy6", "faui49man1"]:
+        append_T(suite, T)
+    yaml.dump(suite, sys.stdout)
 
-    T = os.getenv("BENCHRUN_DEFAULT_SUT", default="faui49easy6")
-
+def append_T(suite, T):
     priv="--drop="
     unpriv="--drop=cap_sys_admin --drop=cap_perfmon"
     priv_spec_mit="configs/priv-spec-mit.defconfig"
-
-    subprocess.run(["make", "-C", "../system/bpf-samples", "clean", "all"],
-                   check=True, stdout=sys.stderr.buffer)
 
     # All programs:
     for prog_path in Path("../system/bpf-samples/prog").iterdir():
@@ -44,8 +48,6 @@ def main():
                     "BPF_OBJ": prog + ".bpf.o",
                 },
             })
-
-    yaml.dump(suite, sys.stdout)
 
 if __name__ == "__main__":
     main()

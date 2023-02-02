@@ -19,7 +19,7 @@ prog/lbe_%.bpf.s: | prog
 	$(MAKE) -C external/libbpf-bootstrap/examples/c .output/$*.bpf.s
 	ln -fs ../external/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
 
-# BUG: These currently do not load. Some tail-call map is missing.
+# BUG: These currently do not load. https://github.com/4ast/bpf_cilium_test/blob/master/cilium_bpf_test.sh
 .PHONY: prog/cilium_%.bpf.s
 prog/cilium_%.bpf.s: Makefile | prog
 	$(MAKE) -C external/cilium/bpf bpf_$*.s

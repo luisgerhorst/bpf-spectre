@@ -43,8 +43,8 @@ done
 
 command="${@:$OPTIND+0}"
 
-ssh="ssh ${SSH_DEST} -p ${SSH_PORT} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true"
-scp="scp -P ${SSH_PORT} -B -o NoHostAuthenticationForLocalhost=true -q"
+ssh="ssh ${SSH_DEST} -p ${SSH_PORT} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true -o ConnectionAttempts=3 -o ConnectTimeout=30"
+scp="scp -P ${SSH_PORT} -B -o NoHostAuthenticationForLocalhost=true -q -o ConnectionAttempts=3 -o ConnectTimeout=30"
 
 guest_temp=$(${ssh} mktemp -d)
 

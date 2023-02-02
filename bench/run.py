@@ -38,7 +38,7 @@ def main():
 
     run_suite(suite_dir, suite_run_path, suite, reps, burst_len)
 
-    subprocess.run(["make", "-C", "eval/archive"], check=True)
+    subprocess.run(["make", "-C", "../eval/archive"], check=True)
 
 def parse_args():
     raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../eval/.raw"))

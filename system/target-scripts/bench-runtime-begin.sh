@@ -67,10 +67,11 @@ then
 else
 	sudo sysctl --all > /tmp/$USER-sysctl-backup.conf
 fi
+sudo sysctl --system
 
 sudo sysctl --version > $dst/sysctl.version
-sudo sysctl --all > $dst/sysctl-old
-sudo sysctl kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
+sudo sysctl --all > $dst/sysctl.default
+sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
 sudo sysctl --all > $dst/sysctl
 
 IFS=$'\n'

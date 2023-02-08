@@ -37,7 +37,7 @@ def append_T(suite, T):
                          (priv, "kernel.bpf_spec_v1_always_on=1 kernel.bpf_spec_v4_always_on=1"),
                          (priv, "kernel.bpf_spec_v1_always_on=1"),
                          (priv, "kernel.bpf_spec_v4_always_on=1"),
-                         (priv, "net.core.bpf_jit_harden=1"),
+                         (priv, "net.core.bpf_jit_harden=2"),
                          (priv, "net.core.bpf_jit_harden=0")]:
             suite.append({
                 "bench_script": "bpftool",

@@ -10,6 +10,9 @@ sudo dmesg > ${dst}/dmesg
 
 echo 1 > sudo tee /proc/sys/kernel/nmi_watchdog
 
+sudo sysctl --load=/tmp/$USER-sysctl-backup.conf
+sudo sysctl --load=/etc/sysctl.conf
+
 if ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null
 then
 	min_freq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq)

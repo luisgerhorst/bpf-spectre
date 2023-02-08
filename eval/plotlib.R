@@ -97,6 +97,7 @@ ALL_DATA <- read_tsv(
     perf_l1_dcache_load_misses = col_double()
   )
 )
+
 DATA <- ALL_DATA %>%
   mutate(
     ## CPU = factor(case_when(

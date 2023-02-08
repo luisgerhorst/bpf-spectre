@@ -15,17 +15,17 @@ def main():
     subprocess.run(["make", "-C", "../system/bpf-samples", "clean", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
-    # T = os.getenv("BENCHRUN_DEFAULT_SUT", default="faui49easy6")
+    T = os.getenv("T", default="faui49easy6")
 
     suite = []
     # for T in ["faui49easy6", "faui49man1"]:
     #     append_T(suite, T)
-    append_T(suite, "faui49easy6")
+    append_T(suite, T)
     yaml.dump(suite, sys.stdout)
 
 def append_T(suite, T):
     priv="--drop="
-    unpriv="--drop=cap_sys_admin --drop=cap_perfmon"
+    unpr="--drop=cap_sys_admin --drop=cap_perfmon"
     priv_spec_mit="configs/priv-spec-mit.defconfig"
 
     # All programs:
@@ -33,20 +33,22 @@ def append_T(suite, T):
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (mcs, ca, bjh) in [("", unpriv, "1"), ("", unpriv, "0"),
-                               (priv_spec_mit, priv, "0"),
-                               ("", priv, "1"), ("", priv, "0")]:
+        for (ca, sc) in [(unpr, ""),
+                         (priv, "kernel.bpf_spec_v1_always_on=1 kernel.bpf_spec_v4_always_on=1"),
+                         (priv, "kernel.bpf_spec_v1_always_on=1"),
+                         (priv, "kernel.bpf_spec_v4_always_on=1"),
+                         (priv, "net.core.bpf_jit_harden=1"),
+                         (priv, "net.core.bpf_jit_harden=0")]:
             suite.append({
                 "bench_script": "bpftool",
-                "boot": {
-                    "MERGE_CONFIGS": mcs
-                },
+                "boot": {},
                 "run": {
                     "T": T,
                     "CPUFREQ": "base",
                     "CAPSH_ARGS": ca,
-                    "BPF_JIT_HARDEN": bjh,
+                    "SYSCTL": sc,
                     "BPF_OBJ": prog + ".bpf.o",
+                    "MERGE_CONFIGS": "",
                 },
             })
 

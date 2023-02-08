@@ -46,12 +46,12 @@ def main():
 
     logging.debug("\n%s", tidy_df)
     tidy_path.parent.mkdir(parents=True, exist_ok=True)
-    tidy_df.to_csv(tidy_path, sep="\t")
+    tidy_df.to_csv(tidy_path, sep="\t", index=False)
 
 def load_values(bench_run_path):
     d = {}
     for key_path in bench_run_path.joinpath("values").glob("*"):
-        d[key_path.name] = key_path.read_text()
+        d[key_path.name] = key_path.read_text().rstrip()
     return d
 
 def load_yaml(bench_run_path):

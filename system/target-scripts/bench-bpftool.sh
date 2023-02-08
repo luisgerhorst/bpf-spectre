@@ -25,8 +25,6 @@
 	sudo rm -rfd $path
 	# sudo bpftool --bpffs > ${bpftool_dst}/bpffs-init
 
-	echo "$BPF_JIT_HARDEN" | sudo tee /proc/sys/net/core/bpf_jit_harden
-
 	set +e
 	$cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
 	exitcode=$?

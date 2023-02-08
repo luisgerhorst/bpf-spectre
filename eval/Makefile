@@ -10,13 +10,13 @@ RM=rm
 all: plots
 
 RAW_DIRS=$(filter %/, $(wildcard $(BENCHRUN_DATA)/*/))
-PLOTS=$(RAW_DIRS:$(BENCHRUN_DATA)/%/=plots-%)
+PLOTS=$(RAW_DIRS:$(BENCHRUN_DATA)/%/=plots/%.pdf)
 
 .PHONY: plots
 plots: $(PLOTS)
 
-.PHONY: plots-%
-plots-%:
+.PHONY: plots/%.pdf
+plots/%.pdf:
 	$(MAKE) -f data.mk D=$*
 
 .PHONY: clean

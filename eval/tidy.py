@@ -83,7 +83,6 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
         # bpftool only exports data for the last repetition (burst_pos == repeat argument).
         return pd.DataFrame({ "observation": ["bench_run"] })
 
-    print(values)
     dfs = []
     for prog in values["bpftool_progs"].split():
         rec = int(values["bpftool_run_exitcode." + prog])
@@ -109,7 +108,7 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
     # Init actually used fields here, otherwise 0 is NA.
     counts = {}
     for o in ["lfence",           # san. stack slot, SSB
-              "rorw", "xorl", "subq", "addq", "andq", "orq", # ptr-alu-trunc
+              "rorw", "xorl", "xorq", "shlq", "cmpq", "subq", "addq", "andq", "orq", # ptr-alu-trunc
               "callq", "je", "jne", "movq", "movl" # Generic
               ]:
         counts[o] = 0

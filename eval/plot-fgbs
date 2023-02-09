@@ -2,8 +2,10 @@
 
 source("plotlib.R")
 
-## DATA <- DATA %>%
-##   filter(!str_detect(BPF_OBJ, ".*custom_.*"))
+DATA <- DATA %>%
+  filter(BPF_OBJ == "lbe_sockfilter.bpf.o"
+         | str_detect(BPF_OBJ, "^*init_whole_stack*")
+         | str_detect(BPF_OBJ, "^*minimal_legacy"))
 
 summary(DATA)
 print(DATA)

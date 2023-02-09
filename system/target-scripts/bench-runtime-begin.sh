@@ -74,12 +74,18 @@ sudo sysctl --all > $dst/sysctl.default
 sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
 sudo sysctl --all > $dst/sysctl
 
+set +x
 IFS=$'\n'
+for p in $(sudo find "/proc/sys/kernel/" -type f)
+do
+	sudo cat $p > ${dst}/values/kernel_$(basename $p)
+done
 for p in $(sudo find "/proc/sys/net/core/" -type f)
 do
 	sudo cat $p > ${dst}/values/net_core_$(basename $p)
 done
 unset IFS
+set -x
 
 set +e
 sudo systemctl status fai-boot.service > $dst/fai_status

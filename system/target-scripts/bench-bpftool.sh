@@ -25,6 +25,9 @@
 	sudo rm -rfd $path
 	# sudo bpftool --bpffs > ${bpftool_dst}/bpffs-init
 
+	# Must happen before load for bpf sysctls.
+	./bench-runtime-begin.sh $@
+
 	set +e
 	$cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
 	exitcode=$?
@@ -56,8 +59,6 @@
 		done
 		set -x
 	fi
-
-	./bench-runtime-begin.sh $@
 
 	echo -n $exitcode > ${values_dst}/bpftool_loadall_exitcode
 	if [ $exitcode != "0" ]

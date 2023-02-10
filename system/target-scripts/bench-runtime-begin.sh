@@ -63,11 +63,11 @@ hostname --short > ${dst}/values/hostname_short
 
 if [ -e /tmp/$USER-sysctl-backup.conf ]
 then
-	sudo sysctl --load=/tmp/$USER-sysctl-backup.conf
+	sudo sysctl --load=/tmp/$USER-sysctl-backup.conf > /dev/null
 else
-	sudo sysctl --all > /tmp/$USER-sysctl-backup.conf
+	sudo sysctl --all > /tmp/$USER-sysctl-backup.conf > /dev/null
 fi
-sudo sysctl --system
+sudo sysctl --system > /dev/null
 
 sudo sysctl --version > $dst/sysctl.version
 sudo sysctl --all > $dst/sysctl.default

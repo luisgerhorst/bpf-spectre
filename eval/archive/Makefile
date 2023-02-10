@@ -19,6 +19,10 @@ TARFLAGS_REPRO=--sort=name --mtime @1 --clamp-mtime --format=gnu --owner=0 --gro
 %.tar.gz: $(BENCHRUN_DATA)/%/suite-run.log
 	tar -c $(TARFLAGS_REPRO) --directory $(dir $<) . | $(GZIP) -cn9 > $@
 
+$(BENCHRUN_DATA)/%: %.tar.gz
+	mkdir -p $@
+	tar xf $< --directory=$@
+
 .PHONY: install-deps
 install-deps:
 	sudo apt install pigz

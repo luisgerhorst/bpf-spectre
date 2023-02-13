@@ -2,53 +2,49 @@
 
 source("plotlib.R")
 
-DATA <- DATA %>%
+dura <- DATA %>%
   filter(BPF_OBJ == "lbe_sockfilter.bpf.o"
          | str_detect(BPF_OBJ, "^*init_whole_stack*")
          | str_detect(BPF_OBJ, "^*minimal_legacy"))
 
-summary(DATA)
-print(DATA)
+summary(dura)
+print(dura)
 
-cns <- colnames(DATA)
-metrics <- cns[cns == "bpftool_loadall_exitcode"]
-
-for (m in metrics) {
-  print(m)
-  ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
-    geom_boxplot() +
-    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    facet_grid(rows=vars(T), labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
-}
-
-DATA <- DATA %>%
+dura <- dura %>%
   filter(bpftool_loadall_exitcode == 0)
-cns <- colnames(DATA)
-metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_") |
-               cns == "bpftool_run_exitcode"]
-for (m in metrics) {
-  print(m)
-  ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
-    geom_boxplot(position = "dodge") +
-    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    facet_grid(rows=vars(T, bpftool_loadall_exitcode),
-               cols=vars(CPUFREQ, bench_script),
-               labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
-}
 
-DATA <- DATA %>%
+dura <- dura %>%
   filter(bpftool_run_exitcode == 0)
-cns <- colnames(DATA)
-metrics <- cns[startsWith(cns, "bpftool_run_duration")]
-for (m in metrics) {
-  print(m)
-  ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
-    geom_boxplot() +
-    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    facet_grid(rows=vars(T, bpftool_loadall_exitcode, bpftool_run_exitcode),
-               cols=vars(CPUFREQ, bench_script),
-               labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
-}
+
+ggplot(dura, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0, NA)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
+             scales="free")
+eval_save(paste0("duration"),
+          title = NULL,
+          width_cm = 24,
+          height_cm = 14,
+          subtitle = NULL)
+
+ed <- DATA %>%
+  filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*"))
+
+expr <- ed %>%
+  group_by(BPF_OBJ, .drop=F) %>%
+  summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
+  ungroup() %>%
+  filter(ble_min == 0)
+
+expr <- ed %>%
+  inner_join(expr)
+
+ggplot(expr, aes(y=BPF_OBJ, x=SYSCTL, fill=factor(bpftool_loadall_exitcode))) +
+  geom_raster() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save(paste0("loading"),
+          title = NULL,
+          width_cm = 24,
+          height_cm = 14,
+          subtitle = NULL)

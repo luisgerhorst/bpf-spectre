@@ -94,7 +94,8 @@ ALL_DATA <- read_tsv(
   tidy_path,
   col_types = cols(
     perf_l1_icache_load_misses = col_double(),
-    perf_l1_dcache_load_misses = col_double()
+    perf_l1_dcache_load_misses = col_double(),
+    bpftool_loadall_exitcode = col_integer()
   )
 )
 
@@ -109,6 +110,10 @@ DATA <- ALL_DATA %>%
       burst_pos == max(burst_pos) ~ "Hot Caches",
       TRUE ~ "Warm Caches",
     ), levels = c("Cold Caches", "Hot Caches")),
+    User = factor(case_when(
+      CAPSH_ARGS == "--drop=" ~ "Privileged",
+      CAPSH_ARGS == "--drop=cap_sys_admin --drop=cap_perfmon" ~ "Unprivileged",
+      ), levels = c("Privileged", "Unprivileged")),
   )
 
 COL_WIDTH_CM=8.5

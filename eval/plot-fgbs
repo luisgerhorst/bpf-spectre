@@ -23,11 +23,7 @@ ggplot(dura, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
   scale_colour_viridis_d() +
   facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
              scales="free")
-eval_save(paste0("duration"),
-          title = NULL,
-          width_cm = PRES_W,
-          height_cm = PRES_H,
-          subtitle = NULL)
+ggsave(eval_path("duration", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
 
 ed <- DATA %>%
   filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*"))
@@ -44,8 +40,4 @@ ggplot(expr, aes(y=BPF_OBJ, x=SYSCTL, fill=`BPF Loadable`)) +
   geom_raster() +
   scale_fill_viridis_d(begin = 0.0, end = 0.7) +
   theme(axis.text.x = element_text(angle = 33, hjust=1))
-eval_save(paste0("loading"),
-          title = NULL,
-          width_cm = PRES_W,
-          height_cm = PRES_H,
-          subtitle = NULL)
+ggsave(eval_path("loading", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")

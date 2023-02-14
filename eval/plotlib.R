@@ -129,7 +129,7 @@ THESIS_HEIGHT_CM=THESIS_WIDTH_CM*0.9
 THESIS_FULL_HEIGHT_CM=20
 
 PRES_W=21
-PRES_H=PRES_W*(9/16)
+PRES_H=PRES_W*(8/16)
 
 ## https://personal.sron.nl/~pault/#qualitativescheme
 color_bblue <- "#4477aa"

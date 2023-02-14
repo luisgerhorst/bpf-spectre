@@ -2,7 +2,7 @@
 LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
 
 # Cilium
-CILIUM_C = $(wildcard $(PREFIX)/external/cilium/bpf/bpf_*.c)
+CILIUM_C = $(wildcard $(PREFIX)/external/cilium/bpf/bpf_align*.c)
 CILIUM_S = $(patsubst $(PREFIX)/external/cilium/bpf/bpf_%.c,$(PREFIX)/prog/cilium_%.bpf.s,$(CILIUM_C))
 
 # vbpf

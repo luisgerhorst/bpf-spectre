@@ -32,8 +32,8 @@ def append_T(suite, T):
     for prog_path in Path("../system/bpf-samples/prog").iterdir():
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
 
-        # if "cilium_aligncheck" not in prog:
-        #     continue
+        if "cilium_aligncheck" not in prog:
+            continue
 
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.

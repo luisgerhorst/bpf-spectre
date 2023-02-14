@@ -20,6 +20,7 @@ prog/lbe_%.bpf.s: | prog
 	$(MAKE) -C external/libbpf-bootstrap/examples/c .output/$*.bpf.s
 	ln -fs ../external/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
 
+
 # CILIUM_ARGS = MAX_BASE_OPTIONS=-DSKIP_POLICY_MAP=1
 
 # BUG: These currently do not load. https://github.com/4ast/bpf_cilium_test/blob/master/cilium_bpf_test.sh
@@ -27,6 +28,11 @@ prog/lbe_%.bpf.s: | prog
 prog/cilium_%.bpf.s: Makefile | prog
 	$(MAKE) -C external/cilium/bpf $(CILIUM_ARGS) bpf_$*.s
 	ln -fs ../external/cilium/bpf/bpf_$*.s $@
+
+.build/cilium_%.bpf.o: Makefile | .build
+	./cilium-bpf-compile.sh external/cilium/bpf bpf_$*
+	ln -fs ../external/cilium/bpf/bpf_$*.o $@
+
 
 CLANG ?= clang
 ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's/ppc64le/powerpc/' | sed 's/mips.*/mips/')
@@ -44,10 +50,6 @@ CLANG_BPF_SYS_INCLUDES = $(shell $(CLANG) -v -E - </dev/null 2>&1 \
 #
 prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
 	$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -S -o $@
-
-.build/cilium_%.bpf.o: Makefile | .build
-	$(MAKE) -C external/cilium/bpf $(CILIUM_ARGS) bpf_$*.o
-	ln -fs ../external/cilium/bpf/bpf_$*.o $@
 
 # https://pchaigno.github.io/bpf/2021/10/20/ebpf-instruction-sets.html
 .build/%.bpf.o: prog/%.bpf.s | .build

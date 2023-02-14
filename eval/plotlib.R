@@ -114,6 +114,11 @@ DATA <- ALL_DATA %>%
       CAPSH_ARGS == "--drop=" ~ "Privileged",
       CAPSH_ARGS == "--drop=cap_sys_admin --drop=cap_perfmon" ~ "Unprivileged",
       ), levels = c("Privileged", "Unprivileged")),
+    `BPF Loadable` = bpftool_loadall_exitcode == 0,
+    SYSCTL = case_when(
+      is.na(SYSCTL) ~ "Default (bpf_*=0)",
+      TRUE ~ SYSCTL,
+    ),
   )
 
 COL_WIDTH_CM=8.5
@@ -122,6 +127,9 @@ COL_HEIGHT_CM=6
 THESIS_WIDTH_CM=14.5
 THESIS_HEIGHT_CM=THESIS_WIDTH_CM*0.9
 THESIS_FULL_HEIGHT_CM=20
+
+PRES_W=21
+PRES_H=PRES_W*(9/16)
 
 ## https://personal.sron.nl/~pault/#qualitativescheme
 color_bblue <- "#4477aa"

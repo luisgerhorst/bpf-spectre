@@ -12,20 +12,21 @@ print(dura)
 
 dura <- dura %>%
   filter(bpftool_loadall_exitcode == 0)
-
 dura <- dura %>%
   filter(bpftool_run_exitcode == 0)
 
 ggplot(dura, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
   geom_boxplot() +
+  labs(y = "Execution Time [ns]") +
   scale_y_continuous(limits = c(0, NA)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  scale_colour_viridis_d() +
   facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
              scales="free")
 eval_save(paste0("duration"),
           title = NULL,
-          width_cm = 24,
-          height_cm = 14,
+          width_cm = PRES_W,
+          height_cm = PRES_H,
           subtitle = NULL)
 
 ed <- DATA %>%
@@ -36,15 +37,15 @@ expr <- ed %>%
   summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
   ungroup() %>%
   filter(ble_min == 0)
-
 expr <- ed %>%
   inner_join(expr)
 
-ggplot(expr, aes(y=BPF_OBJ, x=SYSCTL, fill=factor(bpftool_loadall_exitcode))) +
+ggplot(expr, aes(y=BPF_OBJ, x=SYSCTL, fill=`BPF Loadable`)) +
   geom_raster() +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
+  scale_fill_viridis_d(begin = 0.0, end = 0.7) +
+  theme(axis.text.x = element_text(angle = 33, hjust=1))
 eval_save(paste0("loading"),
           title = NULL,
-          width_cm = 24,
-          height_cm = 14,
+          width_cm = PRES_W,
+          height_cm = PRES_H,
           subtitle = NULL)

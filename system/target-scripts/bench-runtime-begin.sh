@@ -61,18 +61,16 @@ grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities
 uname -a > ${dst}/values/uname_a
 hostname --short > ${dst}/values/hostname_short
 
-if [ -e /tmp/$USER-sysctl-backup.conf ]
-then
-	sudo sysctl --load=/tmp/$USER-sysctl-backup.conf > /dev/null
-else
-	sudo sysctl --all > /tmp/$USER-sysctl-backup.conf > /dev/null
-fi
-sudo sysctl --system > /dev/null
+mkdir $dst/sysctl.d
+sudo sysctl --version > $dst/sysctl.d/version
 
-sudo sysctl --version > $dst/sysctl.version
-sudo sysctl --all > $dst/sysctl.default
+# Load defaults
+sudo sysctl --system > /dev/null
+sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 net.core.bpf_jit_harden=0
+
+sudo sysctl --all > $dst/sysctl.d/default
 sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
-sudo sysctl --all > $dst/sysctl
+sudo sysctl --all > $dst/sysctl.d/all
 
 set +x
 IFS=$'\n'

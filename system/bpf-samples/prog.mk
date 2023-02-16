@@ -2,7 +2,16 @@
 LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
 
 # Cilium
-CILIUM_C = $(wildcard $(PREFIX)/external/cilium/bpf/bpf_align*.c)
+#
+# List from cilium bpf/init.sh:
+CILIUM_C = $(PREFIX)/external/cilium/bpf/bpf_sock.c
+# Has legacy map:
+# $(PREFIX)/external/cilium/bpf/bpf_alignchecker.c
+#
+# Does not load:
+# $(PREFIX)/external/cilium/bpf/bpf_overlay.c
+#
+#
 CILIUM_S = $(patsubst $(PREFIX)/external/cilium/bpf/bpf_%.c,$(PREFIX)/prog/cilium_%.bpf.s,$(CILIUM_C))
 
 # vbpf

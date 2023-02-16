@@ -10,9 +10,8 @@ sudo dmesg > ${dst}/dmesg
 
 echo 1 > sudo tee /proc/sys/kernel/nmi_watchdog
 
-sudo sysctl --all > $dst/sysctl.final
-sudo sysctl --load=/tmp/$USER-sysctl-backup.conf > /dev/null
-sudo sysctl --system > /dev/null
+sudo sysctl --all > $dst/sysctl.d/final
+sudo sysctl --load=$dst/sysctl.d/default > /dev/null
 
 if ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null
 then

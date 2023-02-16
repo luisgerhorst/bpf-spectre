@@ -16,3 +16,6 @@
 [submodule "spectector-proj"]
 	path = system/bpf-samples/spectector-proj
 	url = git@gitlab.cs.fau.de:un65esoq/spectector-bpf.git
+[submodule "system/bpf-samples/external/katran"]
+	path = system/bpf-samples/external/katran
+	url = git@github.com:luisgerhorst/katran.git

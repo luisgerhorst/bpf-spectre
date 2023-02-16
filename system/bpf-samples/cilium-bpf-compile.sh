@@ -24,11 +24,14 @@ function bpf_compile()
 	      -Wimplicit-int-conversion -Wenum-conversion	\
 	      -I. -I$DIR -I$LIB -I$LIB/include			\
 	      -D__NR_CPUS__=$NR_CPUS				\
-	      -DENABLE_ARP_RESPONDER=1				\
 	      $EXTRA_OPTS					\
 	      -c $LIB/$IN -o - |				\
 	llc -march=bpf -mcpu=$MCPU -mattr=dwarfris -filetype=$TYPE -o $OUT
 }
 
+
+# TODO: Add more options from cilium bpf/Makefile?
+MAX_BASE_OPTIONS="-DSKIP_DEBUG=1 -DENABLE_IPV4=1 -DENABLE_IPV6=1 -DENABLE_SOCKET_LB_TCP=1 -DENABLE_SOCKET_LB_UDP=1 -DENABLE_ROUTING=1 -DNO_REDIRECT=1 -DPOLICY_VERDICT_NOTIFY=1 -DALLOW_ICMP_FRAG_NEEDED=1 -DENABLE_IDENTITY_MARK=1 -DMONITOR_AGGREGATION=3 -DCT_REPORT_FLAGS=0x0002 -DENABLE_HOST_FIREWALL=1 -DENABLE_ICMP_RULE=1 -DENABLE_CUSTOM_CALLS=1"
+
 pushd $1
-bpf_compile $2.c $2.o obj ""
+bpf_compile $2.c $2.o obj "$MAX_BASE_OPTIONS"

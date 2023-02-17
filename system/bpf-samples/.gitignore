@@ -7,4 +7,5 @@ prog/lbe_*.bpf.s
 prog/cilium_*.bpf.s
 prog/vbpf_*.bpf.s
 prog/bcc_*.bpf.s
+prog/linux_*.bpf.s
 .build/

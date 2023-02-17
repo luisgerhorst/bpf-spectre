@@ -38,10 +38,10 @@ def main():
 
     run_suite(suite_dir, suite_run_path, suite, reps, burst_len)
 
-    subprocess.run(["make", "-k", "-C", "../eval/archive"], check=True)
+    subprocess.run(["make", "-k", "-C", "../data/archive"], check=True)
 
 def parse_args():
-    raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../eval/.raw"))
+    raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../data/.raw"))
 
     parser = argparse.ArgumentParser(description="Run each benchmark burst_len times in a row, repeat suite rep times.")
     parser.add_argument("-s", "--suite")

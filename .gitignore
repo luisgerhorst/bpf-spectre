@@ -6,6 +6,8 @@ dist/
 /system/bpf-samples/.perf_event_paranoid_-1
 /bench/.data/
 /bench/.build/
-/eval/plots/
-/eval/.tidy/
-/eval/.raw/
+/data/plots/
+/data/.tidy/
+/data/.raw/
+/data/Rplots.pdf
+/data/archive/scratch*.tar.gz

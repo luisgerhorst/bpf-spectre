@@ -1,5 +1,32 @@
 PREFIX = .
-include prog.mk
+
+# Libbpf Bootstrap Examples
+LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
+LBE = $(patsubst %,lbe_%,$(LBE_APPS))
+
+# Cilium
+#
+# List from cilium bpf/init.sh:
+CILIUM_C = $(PREFIX)/external/cilium/bpf/bpf_sock.c
+# Has legacy map:
+# $(PREFIX)/external/cilium/bpf/bpf_alignchecker.c
+#
+# Does not load:
+# $(PREFIX)/external/cilium/bpf/bpf_overlay.c
+#
+#
+CILIUM = $(patsubst $(PREFIX)/external/cilium/bpf/bpf_%.c,cilium_%,$(CILIUM_C))
+
+# vbpf
+VBPF_C = $(wildcard $(PREFIX)/external/vbpf/src/*.c)
+VBPF = $(patsubst $(PREFIX)/external/vbpf/src/%.c,vbpf_%,$(VBPF_C))
+
+CUSTOM_S = $(wildcard $(PREFIX)/prog/custom_*.bpf.s)
+CUSTOM = $(patsubst $(PREFIX)/prog/%.bpf.s,%,$(CUSTOM_S))
+
+KATRAN = $(patsubst %,katran_%,balancer_kern healthchecking_ipip healthchecking_kern xdp_pktcntr xdp_root)
+
+PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(KATRAN)
 
 LLVM_BIN = /usr/lib/llvm-15/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
@@ -10,17 +37,33 @@ endif
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst $(PREFIX)/prog/%.bpf.s,prog-%,$(ALL_S))
+all: $(patsubst %,prog-%,$(PROGS))
 
-# $(patsubst $(PREFIX)/prog/%.bpf.s,.build/%.spectector.log,$(ALL_S))
 .PHONY: prog-%
 prog-%:
-	$(MAKE) prog/$*.bpf.s .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf
+	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf prog/$*.bpf.s
+
+.PHONY: prog-katran_%
+prog-katran_%:
+	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf
+
+#
+# libbpf/examples
+#
 
 .PHONY: prog/lbe_%.bpf.s
 prog/lbe_%.bpf.s: | prog
 	$(MAKE) -C external/libbpf-bootstrap/examples/c .output/$*.bpf.s
 	ln -fs ../external/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
+
+#
+# Katran
+#
+
+.PHONY: .build/katran_%.bpf.o
+.build/katran_%.bpf.o: Makefile | .build
+	env -C external/katran ./build_katran.sh
+	ln -fs ../external/katran/_build/deps/bpfprog/bpf/$*.o $@
 
 #
 # Cilium

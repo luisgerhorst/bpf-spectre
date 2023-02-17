@@ -29,10 +29,10 @@ def append_T(suite, T):
     priv_spec_mit="configs/priv-spec-mit.defconfig"
 
     # All programs:
-    for prog_path in Path("../system/bpf-samples/prog").iterdir():
-        prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.s
+    for prog_path in Path("../system/bpf-samples/.build/").glob("*.bpf.o"):
+        prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.o
 
-        if "cilium" not in prog:
+        if "katran" not in prog:
             continue
 
         # Skip priv_spec_mit with unpriv user because it will be the same as

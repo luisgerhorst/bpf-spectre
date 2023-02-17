@@ -36,8 +36,8 @@ The latter also installs and sets up all benchmark dependencies (e.g., boot the 
 
 Plot and open the results on the development system:
 
-    make -C eval -k -j $(getconf _NPROCESSORS_ONLN) all
-    open eval/plots/*-idle.pdf
+    make -C data -k -j $(getconf _NPROCESSORS_ONLN) all
+    open data/plots/*-idle.pdf
 
 To set up the physical SuTs, see `system`.
 
@@ -45,9 +45,9 @@ To set up the physical SuTs, see `system`.
 
     system/{linux, *}
       -- make -C system --> System under Test (Target)
-      -- ./bench/run.sh --> eval/.raw/*/
-      -- ./eval/tidy.py --> eval/.tidy/*.tsv.gz
-      -- ./eval/plot-*  --> eval/plots/*.pdf
+      -- ./bench/run.sh --> data/.raw/*/
+      -- ./data/tidy.py --> data/.tidy/*.tsv.gz
+      -- ./data/plot-*  --> data/plots/*.pdf
 
 This does not mean that the above commands should be called directly.
 

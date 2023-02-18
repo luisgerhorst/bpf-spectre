@@ -12,6 +12,8 @@ import json
 import numpy as np
 import pandas as pd
 import yaml
+# from etaprogress.progress import ProgressBar
+from joblib import Parallel, delayed
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -24,29 +26,38 @@ def main():
     raw_path = Path(args.raw_path if args.data is None else raw_dir.joinpath(args.data))
     tidy_path = Path(os.getenv("TIDY", default=".tidy/" + raw_path.name + ".tsv.gz"))
 
-    tidy_dfs = []
-
     # Sort tests to allow for easier debugging.
-    for bench_run_path in sorted(raw_path.iterdir()):
-        if not bench_run_path.joinpath("bench-run.yaml").exists():
-            continue;
-        values = load_values(bench_run_path)
-        yaml = load_yaml(bench_run_path)
-        burst_len = int(values["burst_len"])
-        for burst_pos in range(0, burst_len):
-            df = tidy_bench_run(bench_run_path, values, yaml, burst_pos);
-            for key, value in values.items():
-                df[key] = value
-            df = dict_into_df(df, None, yaml)
-            df["bench_run_name"] = bench_run_path.name
-            df["burst_pos"] = burst_pos
-            tidy_dfs.append(df)
-
-    tidy_df = pd.concat(tidy_dfs)
+    brps = sorted(raw_path.iterdir())
+    br_dfs = Parallel(n_jobs=-1, verbose=1)(delayed(bench_run_df)(brp) for brp in brps)
+    tidy_df = pd.concat(br_dfs)
 
     logging.debug("\n%s", tidy_df)
     tidy_path.parent.mkdir(parents=True, exist_ok=True)
     tidy_df.to_csv(tidy_path, sep="\t", index=False)
+
+def bench_run_df(bench_run_path):
+    tidy_dfs = []
+
+    if not bench_run_path.joinpath("bench-run.yaml").exists():
+        return pd.DataFrame()
+
+    values = load_values(bench_run_path)
+    yaml = load_yaml(bench_run_path)
+
+    burst_len = int(values["burst_len"])
+    for burst_pos in range(0, burst_len):
+        df = tidy_bench_run(bench_run_path, values, yaml, burst_pos)
+        df = dict_into_df(df, None, yaml)
+        df = pd.concat([
+            df,
+            pd.DataFrame(values, index=[0]),
+            pd.DataFrame({
+                "bench_run_name": bench_run_path.name,
+                "burst_pos": burst_pos
+            }, index=[0])
+        ], axis=1)
+        tidy_dfs.append(df)
+    return pd.concat(tidy_dfs)
 
 def load_values(bench_run_path):
     d = {}
@@ -79,7 +90,7 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
         return tidy_bpftool(bench_run_path, values, yaml, burst_pos)
 
 def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
-    if values["bpftool_loadall_exitcode"] != "0":
+    if values["bpftool_loadall_exitcode"] != "0" or "bpftool_progs" not in values:
         # bpftool only exports data for the last repetition (burst_pos == repeat argument).
         return pd.DataFrame({ "observation": ["bench_run"] })
 
@@ -96,15 +107,26 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
         df = tidy_bpftool_jited_into_df(bench_run_path, prog, df)
 
         if rec == 0:
-            run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + "." + str(burst_pos) + ".json").open())
-            run_json["duration_ns"] = run_json["duration"] # https://qmonnet.github.io/whirl-offload/2021/09/23/bpftool-features-thread/
-            df = dict_into_df(df, "bpftool_run", run_json)
+            try:
+                run_json = json.load(bench_run_path.joinpath("bpftool/run." + prog + "." + str(burst_pos) + ".json").open())
+                run_json["duration_ns"] = run_json["duration"] # https://qmonnet.github.io/whirl-offload/2021/09/23/bpftool-features-thread/
+                df = dict_into_df(df, "bpftool_run", run_json)
+            except json.decoder.JSONDecodeError as e:
+                print("%s: %s" % (bench_run_path, e), file=sys.stderr)
+                raise e
 
         dfs.append(df)
     return pd.concat(dfs)
 
 def tidy_bpftool_jited_into_df(brp, prog, df):
-    jited = json.load(brp.joinpath("bpftool/jited." + prog + ".json").open())
+    jited = None
+    try:
+        jited = json.load(brp.joinpath("bpftool/jited." + prog + ".json").open())
+        # Likely caused by bpftool segfault for some linux test programs.
+    except json.decoder.JSONDecodeError as je:
+        df["bpftool_jited_insncnt_total"] = [None]
+        return df
+
     # Init actually used fields here, otherwise 0 is NA.
     counts = {}
     for o in ["lfence",           # san. stack slot, SSB
@@ -117,6 +139,7 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
         counts[o] = counts.get(o, 0) + 1
     for k, v in counts.items():
         df["bpftool_jited_insncnt_" + k] = [v]
+
     df["bpftool_jited_insncnt_total"] = [len(jited[0]["insns"])]
     return df
 

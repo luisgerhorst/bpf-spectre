@@ -8,13 +8,17 @@ Clone with `--recursive`. Install [Git LFS](https://git-lfs.com/) for raw data a
 -   Flexible benchmarks (microbenchmarks, real-world client/server benchmarks).
 -   Flexible system under test (e.g., VM or physical machine), compare different SuTs.
 -   Fully automatic setup of the SuT with the software to evaluate (boot kernel, &#x2026;).
--   Plot available benchmark results while the benchmark is still running.
+-   Plot available benchmark results while the benchmark suite is still running.
 -   ETA for long benchmark runs.
 -   Parallel plotting.
 -   Separate running benchmarks and processing (e.g., plotting) their results.
 -   Analyse [tidy](https://vita.had.co.nz/papers/tidy-data.pdf) data but still collect a lot of (dirty) data during the benchmark, decide later what to actually process.
 -   Randomize benchmark execution order to avoid false conclusions and encourage reproducibility.
 -   Archive/share large raw benchmark results and prebuilt plots with Git LFS to avoid exceeding Git limits.
+-   Retry benchmarks when running a suite to not have the whole suite fail if
+    there's a network problem. If you ever have to, you can even run the suite
+    on your laptop, suspend it, and continue running the suite when you want to
+    continue.
 
 ## Quick Start
 

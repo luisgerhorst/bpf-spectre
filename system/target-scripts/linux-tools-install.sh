@@ -17,9 +17,10 @@
     if ! ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
     then
             make -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig prepare
+            # TODO: Test this.
             make SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
-                -j $(getconf _NPROCESSORS_ONLN) -k -C ../target_prefix/linux-src/tools/testing/selftests \
-                install \
+                -j $(getconf _NPROCESSORS_ONLN) -k -C ../target_prefix/linux-src \
+                kselftest-install \
                 || true
             ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
     fi

@@ -61,7 +61,7 @@ prog-%:
 #
 
 LBE_C = external/libbpf-bootstrap/examples/c
-.PHONY: $(LBE_C)/linux_%.bpf.c:
+.PHONY: $(LBE_C)/linux_%.bpf.c
 $(LBE_C)/linux_%.bpf.c:
 	ln -fs $(shell realpath $(LINUX)/$(L_SBP)/$*.c) $@
 

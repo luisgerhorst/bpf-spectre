@@ -11,6 +11,8 @@ import argparse
 import random
 import time
 import copy
+import time
+import shutil
 
 import yaml # Install with 'pip install pyyaml'
 from etaprogress.progress import ProgressBar
@@ -18,7 +20,7 @@ from etaprogress.progress import ProgressBar
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
-    suite_path, suite_run_path, reps, burst_len = parse_args()
+    args, suite_path, suite_run_path = parse_args()
     suite_dir = Path(os.path.dirname(suite_path))
 
     subprocess.run(["make", suite_path], check=True)
@@ -31,12 +33,14 @@ def main():
         subprocess.run(["trash", suite_run_path], check=True)
 
     suite_run_path.mkdir(parents=True)
+    shutil.copy(suite_path, suite_run_path.joinpath("suite.yaml"))
 
     suite_log_tee = subprocess.Popen(["tee", suite_run_path.joinpath("suite-run.log")], stdin=subprocess.PIPE)
     os.dup2(suite_log_tee.stdin.fileno(), sys.stdout.fileno())
     os.dup2(suite_log_tee.stdin.fileno(), sys.stderr.fileno())
 
-    run_suite(suite_dir, suite_run_path, suite, reps, burst_len)
+    print(args)
+    run_suite(suite_dir, suite_run_path, suite, args.reps, args.burst_len)
 
     subprocess.run(["make", "-k", "-C", "../data/archive"], check=True)
 
@@ -49,7 +53,7 @@ def parse_args():
     parser.add_argument("-p", "--data-path", help="Relative to BENCHRUN_DATA. For example, set this to 'scratch' for test-runs.")
     parser.add_argument("-r", "--reps", default=1, type=int)
     parser.add_argument("-b", "--burst-len", default=5, type=int)
-    parser.add_argument("--random-seed", default=0, type=int)
+    parser.add_argument("--random-seed", default=time.time_ns(), type=int)
     args = parser.parse_args()
 
     # Allow reproducible shuffling of the suite.
@@ -63,7 +67,9 @@ def parse_args():
             "_" + args.data_name if args.data_name is not None else "",
         ) if args.data_path is None else args.data_path))
 
-    return suite_path, suite_run_path, args.reps, args.burst_len
+    return args, suite_path, suite_run_path
+
+RETRY_MAX = 10
 
 def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
     i = 0
@@ -77,13 +83,23 @@ def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
             print("%s: %s" % (bar, bench), end="\n")
             sys.stdout.flush()
             bench_list = [bench["bench_script"]] + list(bench["boot"].values()) + list(bench["run"].values())
-            bench_foldername = '{:04d}-{}'.format(i, '-'.join(map(urllib.parse.quote_plus, map(str, bench_list))))
-            run_bench(suite_dir, suite_run_path.joinpath(bench_foldername[0:128]), bench, burst_len)
+            human_name = urllib.parse.quote_plus('-'.join(map(str, bench_list)).replace("=", "-"))[0:128]
+            name = '{:04d}.{}'.format(i, human_name.replace(".", "-"))
+            tmp = None
+            for retry in range(0, RETRY_MAX):
+                tmp = suite_run_path.joinpath("%s.retry-%d.incomplete-bench-run" % (name, retry))
+                tmp.mkdir()
+                try:
+                    run_bench(suite_dir, tmp, bench, burst_len, retry)
+                    break
+                except subprocess.CalledProcessError as e:
+                    if retry == RETRY_MAX-1:
+                        raise e
+                    time.sleep(retry*60)
+            os.rename(tmp, suite_run_path.joinpath("%s.bench-run" % (name)))
             i += 1
 
-def run_bench(suite_dir, bench_run_data, bench, burst_len):
-    bench_run_data.mkdir()
-
+def run_bench(suite_dir, bench_run_data, bench, burst_len, retry):
     with subprocess.Popen(["tee", bench_run_data.joinpath("bench-run.log")], stdin=subprocess.PIPE) as bench_log_tee:
         subproc_env = os.environ.copy()
         for name, value in bench['boot'].items():
@@ -112,6 +128,7 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len):
         bench_run.update(bench_cp.pop('run'))
         bench_run.update(bench_cp)
 
+        bench_run["retry"] = retry
         bench_run["date"] = datetime.datetime.now().isoformat()
         yaml.dump(bench_run, bench_run_yaml)
 

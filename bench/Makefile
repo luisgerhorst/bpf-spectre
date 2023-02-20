@@ -10,12 +10,15 @@ all: $(suite_def_yamls) $(suite_py_yamls)
 .build:
 	mkdir -p $@
 
-.PHONY: .build/%.yaml
-.build/%.yaml: %.suite.py | .build
-	./$< > $@ || rm -f $@
+.build/%.yaml: .FORCE
+	./$*.suite.py > $@ || rm -f $@
 
-.build/%.yaml: %.suite.yaml | .build
-	ln -s $< $@
+PHONY: .FORCE
+.FORCE:
+
+# .PHONY: .build/%.yaml
+# .build/%.yaml: %.suite.yaml | .build
+# 	ln -s $< $@
 
 .PHONY: install-deps
 install-deps:

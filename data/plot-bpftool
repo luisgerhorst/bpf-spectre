@@ -85,12 +85,10 @@ for (m in metrics) {
   eval_save(paste0(m, "-point"))
 }
 
-ggplot(md, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
+ggplot(md, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=bpftool_run_duration_ns, colour=SYSCTL)) +
   geom_boxplot() +
   labs(y = "Execution Time [ns]") +
   scale_y_continuous(limits = c(0, NA)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-  scale_colour_viridis_d() +
-  facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
-             scales="free")
+  scale_colour_viridis_d()
 eval_save("executiontime")

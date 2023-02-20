@@ -15,11 +15,9 @@ def main():
     subprocess.run(["make", "-C", "../system/bpf-samples", "clean", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
-    T = os.getenv("T", default="faui49easy6")
+    T = os.getenv("T", default="faui49man1")
 
     suite = []
-    # for T in ["faui49easy6", "faui49man1"]:
-    #     append_T(suite, T)
     append_T(suite, T)
     yaml.dump(suite, sys.stdout)
 

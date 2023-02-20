@@ -23,7 +23,7 @@ def main():
     args, suite_path, suite_run_path = parse_args()
     suite_dir = Path(os.path.dirname(suite_path))
 
-    subprocess.run(["make", suite_path], check=True)
+    subprocess.run(["make", suite_path], check=True, env=os.environ.copy())
     suite = None
     with open(suite_path) as suite_yaml:
         suite = yaml.safe_load(suite_yaml)

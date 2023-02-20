@@ -120,12 +120,16 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
 
 def tidy_bpftool_jited_into_df(brp, prog, df):
     jited = None
+    f = "bpftool/jited." + prog + ".json"
     try:
-        jited = json.load(brp.joinpath("bpftool/jited." + prog + ".json").open())
+        # Fixup for bpftool's invalid \' escapes.
+        s = brp.joinpath(f).read_text().replace("\\'", "'")
+        jited = json.loads(s)
         # Likely caused by bpftool segfault for some linux test programs.
     except json.decoder.JSONDecodeError as je:
-        df["bpftool_jited_insncnt_total"] = [None]
-        return df
+        print("%s/%s: %s" % (brp, f, je), file=sys.stderr)
+        # df["bpftool_jited_insncnt_total"] = [None]
+        raise je
 
     # Init actually used fields here, otherwise 0 is NA.
     counts = {}

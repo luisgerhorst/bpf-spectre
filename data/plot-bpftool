@@ -2,30 +2,44 @@
 
 source("plotlib.R")
 
-## DATA <- DATA %>%
-##   filter(!str_detect(BPF_OBJ, ".*custom_.*"))
-
-summary(DATA)
 print(DATA)
 
-cns <- colnames(DATA)
-metrics <- cns[cns == "bpftool_loadall_exitcode"]
 
-for (m in metrics) {
-  ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
-    geom_boxplot() +
-    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    facet_grid(rows=vars(T), labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
-}
+ed <- DATA %>%
+  filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*"))
+expr <- ed %>%
+  group_by(BPF_OBJ, .drop=F) %>%
+  summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
+  ungroup() %>%
+  filter(ble_min == 0)
+expr <- ed %>%
+  inner_join(expr)
+
+ggplot(expr, aes(SYSCTL, fill=`BPF Loadable`)) +
+  geom_histogram(stat = "count", position="stack")
+eval_save("lahist")
 
 DATA <- DATA %>%
-  filter(bpftool_loadall_exitcode == 0)
+  filter(bpftool_run_exitcode == 0, bpftool_loadall_exitcode == 0)
+
+
+md <- DATA %>%
+  filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v4 == "0", User == "Privileged") %>%
+  group_by(BPF_OBJ, bpftool_prog, .drop=F) %>%
+  summarize(
+    bjit_max = max(bpftool_jited_insncnt_total), bjit_min = min(bpftool_jited_insncnt_total),
+    bjil_max = max(bpftool_jited_insncnt_lfence), bjil_min = min(bpftool_jited_insncnt_lfence)
+  ) %>%
+  ungroup() %>%
+  filter(bjit_max > 1.05 * bjit_min)
+md <- DATA %>%
+  filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v4 == "0", User == "Privileged") %>%
+  inner_join(md)
 cns <- colnames(DATA)
-metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_") |
-               cns == "bpftool_run_exitcode"]
+metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_lfence") |
+               startsWith(cns, "bpftool_jited_insncnt_total")]
 for (m in metrics) {
-  ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
+  ggplot(md, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
     geom_boxplot(position = "dodge") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     facet_grid(rows=vars(T, bpftool_loadall_exitcode),
@@ -34,16 +48,49 @@ for (m in metrics) {
   eval_save(paste0(m, "-point"))
 }
 
+
 DATA <- DATA %>%
-  filter(bpftool_run_exitcode == 0)
+  filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v1 == "0", User == "Privileged")
+
+ggplot(DATA, aes(bpftool_jited_insncnt_total, fill=SYSCTL)) +
+  geom_histogram(position="dodge")
+eval_save("total")
+
+ggplot(DATA, aes(bpftool_jited_insncnt_lfence, fill=bpftool_jited_insncnt_total)) +
+  geom_histogram() +
+  facet_grid(rows=vars(SYSCTL),
+             labeller=label_both, scales="free")
+eval_save("lfence")
+
+md <- DATA %>%
+  group_by(BPF_OBJ, bpftool_prog, .drop=F) %>%
+  summarize(
+    bjit_max = max(bpftool_jited_insncnt_total), bjit_min = min(bpftool_jited_insncnt_total),
+    bjil_max = max(bpftool_jited_insncnt_lfence), bjil_min = min(bpftool_jited_insncnt_lfence)
+  ) %>%
+  ungroup() %>%
+  filter(bjit_max > 1.05 * bjit_min)
+md <- DATA %>% inner_join(md)
+
 cns <- colnames(DATA)
-metrics <- cns[startsWith(cns, "bpftool_run_duration")]
+metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_lfence") |
+               startsWith(cns, "bpftool_jited_insncnt_total")]
 for (m in metrics) {
-  ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
-    geom_boxplot() +
+  ggplot(md, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
+    geom_boxplot(position = "dodge") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    facet_grid(rows=vars(T, bpftool_loadall_exitcode, bpftool_run_exitcode),
+    facet_grid(rows=vars(T, bpftool_loadall_exitcode),
                cols=vars(CPUFREQ, bench_script),
                labeller=label_both, scales="free")
   eval_save(paste0(m, "-point"))
 }
+
+ggplot(md, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
+  geom_boxplot() +
+  labs(y = "Execution Time [ns]") +
+  scale_y_continuous(limits = c(0, NA)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  scale_colour_viridis_d() +
+  facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
+             scales="free")
+eval_save("executiontime")

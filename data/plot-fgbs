@@ -27,7 +27,6 @@ ggsave(eval_path("duration", 0, ".png"), plot=last_plot(), width = PRES_W, heigh
 
 ed <- DATA %>%
   filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*"))
-
 expr <- ed %>%
   group_by(BPF_OBJ, .drop=F) %>%
   summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%

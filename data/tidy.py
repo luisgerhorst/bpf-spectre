@@ -124,6 +124,7 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
         jited = json.load(brp.joinpath("bpftool/jited." + prog + ".json").open())
         # Likely caused by bpftool segfault for some linux test programs.
     except json.decoder.JSONDecodeError as je:
+        print("%s: %s" % (brp, je), file=sys.stderr)
         df["bpftool_jited_insncnt_total"] = [None]
         return df
 

@@ -12,7 +12,6 @@ cns <- colnames(DATA)
 metrics <- cns[cns == "bpftool_loadall_exitcode"]
 
 for (m in metrics) {
-  print(m)
   ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
@@ -26,7 +25,6 @@ cns <- colnames(DATA)
 metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_") |
                cns == "bpftool_run_exitcode"]
 for (m in metrics) {
-  print(m)
   ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
     geom_boxplot(position = "dodge") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
@@ -41,7 +39,6 @@ DATA <- DATA %>%
 cns <- colnames(DATA)
 metrics <- cns[startsWith(cns, "bpftool_run_duration")]
 for (m in metrics) {
-  print(m)
   ggplot(DATA, aes(x=paste(BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(CAPSH_ARGS, SYSCTL))) +
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +

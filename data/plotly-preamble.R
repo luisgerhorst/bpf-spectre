@@ -9,13 +9,11 @@ library(purrr) # for map_lgl
 library(readr)
 library(dplyr, warn.conflicts = FALSE)
 library(stringr)
+library(plotly)
 library(ggplot2)
-## library(plotly)
-## library(htmlwidgets)
+library(htmlwidgets)
 library(scriptName)
 library(argparse)
-library(tikzDevice)
-library(gghighlight)
 
 tidy_dir <- Sys.getenv("TIDY_DIR", unset=".tidy")
 
@@ -72,15 +70,11 @@ eval_save_tikz <- function(plot_name) {
   tikz(file = eval_path(plot_name, 0, ".tex"), width = TEXT_COL_WIDTH_INCH, height = 0.68*TEXT_COL_WIDTH_INCH)
 }
 
-eval_save <- function(plot_name, eval_id = plotlib_eval_id,
+eval_save <- function(p, plot_name, eval_id = plotlib_eval_id,
                       title=plot_name, subtitle=paste0("eval-id = ", eval_id),
                       width_cm=16*3, height_cm=9*3) {
-  lp <- last_plot() + labs(title = title, subtitle = subtitle)
-  ep <- eval_path(plot_name, eval_id, ".pdf")
-  ggsave(ep,
-         plot = lp,
-         width = width_cm, height = height_cm,
-         units = "cm")
+  eh <- eval_path(plot_name, eval_id, ".html")
+  htmlwidgets::saveWidget(ggplotly(p), eh)
   plotlib_eval_id <<- plotlib_eval_id + 1
 }
 

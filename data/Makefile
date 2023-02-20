@@ -27,5 +27,5 @@ clean:
 install-deps:
 	sudo apt install r-base cups libcurl4-openssl-dev
 	pip3 install pyyaml seaborn
-	Rscript -e 'install.packages(c("tidyverse", "argparse", "scriptName", "tikzDevice", "gghighlight", "ggpubr", "broom", "plyr"))' \
+	Rscript -e 'install.packages(c("tidyverse", "argparse", "scriptName", "tikzDevice", "gghighlight", "ggpubr", "broom", "plyr", "plotly"))' \
 		|| echo "run 'R' interactively and call install.packages() manually to choose lib install path" && false

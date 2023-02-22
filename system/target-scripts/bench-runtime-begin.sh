@@ -55,14 +55,15 @@ then
 	sudo cpupower frequency-info > ${dst}/cpupower-frequency-info
 fi
 
-lscpu > ${dst}/lscpu
-grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities
+lscpu > ${dst}/lscpu &
+grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities &
 
-uname -a > ${dst}/values/uname_a
-hostname --short > ${dst}/values/hostname_short
+uname -a > ${dst}/values/uname_a &
+hostname --short > ${dst}/values/hostname_short &
 
 mkdir $dst/sysctl.d
-sudo sysctl --version > $dst/sysctl.d/version
+sudo sysctl --version > $dst/sysctl.d/version &
+wait
 
 # Load defaults
 sudo sysctl --system > /dev/null
@@ -86,9 +87,7 @@ unset IFS
 set -x
 
 set +e
-sudo systemctl status fai-boot.service > $dst/fai_status
-sudo systemctl status run-fai.service >> $dst/fai_status
-sudo systemctl status run-fai.timer >> $dst/fai_status
+sudo systemctl status fai-boot.service run-fai.service run-fai.timer > $dst/fai-status
 set -e
 
 if cat /var/run/fai/fai*_is_running

@@ -10,7 +10,7 @@ all: $(suite_def_yamls) $(suite_py_yamls)
 .build:
 	mkdir -p $@
 
-.build/%.yaml: .FORCE
+.build/%.yaml: .FORCE | .build
 	./$*.suite.py > $@ || rm -f $@
 
 PHONY: .FORCE

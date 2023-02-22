@@ -12,17 +12,8 @@ then
    exit 0
 fi
 
-# clean up
-./scripts/target-scpsh '
-set +e
-# Disabled because of install reuse. TODO: Only keep last N installed kernels.
-# sudo --non-interactive dpkg -r $(dpkg -l | awk "{ print $2 }" | grep -e "linux-headers")
-# sudo dpkg -r $(dpkg -l | awk "{ print $2 }" | grep -e "linux-image" | grep -e "-dbg")
-sudo --non-interactive apt-get -y autoremove
-set -e
-'
+./scripts/target-scpsh -C target-scripts './linux-deb-cleanup.sh'
 
-# install
 ./scripts/target-scpsh -C $LINUX_DEB_DIR '
 sudo --non-interactive dpkg -i *.deb # announce deps
 sudo --non-interactive apt-get -y --fix-broken install # install deps

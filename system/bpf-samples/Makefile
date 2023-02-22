@@ -1,7 +1,7 @@
 PREFIX = .
 
 # Libbpf Bootstrap Examples
-LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc test_l4lb
+LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
 LBE = $(patsubst %,lbe_%,$(LBE_APPS))
 
 # Cilium
@@ -33,7 +33,8 @@ L_SBP_C = $(wildcard $(LINUX)/$(L_SBP)/*.c)
 L_P_ALL = $(patsubst $(LINUX)/$(L_SBP)/%.c,linux_%,$(L_SBP_C))
 LINUX_PROGS = $(filter-out %bpf_flow %_bpf_iter_ksym linux_kfunc_% linux_linked_list% linux_local_storage% linux_map_kptr% linux_rcu% linux_read_bpf_% linux_syscall linux_task% linux_test_bpf% linux_test_kfunc% linux_test_misc% linux_test_mod% linux_test_stacktrace% linux_test_tracepoint% linux_test_tunnel% linux_test_verify% linux_timer% linux_tracing% linux_type_cast linux_user_ringbuf% linux_cgrp_%,$(L_P_ALL))
 
-PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(KATRAN) $(LINUX_PROGS)
+#  $(KATRAN)
+PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(LINUX_PROGS)
 
 LLVM_BIN = /usr/lib/llvm-15/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
@@ -85,9 +86,9 @@ prog/lbe_%.bpf.s: | prog
 # Katran
 #
 
-	# env -C external/katran ./build_katran.sh || true
 .PHONY: .build/katran_%.bpf.o
 .build/katran_%.bpf.o: Makefile | .build
+	env -C external/katran ./build_katran.sh
 	ln -fs ../external/katran/_build/deps/bpfprog/bpf/$*.o $@
 
 #

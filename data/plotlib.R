@@ -115,7 +115,7 @@ DATA <- ALL_DATA %>%
       is.na(SYSCTL) ~ "Default (bpf_*=0)",
       TRUE ~ SYSCTL,
     ),
-    Project = str_extract(BPF_OBJ, "^[a-z]+"),
+    Project = str_extract(BPF_OBJ, "^[a-z-]+"),
     `BPF Program Type` = factor(case_when(
       BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
       Project == "linux" ~ "Test",

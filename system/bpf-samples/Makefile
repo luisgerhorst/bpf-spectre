@@ -45,7 +45,11 @@ endif
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst %,prog-%,$(PROGS))
+all: $(patsubst %,prog-%,$(PROGS)) vbi
+
+.PHONY: vbi
+vbi:
+	./vbi.sh
 
 # .PHONY: prog-%
 # prog-%:

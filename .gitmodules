@@ -19,3 +19,6 @@
 [submodule "system/bpf-samples/external/katran"]
 	path = system/bpf-samples/external/katran
 	url = git@github.com:luisgerhorst/katran.git
+[submodule "system/bpf-samples/external/calico"]
+	path = system/bpf-samples/external/calico
+	url = git@github.com:projectcalico/calico.git

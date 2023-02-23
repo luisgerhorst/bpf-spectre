@@ -34,7 +34,7 @@ L_P_ALL = $(patsubst $(LINUX)/$(L_SBP)/%.c,linux_%,$(L_SBP_C))
 LINUX_PROGS = $(filter-out %bpf_flow %_bpf_iter_ksym linux_kfunc_% linux_linked_list% linux_local_storage% linux_map_kptr% linux_rcu% linux_read_bpf_% linux_syscall linux_task% linux_test_bpf% linux_test_kfunc% linux_test_misc% linux_test_mod% linux_test_stacktrace% linux_test_tracepoint% linux_test_tunnel% linux_test_verify% linux_timer% linux_tracing% linux_type_cast linux_user_ringbuf% linux_cgrp_%,$(L_P_ALL))
 
 #  $(KATRAN)
-PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(LINUX_PROGS)
+PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(LINUX_PROGS) falco_probe
 
 LLVM_BIN = /usr/lib/llvm-15/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
@@ -47,13 +47,13 @@ endif
 .PHONY: all
 all: $(patsubst %,prog-%,$(PROGS))
 
-.PHONY: prog-katran_%
-prog-katran_%:
-	$(MAKE) .build/katran_$*.bpf.o .build/katran_$*.bpf.objdump .build/katran_$*.bpf.readelf
+# .PHONY: prog-%
+# prog-%:
+# 	$(MAKE) .build/katran_$*.bpf.o .build/katran_$*.bpf.objdump .build/katran_$*.bpf.readelf
 
 .PHONY: prog-%
 prog-%:
-	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf prog/$*.bpf.s
+	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf
 
 #
 # Linux
@@ -88,7 +88,7 @@ prog/lbe_%.bpf.s: | prog
 
 .PHONY: .build/katran_%.bpf.o
 .build/katran_%.bpf.o: Makefile | .build
-	env -C external/katran ./build_katran.sh
+	env -C external/katran ./build.sh --num-jobs $(nproc)
 	ln -fs ../external/katran/_build/deps/bpfprog/bpf/$*.o $@
 
 #
@@ -124,6 +124,14 @@ CLANG_BPF_SYS_INCLUDES = $(shell $(CLANG) -v -E - </dev/null 2>&1 \
 #
 prog/vbpf_%.bpf.s: external/vbpf/src/%.c | prog
 	$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -S -o $@
+
+#
+# vbpf Falco
+#
+
+.PHONY: .build/falco_%.bpf.o
+.build/falco_%.bpf.o: external/vbpf/falco/probe.o | .build
+	ln -fs ../$< $@
 
 #
 # generic

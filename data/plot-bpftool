@@ -13,10 +13,13 @@ expr <- ed %>%
   ungroup() %>%
   filter(ble_min == 0)
 expr <- ed %>%
-  inner_join(expr)
+  inner_join(expr) %>%
+  distinct(BPF_OBJ, SYSCTL, `BPF Loadable`, .keep_all=TRUE)
 
 ggplot(expr, aes(SYSCTL, fill=`BPF Loadable`)) +
-  geom_histogram(stat = "count", position="stack")
+  geom_histogram(stat = "count", position="stack") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
 eval_save("lahist")
 
 DATA <- DATA %>%

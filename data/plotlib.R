@@ -115,6 +115,14 @@ DATA <- ALL_DATA %>%
       is.na(SYSCTL) ~ "Default (bpf_*=0)",
       TRUE ~ SYSCTL,
     ),
+    Project = str_extract(BPF_OBJ, "^[a-z]+"),
+    `BPF Program Type` = factor(case_when(
+      BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
+      Project == "linux" ~ "Test",
+      Project == "cilium" ~ "Real",
+      Project == "vbpf" ~ "Test",
+      Project == "lbe" ~ "Example",
+      ), levels = c("Real", "Example", "Test")),
   )
 
 COL_WIDTH_CM=8.5

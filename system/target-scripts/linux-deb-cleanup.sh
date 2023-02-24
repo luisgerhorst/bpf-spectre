@@ -4,6 +4,7 @@
     shopt -s nullglob
     set -x
 
+    set +e
     rs=$(dpkg -l \
         | grep --invert-match -e "$(uname -r)" \
         | grep -e "linux-.*-$USER+" \
@@ -11,5 +12,6 @@
         | sort --reverse \
         | tail --lines=+5)
     sudo dpkg -r $rs
+    set -e
     sudo --non-interactive apt-get -y autoremove
 }

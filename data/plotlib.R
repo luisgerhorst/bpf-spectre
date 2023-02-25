@@ -123,6 +123,7 @@ DATA <- ALL_DATA %>%
       Project == "vbpf" ~ "Test",
       Project == "lbe" ~ "Example",
       ), levels = c("Real", "Example", "Test")),
+    verification_error = str_replace_all(str_replace_all(verification_error_msg, "0x[0-9a-f]+", "x"), "[0-9]+", "x")
   )
 
 COL_WIDTH_CM=8.5

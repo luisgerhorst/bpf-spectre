@@ -14,7 +14,18 @@ expr <- ed %>%
   filter(ble_min == 0)
 expr <- ed %>%
   inner_join(expr) %>%
-  distinct(BPF_OBJ, SYSCTL, `BPF Loadable`, .keep_all=TRUE)
+  distinct(BPF_OBJ, SYSCTL, .keep_all=TRUE)
+
+ggplot(expr, aes(verification_time_usec)) +
+  stat_ecdf() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
+eval_save("lahist")
+
+ggplot(expr, aes(verification_error)) +
+  geom_histogram(stat = "count") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save("x")
 
 ggplot(expr, aes(SYSCTL, fill=`BPF Loadable`)) +
   geom_histogram(stat = "count", position="stack") +

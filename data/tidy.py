@@ -87,7 +87,33 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
     else:
-        return tidy_bpftool(bench_run_path, values, yaml, burst_pos)
+        return pd.concat([
+            tidy_bpftool(bench_run_path, values, yaml, burst_pos),
+            tidy_bpftool_loadall_log(bench_run_path)
+        ], axis=1)
+
+def tidy_bpftool_loadall_log(brp):
+    lines = None
+    try:
+        lines = brp.joinpath("bpftool/loadall.log").read_text().splitlines()
+    except:
+        lines = []
+    d = pd.DataFrame({ "verification_time_usec": ["NA"] })
+    l_prev = None
+    for l in lines:
+        if re.match(r"^verification time .+ usec$", l) is not None:
+            d["verification_time_usec"] = l.split()[2]
+            if "program exit" in l_prev:
+                d["verification_error_msg"] = l_prev
+            if "safe" in l_prev or "exit" in l_prev:
+                d["verification_error_msg"] = "NA"
+            else:
+                d["verification_error_msg"] = l_prev
+        if re.match(r"^Error: .+$", l) is not None:
+            d["bpftool_loadall_error"] = l
+            d["bpftool_loadall_error_reason"] = l_prev
+        l_prev = l
+    return d
 
 def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
     if values["bpftool_loadall_exitcode"] != "0" or "bpftool_progs" not in values:

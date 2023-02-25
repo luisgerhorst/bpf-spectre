@@ -111,7 +111,7 @@ def tidy_bpftool_loadall_log(brp):
                 d["verification_error_msg"] = l_prev
         if re.match(r"^Error: .+$", l) is not None:
             d["bpftool_loadall_error"] = l
-            d["bpftool_loadall_error_reason"] = l_prev
+            d["bpftool_loadall_error_reason_msg"] = l_prev
         l_prev = l
     return d
 

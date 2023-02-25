@@ -123,7 +123,20 @@ DATA <- ALL_DATA %>%
       Project == "vbpf" ~ "Test",
       Project == "lbe" ~ "Example",
       ), levels = c("Real", "Example", "Test")),
-    verification_error = str_replace_all(str_replace_all(verification_error_msg, "0x[0-9a-f]+", "x"), "[0-9]+", "x")
+    verification_error = verification_error_msg %>%
+      str_replace_all("<.+>", "<*>") %>%
+      str_replace_all("'.+'", "'*'") %>%
+      str_replace_all("func .+#", "func *#") %>%
+      str_replace_all("0x[0-9a-f]+", "*") %>%
+      str_replace_all("[0-9:]+", "*") %>%
+      str_replace_all("type=.+ ", "type=* ") %>%
+      str_replace_all("enum .+ ", "enum * ") %>%
+      str_replace_all(" !root", " $USER") %>%
+      str_replace_all("struct .+ ", "struct * "),
+    bpftool_loadall_error_reason = bpftool_loadall_error_reason_msg %>%
+      str_replace_all("[0-9:]+", "*") %>%
+      str_replace_all("'.+.bpf.o'", "'*.bpf.o'") %>%
+      str_replace_all(" '.+'", " '*'")
   )
 
 COL_WIDTH_CM=8.5

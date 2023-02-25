@@ -4,30 +4,38 @@ source("plotlib.R")
 
 print(DATA)
 
-
 ed <- DATA %>%
   filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*"))
 expr <- ed %>%
   group_by(BPF_OBJ, .drop=F) %>%
   summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
-  ungroup() %>%
-  filter(ble_min == 0)
+  ungroup()
 expr <- ed %>%
   inner_join(expr) %>%
   distinct(BPF_OBJ, SYSCTL, .keep_all=TRUE)
+
+ggplot(expr, aes(SYSCTL, colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
+                 fill=verification_error)) +
+  geom_histogram(stat = "count") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  scale_fill_viridis_d() +
+  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
+eval_save("x")
+
+expr <- expr %>% filter(ble_min == 0)
 
 ggplot(expr, aes(verification_time_usec)) +
   stat_ecdf() +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
-eval_save("lahist")
+eval_save("x")
 
 ggplot(expr, aes(verification_error)) +
   geom_histogram(stat = "count") +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("x")
 
-ggplot(expr, aes(SYSCTL, fill=`BPF Loadable`)) +
+ggplot(expr, aes(SYSCTL, fill=verification_error)) +
   geom_histogram(stat = "count", position="stack") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")

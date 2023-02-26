@@ -32,9 +32,10 @@
 	$cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
 	exitcode=$?
 	set -e
-	echo -n $exitcode > ${values_dst}/bpftool_loadall_type_inferred_exitcode
-
+	echo -n $exitcode > ${bpftool_dst}/loadall.exitcode
+	echo -n loadall > ${values_dst}/bpftool_loadall_path
 	echo -n "NA" > ${values_dst}/bpftool_loadall_type
+
 	if [ $exitcode != "0" ]
 	then
 		set +x
@@ -45,14 +46,13 @@
 
 			set +e
 			$cs "bpftool --debug prog loadall $obj $path type $type" \
-				2>> ${bpftool_dst}/loadall_type/$type_path.log
+				2> ${bpftool_dst}/loadall_type/$type_path.log
 			exitcode=$?
 			set -e
-
 			echo -n $exitcode > ${bpftool_dst}/loadall_type/$type_path.exitcode
-
 			if [ $exitcode == "0" ]
 			then
+				echo -n loadall_type/$type_path > ${values_dst}/bpftool_loadall_path
 				echo -n $type > ${values_dst}/bpftool_loadall_type
 				break
 			fi

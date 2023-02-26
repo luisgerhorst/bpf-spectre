@@ -42,6 +42,7 @@ def bench_run_df(bench_run_path):
         return pd.DataFrame()
 
     values = load_values(bench_run_path)
+    tidy_values = pd.DataFrame(load_tidy_values(bench_run_path), index=[0])
     yaml = load_yaml(bench_run_path)
 
     burst_len = int(values["burst_len"])
@@ -50,7 +51,7 @@ def bench_run_df(bench_run_path):
         df = dict_into_df(df, None, yaml)
         df = pd.concat([
             df,
-            pd.DataFrame(values, index=[0]),
+            tidy_values,
             pd.DataFrame({
                 "bench_run_name": bench_run_path.name,
                 "burst_pos": burst_pos
@@ -62,6 +63,14 @@ def bench_run_df(bench_run_path):
 def load_values(bench_run_path):
     d = {}
     for key_path in bench_run_path.joinpath("values").glob("*"):
+        d[key_path.name] = key_path.read_text().rstrip()
+    return d
+
+def load_tidy_values(bench_run_path):
+    d = {}
+    for key_path in bench_run_path.joinpath("values").glob("*"):
+        if key_path.name.startswith("bpftool_run_exitcode."):
+            continue
         d[key_path.name] = key_path.read_text().rstrip()
     return d
 
@@ -89,16 +98,23 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     else:
         return pd.concat([
             tidy_bpftool(bench_run_path, values, yaml, burst_pos),
-            tidy_bpftool_loadall_log(bench_run_path)
+            tidy_bpftool_loadall_log(bench_run_path, values)
         ], axis=1)
 
-def tidy_bpftool_loadall_log(brp):
+def tidy_bpftool_loadall_log(brp, values):
+    d = pd.DataFrame({ "verification_time_usec": ["NA"] })
+
     lines = None
     try:
-        lines = brp.joinpath("bpftool/loadall.log").read_text().splitlines()
+        p = values["bpftool_loadall_path"]
+        lines = brp.joinpath("bpftool/" + p + ".log").read_text().splitlines()
     except:
-        lines = []
-    d = pd.DataFrame({ "verification_time_usec": ["NA"] })
+        # Fallback for old data formats:
+        if values["bpftool_loadall_type"] == "NA":
+            lines = brp.joinpath("bpftool/loadall.log").read_text().splitlines()
+        else:
+            return d
+
     l_prev = None
     for l in lines:
         if re.match(r"^verification time .+ usec$", l) is not None:

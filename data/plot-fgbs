@@ -23,6 +23,7 @@ ggplot(dura, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
   scale_colour_viridis_d() +
   facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
              scales="free")
+eval_save("dur")
 ggsave(eval_path("duration", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
 
 ed <- DATA %>%
@@ -30,13 +31,16 @@ ed <- DATA %>%
 expr <- ed %>%
   group_by(BPF_OBJ, .drop=F) %>%
   summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
-  ungroup() %>%
-  filter(ble_min == 0)
+  ungroup()
 expr <- ed %>%
-  inner_join(expr)
+  inner_join(expr) %>%
+  distinct(BPF_OBJ, SYSCTL, .keep_all=TRUE) %>%
+  filter(ble_min == 0)
 
-ggplot(expr, aes(y=BPF_OBJ, x=SYSCTL, fill=`BPF Loadable`)) +
-  geom_raster() +
-  scale_fill_viridis_d(begin = 0.0, end = 0.7) +
-  theme(axis.text.x = element_text(angle = 33, hjust=1))
-ggsave(eval_path("loading", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+p <- ggplot(expr, aes(SYSCTL, fill=`BPF Load`)) +
+  geom_histogram(stat = "count", position="stack") +
+  scale_fill_viridis_d(begin = 0.0, end = 0.95) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+  ## facet_grid(cols=vars(`BPF Program Type`), scales="free")
+eval_save("load")
+ggsave(eval_path("loading", 0, ".png"), plot=p, width = PRES_W, height = PRES_H, units="cm")

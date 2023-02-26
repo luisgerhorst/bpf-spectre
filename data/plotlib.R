@@ -105,7 +105,7 @@ DATA <- ALL_DATA %>%
       burst_pos == 0 ~ "Cold Caches",
       burst_pos == max(burst_pos) ~ "Hot Caches",
       TRUE ~ "Warm Caches",
-    ), levels = c("Cold Caches", "Hot Caches")),
+      ), levels = c("Cold Caches", "Hot Caches")),
     User = factor(case_when(
       CAPSH_ARGS == "--drop=" ~ "Privileged",
       CAPSH_ARGS == "--drop=cap_sys_admin --drop=cap_perfmon" ~ "Unprivileged",
@@ -113,8 +113,9 @@ DATA <- ALL_DATA %>%
     `BPF Loadable` = bpftool_loadall_exitcode == 0,
     SYSCTL = case_when(
       is.na(SYSCTL) ~ "Default (bpf_*=0)",
+      SYSCTL == "net.core.bpf_jit_harden=0" ~ "Default (bpf_*=0)",
       TRUE ~ SYSCTL,
-    ),
+      ),
     Project = str_extract(BPF_OBJ, "^[a-z-]+"),
     `BPF Program Type` = factor(case_when(
       BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
@@ -124,19 +125,37 @@ DATA <- ALL_DATA %>%
       Project == "lbe" ~ "Example",
       ), levels = c("Real", "Example", "Test")),
     verification_error = verification_error_msg %>%
+      ## CORE:
+      str_replace_all(" enum[0-9]+ .+ = [0-9]+", " *") %>%
+      str_replace_all(" enum .+", " *") %>%
+      str_replace_all(" struct .+", " *") %>%
+      ## etc
+      str_replace_all("func .+#", "func *#") %>%
       str_replace_all("<.+>", "<*>") %>%
       str_replace_all("'.+'", "'*'") %>%
-      str_replace_all("func .+#", "func *#") %>%
       str_replace_all("0x[0-9a-f]+", "*") %>%
       str_replace_all("[0-9:]+", "*") %>%
-      str_replace_all("type=.+ ", "type=* ") %>%
-      str_replace_all("enum .+ ", "enum * ") %>%
-      str_replace_all(" !root", " $USER") %>%
-      str_replace_all("struct .+ ", "struct * "),
+      ## Priv:
+      str_replace_all(" !root", " $USER"),
     bpftool_loadall_error_reason = bpftool_loadall_error_reason_msg %>%
-      str_replace_all("[0-9:]+", "*") %>%
+      str_replace_all("extern '.+'.+ -[0-9]+$", "extern *") %>%
+      str_replace_all(" [0-9:]+", " *") %>%
       str_replace_all("'.+.bpf.o'", "'*.bpf.o'") %>%
-      str_replace_all(" '.+'", " '*'")
+      str_replace_all(" '.+'", " '*'"),
+    `BPF Load` = case_when(
+      is.na(verification_error) ~ "Success",
+      str_detect(verification_error, "variable stack access prohibited for ") ~ "Error: Variable Stack Access",
+      str_detect(verification_error, "tried to add from different maps, paths or scalars, pointer arithmetic with it prohibited for") ~ "Error: Variable Stack Access",
+      str_detect(verification_error, "R. has unknown scalar with mixed signed bounds, pointer arithmetic with it prohibited for") ~ "Error: Variable Stack Access",
+      str_detect(verification_error, "R. has pointer with unsupported alu operation, pointer arithmetic with it prohibited for") ~ "Error: Types",
+      str_detect(verification_error, "R. type=.+ expected=.*") ~ "Error: Types",
+      str_detect(verification_error, "invalid zero-sized read") ~ "Error: Types",
+      str_detect(verification_error, "R. invalid mem access '.+'") ~ "Error: Breakout",
+      str_detect(verification_error, "math between map_value pointer and register with unbounded min value is not allowed") ~ "Error: Breakout",
+      str_detect(verification_error, "R. pointer arithmetic of map value goes out of range, prohibited for .+") ~ "Error: Breakout",
+      str_detect(verification_error, "The sequence of .+ jumps is too complex.") ~ "Error: Too Complex",
+      bpftool_loadall_exitcode != "0" ~ paste("Error:", "Other")
+    )
   )
 
 COL_WIDTH_CM=8.5

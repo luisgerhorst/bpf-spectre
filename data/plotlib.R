@@ -126,11 +126,13 @@ DATA <- ALL_DATA %>%
         BPF_OBJ == "linux_test_l4lb_noinline.bpf.o" ~ "Real",
         BPF_OBJ == "linux_xdp_synproxy_kern.bpf.o" ~ "Real",
         BPF_OBJ == "linux_xdp_vlan.bpf.o" ~ "Real",
-        Project == "linux" ~ "Test",
+        Project == "linux-selftests" ~ "Test",
+        Project == "linux-samples" ~ "Example",
         Project == "cilium" ~ "Real",
         Project == "vbpf" ~ "Test",
         Project == "libbpf/examples" ~ "Example",
-        ),
+        TRUE ~ "Unspecified"
+      ),
       levels = c("Real", "Example", "Test")
     ),
     `lfence / Total Instructions [%]` = 100 * bpftool_jited_insncnt_lfence / bpftool_jited_insncnt_total,

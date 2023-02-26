@@ -30,11 +30,11 @@ LINUX = ../linux
 # Linux Selftests BPF Progs
 L_SBP = tools/testing/selftests/bpf/progs
 L_SBP_C = $(wildcard $(LINUX)/$(L_SBP)/*.c)
-L_P_ALL = $(patsubst $(LINUX)/$(L_SBP)/%.c,linux_%,$(L_SBP_C))
-LINUX_PROGS = $(filter-out %bpf_flow %_bpf_iter_ksym linux_kfunc_% linux_linked_list% linux_local_storage% linux_map_kptr% linux_rcu% linux_read_bpf_% linux_syscall linux_task% linux_test_bpf% linux_test_kfunc% linux_test_misc% linux_test_mod% linux_test_stacktrace% linux_test_tracepoint% linux_test_tunnel% linux_test_verify% linux_timer% linux_tracing% linux_type_cast linux_user_ringbuf% linux_cgrp_%,$(L_P_ALL))
+L_P_ALL = $(patsubst $(LINUX)/$(L_SBP)/%.c,linux-selftests_%,$(L_SBP_C))
+LST = $(filter-out %bpf_flow %_bpf_iter_ksym linux-selftests_kfunc_% linux-selftests_linked_list% linux-selftests_local_storage% linux-selftests_map_kptr% linux-selftests_rcu% linux-selftests_read_bpf_% linux-selftests_syscall linux-selftests_task% linux-selftests_test_bpf% linux-selftests_test_kfunc% linux-selftests_test_misc% linux-selftests_test_mod% linux-selftests_test_stacktrace% linux-selftests_test_tracepoint% linux-selftests_test_tunnel% linux-selftests_test_verify% linux-selftests_timer% linux-selftests_tracing% linux-selftests_type_cast linux-selftests_user_ringbuf% linux-selftests_cgrp_%,$(L_P_ALL))
 
 #  $(KATRAN)
-PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(LINUX_PROGS) falco_probe
+PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(LST) falco_probe
 
 LLVM_BIN = /usr/lib/llvm-15/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
@@ -45,11 +45,16 @@ endif
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst %,prog-%,$(PROGS)) vbi
+all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples
 
 .PHONY: vbi
 vbi:
 	./vbi.sh
+
+.PHONY: linux-samples
+linux-samples:
+	$(MAKE) -C $(LINUX)/samples/bpf
+	./linux-samples.sh
 
 # .PHONY: prog-%
 # prog-%:
@@ -60,22 +65,22 @@ prog-%:
 	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf
 
 #
-# Linux
+# Linux-Selftests
 #
 # Build these through libbpf/examples because linux build is incomprehensible.
 #
 
 LBE_C = external/libbpf-bootstrap/examples/c
-.PHONY: $(LBE_C)/linux_%.bpf.c
-$(LBE_C)/linux_%.bpf.c:
+.PHONY: $(LBE_C)/linux-selftests_%.bpf.c
+$(LBE_C)/linux-selftests_%.bpf.c:
 	ln -fs $(shell realpath $(LINUX)/$(L_SBP)/$*.c) $@
 
-.PHONY: prog/linux_%.bpf.s
-prog/linux_%.bpf.s: $(LBE_C)/linux_%.bpf.c | prog
+.PHONY: prog/linux-selftests_%.bpf.s
+prog/linux-selftests_%.bpf.s: $(LBE_C)/linux-selftests_%.bpf.c | prog
 	$(MAKE) -C $(LBE_C) V=1 \
 		"EXTRA_INCLUDES=-I$(shell realpath $(LINUX)/$(L_SBP)) -I$(shell realpath $(LINUX)/$(L_SBP)/..)" \
-		.output/linux_$*.bpf.s
-	ln -fs ../$(LBE_C)/.output/linux_$*.bpf.s $@
+		.output/linux-selftests_$*.bpf.s
+	ln -fs ../$(LBE_C)/.output/linux-selftests_$*.bpf.s $@
 
 #
 # libbpf/examples

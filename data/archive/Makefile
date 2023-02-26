@@ -17,7 +17,8 @@ all: $(TARGZ_FILES)
 TARFLAGS_REPRO=--sort=name --mtime @1 --clamp-mtime --format=gnu --owner=0 --group=0
 
 %.tar.gz: $(BENCHRUN_DATA)/%/suite-run.log
-	tar -c $(TARFLAGS_REPRO) --directory $(dir $<) . | $(GZIP) -cn9 > $@
+	tar -c $(TARFLAGS_REPRO) --directory $(dir $<) . \
+		| $(GZIP) --to-stdout --best --no-name > $@
 
 $(BENCHRUN_DATA)/%: %.tar.gz
 	mkdir -p $@

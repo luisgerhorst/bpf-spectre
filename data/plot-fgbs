@@ -4,6 +4,7 @@ source("plotlib.R")
 
 dura <- DATA %>%
   filter(BPF_OBJ == "lbe_sockfilter.bpf.o"
+         | str_detect(BPF_OBJ, "^*l4lb*")
          | str_detect(BPF_OBJ, "^*init_whole_stack*")
          | str_detect(BPF_OBJ, "^*minimal_legacy"))
 

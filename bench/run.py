@@ -42,7 +42,8 @@ def main():
     print(args)
     run_suite(suite_dir, suite_run_path, suite, args.reps, args.burst_len)
 
-    subprocess.run(["make", "-k", "-C", "../data/archive"], check=True)
+    subprocess.run(["make", "-k", "-C", "../data/archive", suite_run_path.name + ".tar.gz"],
+                   check=True)
 
 def parse_args():
     raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../data/.raw"))

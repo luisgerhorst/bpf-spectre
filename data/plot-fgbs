@@ -2,33 +2,35 @@
 
 source("plotlib.R")
 
-dura <- DATA %>%
-  filter(BPF_OBJ == "lbe_sockfilter.bpf.o"
-         | str_detect(BPF_OBJ, "^*l4lb*")
-         | str_detect(BPF_OBJ, "^*init_whole_stack*")
-         | str_detect(BPF_OBJ, "^*minimal_legacy"))
+DATA
 
-summary(dura)
-print(dura)
+d <- DATA %>%
+  filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*")) %>%
+  filter(bpftool_loadall_exitcode == 0, kernel_bpf_spec_v1 == "0", net_core_bpf_jit_harden == "0")
+s <- d %>%
+  group_by(BPF_OBJ, bpftool_prog, .drop=F) %>%
+  summarize(
+    bjit_max = max(bpftool_jited_insncnt_total),
+    bjit_min = min(bpftool_jited_insncnt_total),
+    bjil_max = max(bpftool_jited_insncnt_lfence),
+    bjil_min = min(bpftool_jited_insncnt_lfence)
+  ) %>%
+  ungroup()
+d <- d %>%
+  left_join(s) %>%
+  filter(kernel_bpf_spec_v4 == "2")
 
-dura <- dura %>%
-  filter(bpftool_loadall_exitcode == 0)
-dura <- dura %>%
-  filter(bpftool_run_exitcode == 0)
-
-ggplot(dura, aes(x=User, y=bpftool_run_duration_ns, colour=SYSCTL)) +
-  geom_boxplot() +
-  labs(y = "Execution Time [ns]") +
-  scale_y_continuous(limits = c(0, NA)) +
-  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-  scale_colour_viridis_d() +
-  facet_grid(cols=vars(BPF_OBJ, bpftool_prog),
-             scales="free")
-eval_save("dur")
-ggsave(eval_path("duration", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+  stat_ecdf() +
+  labs(y = "eCDF") +
+  scale_colour_viridis_d(begin = 0.1, end = 0.9)
+  ## facet_grid(cols=vars(BPF_OBJ, bpftool_prog), scales="free")
+ggsave(eval_path("count", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+eval_save("d")
 
 ed <- DATA %>%
-  filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*"))
+  filter(User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*")) %>%
+  filter(kernel_bpf_spec_v4 == "0", net_core_bpf_jit_harden == "0")
 expr <- ed %>%
   group_by(BPF_OBJ, .drop=F) %>%
   summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
@@ -40,8 +42,7 @@ expr <- ed %>%
 
 p <- ggplot(expr, aes(SYSCTL, fill=`BPF Load`)) +
   geom_histogram(stat = "count", position="stack") +
-  scale_fill_viridis_d(begin = 0.0, end = 0.95) +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
+  scale_fill_viridis_d(begin = 0.0, end = 0.95)
   ## facet_grid(cols=vars(`BPF Program Type`), scales="free")
 eval_save("load")
 ggsave(eval_path("loading", 0, ".png"), plot=p, width = PRES_W, height = PRES_H, units="cm")

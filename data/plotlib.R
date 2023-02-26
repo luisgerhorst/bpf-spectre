@@ -116,14 +116,21 @@ DATA <- ALL_DATA %>%
       SYSCTL == "net.core.bpf_jit_harden=0" ~ "Default (bpf_*=0)",
       TRUE ~ SYSCTL,
       ),
-    Project = str_extract(BPF_OBJ, "^[a-z-]+"),
-    `BPF Program Type` = factor(case_when(
-      BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
-      Project == "linux" ~ "Test",
-      Project == "cilium" ~ "Real",
-      Project == "vbpf" ~ "Test",
-      Project == "lbe" ~ "Example",
-      ), levels = c("Real", "Example", "Test")),
+    Project = case_when(
+      str_detect(BPF_OBJ, "^lbe_") ~ "libbpf/examples",
+      TRUE ~ str_extract(BPF_OBJ, "^[a-z-]+")
+    ),
+    `BPF Program Type` = factor(
+      case_when(
+        BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
+        Project == "linux" ~ "Test",
+        Project == "cilium" ~ "Real",
+        Project == "vbpf" ~ "Test",
+        Project == "libbpf/examples" ~ "Example",
+        ),
+      levels = c("Real", "Example", "Test")
+    ),
+    `lfence / Total Instructions [%]` = 100 * bpftool_jited_insncnt_lfence / bpftool_jited_insncnt_total,
     verification_error = verification_error_msg %>%
       ## CORE:
       str_replace_all(" enum[0-9]+ .+ = [0-9]+", " *") %>%

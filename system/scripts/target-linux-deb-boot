@@ -15,7 +15,8 @@ As of $(date), it is used as System-under-Test for evaluation by $USER running
 control scripts on $(hostname). If possible, migrate all your /srv/scratch data
 to another machine to ensure it is not lost in a clean-install. If you believe
 this is outdated, or you can not switch to another machine, contact $NAME
-<$EMAIL>.' | sudo tee /etc/motd"
+<$EMAIL>.
+' | sudo tee /etc/motd"
 
 ./scripts/target-linux-deb-install $linux_pkg
 ./scripts/target-grub-boot -r $kernel_release

@@ -123,6 +123,9 @@ DATA <- ALL_DATA %>%
     `BPF Program Type` = factor(
       case_when(
         BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
+        BPF_OBJ == "linux_test_l4lb_noinline.bpf.o" ~ "Real",
+        BPF_OBJ == "linux_xdp_synproxy_kern.bpf.o" ~ "Real",
+        BPF_OBJ == "linux_xdp_vlan.bpf.o" ~ "Real",
         Project == "linux" ~ "Test",
         Project == "cilium" ~ "Real",
         Project == "vbpf" ~ "Test",

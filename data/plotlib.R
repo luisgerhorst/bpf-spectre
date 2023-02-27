@@ -122,18 +122,19 @@ DATA <- ALL_DATA %>%
     ),
     `BPF Program Type` = factor(
       case_when(
-        BPF_OBJ == "linux_test_l4lb.bpf.o" ~ "Real",
-        BPF_OBJ == "linux_test_l4lb_noinline.bpf.o" ~ "Real",
-        BPF_OBJ == "linux_xdp_synproxy_kern.bpf.o" ~ "Real",
-        BPF_OBJ == "linux_xdp_vlan.bpf.o" ~ "Real",
-        Project == "linux-selftests" ~ "Test",
-        Project == "linux-samples" ~ "Example",
+        BPF_OBJ == "linux-selftests_test_l4lb.bpf.o" ~ "Real",
+        BPF_OBJ == "linux-selftests_test_l4lb_noinline.bpf.o" ~ "Real",
+        BPF_OBJ == "linux-selftests_xdp_synproxy_kern.bpf.o" ~ "Real",
+        BPF_OBJ == "linux-selftests_xdp_vlan.bpf.o" ~ "Real",
+        Project == "linux-selftests" ~ "Test / Example",
+        Project == "linux" ~ "Test", # legacy linux-selftests
+        Project == "linux-samples" ~ "Test / Example",
         Project == "cilium" ~ "Real",
-        Project == "vbpf" ~ "Test",
-        Project == "libbpf/examples" ~ "Example",
+        Project == "vbpf" ~ "Test / Example",
+        Project == "libbpf/examples" ~ "Test / Example",
         TRUE ~ "Unspecified"
       ),
-      levels = c("Real", "Example", "Test")
+      levels = c("Real", "Test / Example", "Unspecified")
     ),
     `lfence / Total Instructions [%]` = 100 * bpftool_jited_insncnt_lfence / bpftool_jited_insncnt_total,
     verification_error = verification_error_msg %>%

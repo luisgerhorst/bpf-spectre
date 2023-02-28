@@ -18,12 +18,35 @@ d <- d %>%
   left_join(s) %>%
   filter(kernel_bpf_spec_v4 == "2") %>%
   distinct(BPF_OBJ, bpftool_prog, .keep_all=T)
-ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+p <- ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
   stat_ecdf() +
   labs(y = "eCDF") +
   scale_colour_viridis_d()
-  ## facet_grid(cols=vars(BPF_OBJ, bpftool_prog), scales="free")
-ggsave(eval_path("count", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+ggsave(eval_path("c0", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+p <- ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+  stat_ecdf() +
+  labs(y = "eCDF") +
+  scale_colour_viridis_d()
+p2 <- p +
+  gghighlight(Project == "linux-samples",
+              unhighlighted_params = list(colour = NULL, alpha=0.0))
+ggsave(eval_path("c1", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+p <- ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+  stat_ecdf() +
+  labs(y = "eCDF") +
+  scale_colour_viridis_d()
+p2 <- p +
+  gghighlight(`BPF Program Type` == 'Test / Example',
+              unhighlighted_params = list(colour = NULL, alpha=0.0))
+ggsave(eval_path("c2", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
+p <- ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+  stat_ecdf() +
+  labs(y = "eCDF") +
+  scale_colour_viridis_d()
+p2 <- p +
+  gghighlight(`BPF Program Type` == 'Real',
+              unhighlighted_params = list(colour = NULL, alpha=0.0))
+ggsave(eval_path("c3", 0, ".png"), plot=last_plot(), width = PRES_W, height = PRES_H, units="cm")
 eval_save("d")
 
 ed <- DATA %>%

@@ -85,7 +85,7 @@ def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
             sys.stdout.flush()
             bench_list = [bench["bench_script"]] + list(bench["boot"].values()) + list(bench["run"].values())
             human_name = urllib.parse.quote_plus('-'.join(map(str, bench_list)).replace("=", "-"))[0:128]
-            name = '{:04d}.{}'.format(i, human_name.replace(".", "-"))
+            name = '{:06d}.{}'.format(i, human_name.replace(".", "-"))
             tmp = None
             for retry in range(0, RETRY_MAX):
                 tmp = suite_run_path.joinpath("%s.retry-%d.incomplete-bench-run" % (name, retry))

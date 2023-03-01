@@ -115,17 +115,23 @@ def tidy_bpftool_loadall_log(brp, values):
         else:
             return d
 
-    l_prev = None
+    speculative = False         # assume insn 0 is invoked non-speculatively
+    l_prev = "NA"
     for l in lines:
+        if re.match(r"^from [0-9]+ to [0-9]+.*:.*$", l) is not None:
+            speculative = "(speculative execution)" in l
         if re.match(r"^verification time .+ usec$", l) is not None:
             d["verification_time_usec"] = l.split()[2]
-            if "program exit" in l_prev:
-                d["verification_error_msg"] = l_prev
-            if "safe" in l_prev or "exit" in l_prev:
+            insn_safe = re.match(r"^[0-9]+: safe$", l_prev) is not None
+            vblock_safe = re.match(r"^from [0-9]+ to [0-9]+.*: safe$", l_prev) is not None
+            exit_reached = re.match(r"^[0-9]+: \(.+\) exit$", l_prev) is not None
+            if insn_safe or vblock_safe or exit_reached:
                 d["verification_error_msg"] = "NA"
+                d["verification_error_speculative"] = "NA"
             else:
                 d["verification_error_msg"] = l_prev
-        if re.match(r"^Error: .+$", l) is not None:
+                d["verification_error_speculative"] = speculative
+        if re.match(r"^Error:.*$", l) is not None:
             d["bpftool_loadall_error"] = l
             d["bpftool_loadall_error_reason_msg"] = l_prev
         l_prev = l
@@ -164,8 +170,8 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
     jited = None
     f = "bpftool/jited." + prog + ".json"
     try:
-        # Fixup for bpftool's invalid \' escapes.
-        s = brp.joinpath(f).read_text().replace("\\'", "'")
+        # Fixup for bpftool's invalid \' escapes no longer required: .replace("\\'", "'")
+        s = brp.joinpath(f).read_text()
         jited = json.loads(s)
         # Likely caused by bpftool segfault for some linux test programs.
     except json.decoder.JSONDecodeError as je:

@@ -31,10 +31,10 @@ LINUX = ../linux
 L_SBP = tools/testing/selftests/bpf/progs
 L_SBP_C = $(wildcard $(LINUX)/$(L_SBP)/*.c)
 L_P_ALL = $(patsubst $(LINUX)/$(L_SBP)/%.c,linux-selftests_%,$(L_SBP_C))
-LST = $(filter-out %bpf_flow %_bpf_iter_ksym linux-selftests_kfunc_% linux-selftests_linked_list% linux-selftests_local_storage% linux-selftests_map_kptr% linux-selftests_rcu% linux-selftests_read_bpf_% linux-selftests_syscall linux-selftests_task% linux-selftests_test_bpf% linux-selftests_test_kfunc% linux-selftests_test_misc% linux-selftests_test_mod% linux-selftests_test_stacktrace% linux-selftests_test_tracepoint% linux-selftests_test_tunnel% linux-selftests_test_verify% linux-selftests_timer% linux-selftests_tracing% linux-selftests_type_cast linux-selftests_user_ringbuf% linux-selftests_cgrp_%,$(L_P_ALL))
+LST = $(filter-out linux-selftests_test_attach_probe.% linux-selftests_dummy_st_ops_% linux-selftests_nested_trust_failure linux-selftests_rbtree% linux-selftests_bpf_syscall_macro% %bpf_flow %_bpf_iter_ksym linux-selftests_kfunc_% linux-selftests_linked_list% linux-selftests_local_storage% linux-selftests_map_kptr% linux-selftests_rcu% linux-selftests_read_bpf_% linux-selftests_syscall linux-selftests_task% linux-selftests_test_bpf% linux-selftests_test_kfunc% linux-selftests_test_misc% linux-selftests_test_mod% linux-selftests_test_stacktrace% linux-selftests_test_tracepoint% linux-selftests_test_tunnel% linux-selftests_test_verify% linux-selftests_timer% linux-selftests_tracing% linux-selftests_type_cast linux-selftests_user_ringbuf% linux-selftests_cgrp_%,$(L_P_ALL))
 
-#  $(KATRAN)
-PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) $(LST) falco_probe
+#  $(KATRAN) $(LST)
+PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
 
 LLVM_BIN = /usr/lib/llvm-15/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)

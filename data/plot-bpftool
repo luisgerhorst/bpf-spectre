@@ -35,7 +35,7 @@ ggplot(expr, aes(verification_error)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("x")
 
-ggplot(expr, aes(SYSCTL, fill=paste(bpftool_loadall_exitcode, verification_error))) +
+ggplot(expr, aes(SYSCTL, fill=paste(bpftool_loadall_exitcode, verification_error_speculative, verification_error))) +
   geom_histogram(stat = "count", position="stack") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")

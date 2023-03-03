@@ -46,7 +46,7 @@ DATA <- DATA %>%
 
 
 md <- DATA %>%
-  filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v4 == "0", User == "Privileged") %>%
+  ## filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v4 == "0", User == "Privileged") %>%
   group_by(BPF_OBJ, bpftool_prog, .drop=F) %>%
   summarize(
     bjit_max = max(bpftool_jited_insncnt_total), bjit_min = min(bpftool_jited_insncnt_total),
@@ -71,8 +71,8 @@ for (m in metrics) {
 }
 
 
-DATA <- DATA %>%
-  filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v1 == "0", User == "Privileged")
+## DATA <- DATA %>%
+##   filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v1 == "0", User == "Privileged")
 
 ggplot(DATA, aes(bpftool_jited_insncnt_total, fill=SYSCTL)) +
   geom_histogram(position="dodge")

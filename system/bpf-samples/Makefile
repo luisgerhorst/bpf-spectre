@@ -39,9 +39,8 @@ endif
 # Don't remove intermediate results.
 .SECONDARY:
 
-# linux-selftests
 .PHONY: all
-all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples
+all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples linux-selftests
 
 .PHONY: vbi
 vbi:
@@ -55,7 +54,7 @@ linux-samples:
 .PHONY: linux-selftests
 linux-selftests:
 	$(MAKE) -C $(LINUX) vmlinux
-	$(MAKE) -C $(LINUX)/tools/testing/selftests/bpf -k all
+	env -i PATH=$(PATH) $(MAKE) -C $(LINUX)/tools/testing/selftests/bpf -k all > make-linux-selftests.stdout 2> make-linux-selftests.stderr || true
 	./linux-selftests.sh
 
 # .PHONY: prog-%

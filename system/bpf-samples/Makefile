@@ -1,4 +1,4 @@
-PREFIX = .
+PREFIX=.
 
 # Libbpf Bootstrap Examples
 LBE_APPS = minimal minimal_legacy bootstrap uprobe kprobe fentry usdt sockfilter tc
@@ -26,14 +26,9 @@ CUSTOM = $(patsubst $(PREFIX)/prog/%.bpf.s,%,$(CUSTOM_S))
 
 KATRAN = $(patsubst %,katran_%,balancer_kern healthchecking_ipip healthchecking_kern xdp_pktcntr xdp_root)
 
-LINUX = ../linux
-# Linux Selftests BPF Progs
-L_SBP = tools/testing/selftests/bpf/progs
-L_SBP_C = $(wildcard $(LINUX)/$(L_SBP)/*.c)
-L_P_ALL = $(patsubst $(LINUX)/$(L_SBP)/%.c,linux-selftests_%,$(L_SBP_C))
-LST = $(filter-out linux-selftests_test_attach_probe.% linux-selftests_dummy_st_ops_% linux-selftests_nested_trust_failure linux-selftests_rbtree% linux-selftests_bpf_syscall_macro% %bpf_flow %_bpf_iter_ksym linux-selftests_kfunc_% linux-selftests_linked_list% linux-selftests_local_storage% linux-selftests_map_kptr% linux-selftests_rcu% linux-selftests_read_bpf_% linux-selftests_syscall linux-selftests_task% linux-selftests_test_bpf% linux-selftests_test_kfunc% linux-selftests_test_misc% linux-selftests_test_mod% linux-selftests_test_stacktrace% linux-selftests_test_tracepoint% linux-selftests_test_tunnel% linux-selftests_test_verify% linux-selftests_timer% linux-selftests_tracing% linux-selftests_type_cast linux-selftests_user_ringbuf% linux-selftests_cgrp_%,$(L_P_ALL))
+LINUX=../linux
 
-#  $(KATRAN) $(LST)
+#  $(KATRAN)
 PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
 
 LLVM_BIN = /usr/lib/llvm-15/bin
@@ -44,6 +39,7 @@ endif
 # Don't remove intermediate results.
 .SECONDARY:
 
+# linux-selftests
 .PHONY: all
 all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples
 
@@ -56,6 +52,12 @@ linux-samples:
 	$(MAKE) -C $(LINUX)/samples/bpf
 	./linux-samples.sh
 
+.PHONY: linux-selftests
+linux-selftests:
+	$(MAKE) -C $(LINUX) vmlinux
+	$(MAKE) -C $(LINUX)/tools/testing/selftests/bpf -k all
+	./linux-selftests.sh
+
 # .PHONY: prog-%
 # prog-%:
 # 	$(MAKE) .build/katran_$*.bpf.o .build/katran_$*.bpf.objdump .build/katran_$*.bpf.readelf
@@ -63,24 +65,6 @@ linux-samples:
 .PHONY: prog-%
 prog-%:
 	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf
-
-#
-# Linux-Selftests
-#
-# Build these through libbpf/examples because linux build is incomprehensible.
-#
-
-LBE_C = external/libbpf-bootstrap/examples/c
-.PHONY: $(LBE_C)/linux-selftests_%.bpf.c
-$(LBE_C)/linux-selftests_%.bpf.c:
-	ln -fs $(shell realpath $(LINUX)/$(L_SBP)/$*.c) $@
-
-.PHONY: prog/linux-selftests_%.bpf.s
-prog/linux-selftests_%.bpf.s: $(LBE_C)/linux-selftests_%.bpf.c | prog
-	$(MAKE) -C $(LBE_C) V=1 \
-		"EXTRA_INCLUDES=-I$(shell realpath $(LINUX)/$(L_SBP)) -I$(shell realpath $(LINUX)/$(L_SBP)/..)" \
-		.output/linux-selftests_$*.bpf.s
-	ln -fs ../$(LBE_C)/.output/linux-selftests_$*.bpf.s $@
 
 #
 # libbpf/examples

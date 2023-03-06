@@ -10,3 +10,10 @@ do
     name=$(basename --suffix=.bpf.o $o)
     ln -fs ../$o .build/linux-selftests_$name.bpf.o
 done
+
+if cat make-linux-selftests.stderr | \
+    grep --extended-regexp "^make: .+ Error [0-9]+$" | \
+    grep --invert-match "find_vma_fail1.bpf.o"
+then
+    exit 1
+fi

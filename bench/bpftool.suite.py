@@ -33,7 +33,7 @@ def append_T(suite, T):
     for prog_path in Path("../system/bpf-samples/.build/").glob("*.bpf.o"):
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.o
 
-        # if "linux-samples_" not in prog:
+        # if "linux-selftests_" not in prog:
         #     continue
 
         # Skip priv_spec_mit with unpriv user because it will be the same as
@@ -42,7 +42,7 @@ def append_T(suite, T):
                 # (unpr, ""),
                 # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2"),
                 (priv, "kernel.bpf_spec_v1=2"),
-                (priv, "kernel.bpf_spec_v4=2"),
+                # (priv, "kernel.bpf_spec_v4=2"),
                 # (priv, "net.core.bpf_jit_harden=2"),
                 (priv, "net.core.bpf_jit_harden=0")
         ]:

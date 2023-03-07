@@ -1,0 +1,66 @@
+#!/usr/bin/Rscript
+
+source("plotlib.R")
+
+print(DATA)
+
+ed <- DATA
+expr <- ed %>%
+  group_by(BPF_OBJ, .drop=F) %>%
+  summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
+  ungroup()
+expr <- ed %>%
+  inner_join(expr) %>%
+  distinct(BPF_OBJ, SYSCTL, .keep_all=TRUE)
+
+ggplot(expr, aes(SYSCTL,
+                 colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
+                 fill=paste(verification_error_speculative) # , verification_error
+                 )) +
+  geom_histogram(stat = "count") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  scale_fill_viridis_d() +
+  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
+eval_save("verierror")
+
+d <- expr %>%
+  filter(!verification_error_speculative)
+ggplot(d, aes(paste(verification_error), fill=paste(verification_error_speculative, Project, `BPF Program Type`))) +
+  geom_histogram(stat = "count") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save("v1-lfence")
+
+ggplot(expr, aes(verification_error)) +
+  geom_histogram(stat = "count") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save("x")
+
+ggplot(expr, aes(SYSCTL, fill=paste(bpftool_loadall_exitcode, verification_error_speculative, verification_error))) +
+  geom_histogram(stat = "count", position="stack") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
+eval_save("vererror")
+
+
+d <- DATA %>%
+  filter(bpftool_loadall_exitcode == 0, net_core_bpf_jit_harden == "0")
+s <- d %>%
+  group_by(BPF_OBJ, bpftool_prog, .drop=F) %>%
+  summarize(
+    bjit_max = max(bpftool_jited_insncnt_total),
+    bjit_min = min(bpftool_jited_insncnt_total),
+    bjil_max = max(bpftool_jited_insncnt_lfence),
+    bjil_min = min(bpftool_jited_insncnt_lfence)
+  ) %>%
+  ungroup()
+d <- d %>%
+  left_join(s) %>%
+  distinct(BPF_OBJ, bpftool_prog, .keep_all=T)
+p <- ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=SYSCTL, colour=paste(Project, `BPF Program Type`))) +
+  stat_ecdf() +
+  scale_colour_viridis_d()
+eval_save("fences")
+
+
+g <- DATA %>%
+  filter(bpftool_run_exitcode == 0, bpftool_loadall_exitcode == 0)

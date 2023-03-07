@@ -11,7 +11,7 @@ do
     ln -fs ../$o .build/linux-selftests_$name.bpf.o
 done
 
-if cat make-linux-selftests.stderr | \
+if cat .build/make-linux-selftests.stderr | \
     grep --extended-regexp "^make: .+ Error [0-9]+$" | \
     grep --invert-match "find_vma_fail1.bpf.o"
 then

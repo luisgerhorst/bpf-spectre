@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 bash -n "$(command -v "$0")"
-
 set -x
 
 dst=$1
-# burst_len=$2
-
-mkdir -p $dst/workload $dst/values
 
 # Environment from suite definition:
 export CPUFREQ=${CPUFREQ:-max}
+
+mkdir -p $dst/workload $dst/values
 
 if cat /var/run/fai/fai*_is_running
 then
    exit 1
 fi
 
-echo 0 > sudo tee /proc/sys/kernel/nmi_watchdog
+echo 0 > sudo tee /proc/sys/kernel/nmi_watchdog &
 
 if ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null
 then
@@ -51,9 +49,27 @@ then
 	fi
 	sudo cpupower frequency-set \
 		--min ${cpufreq_khz}kHz --max ${cpufreq_khz}kHz \
-		--governor performance
-	sudo cpupower frequency-info > ${dst}/cpupower-frequency-info
+		--governor performance &
 fi
+
+mkdir $dst/sysctl.d
+sudo sysctl --version > $dst/sysctl.d/version &
+sudo sysctl --system 2>&1 > /dev/null
+sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 net.core.bpf_jit_harden=0
+sudo sysctl --all > $dst/sysctl.d/default
+sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
+
+wait
+
+#
+# Record system config
+#
+
+set +e
+sudo systemctl status fai-boot.service run-fai.service run-fai.timer > $dst/fai-status &
+set -e
+
+sudo cpupower frequency-info > ${dst}/cpupower-frequency-info &
 
 lscpu > ${dst}/lscpu &
 grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities &
@@ -61,36 +77,19 @@ grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities &
 uname -a > ${dst}/values/uname_a &
 hostname --short > ${dst}/values/hostname_short &
 
-mkdir $dst/sysctl.d
-sudo sysctl --version > $dst/sysctl.d/version &
-wait
-
-# Load defaults
-sudo sysctl --system > /dev/null
-sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 net.core.bpf_jit_harden=0
-
-sudo sysctl --all > $dst/sysctl.d/default
-sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
-sudo sysctl --all > $dst/sysctl.d/all
+sudo sysctl --all > $dst/sysctl.d/all &
 
 set +x
 IFS=$'\n'
 for p in $(sudo find "/proc/sys/kernel/" -type f)
 do
-	sudo cat $p > ${dst}/values/kernel_$(basename $p)
+	sudo cat $p > ${dst}/values/kernel_$(basename $p) &
 done
 for p in $(sudo find "/proc/sys/net/core/" -type f)
 do
-	sudo cat $p > ${dst}/values/net_core_$(basename $p)
+	sudo cat $p > ${dst}/values/net_core_$(basename $p) &
 done
 unset IFS
 set -x
 
-set +e
-sudo systemctl status fai-boot.service run-fai.service run-fai.timer > $dst/fai-status
-set -e
-
-if cat /var/run/fai/fai*_is_running
-then
-   exit 1
-fi
+wait

@@ -127,6 +127,9 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/faui49%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 	./scripts/target-linux-deb-boot $< && touch $@
 
+.build/target-state/%-vm/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
+	./scripts/target-linux-deb-boot $< && touch $@
+
 TS = .build/target-state/$(T)
 
 $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel

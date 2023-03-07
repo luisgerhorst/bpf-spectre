@@ -60,6 +60,7 @@ Other terminal:
 
 The latter installs the required software on the target system under test and ensures that the kernel checked out in the subdirectory is booted. That is, the system is ready for evaluation. May be called repeatedly by bench-scripts to evaluate different configurations.
 
+Rebooting qemu into a new kernel using grub does not work. For this, use VMM.
 
 ## Related Work
 

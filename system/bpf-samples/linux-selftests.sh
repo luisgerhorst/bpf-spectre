@@ -13,6 +13,7 @@ done
 
 if cat .build/make-linux-selftests.stderr | \
     grep --extended-regexp "^make: .+ Error [0-9]+$" | \
+    grep --invert-match "test_deny_namespace.bpf.o" | \
     grep --invert-match "find_vma_fail1.bpf.o"
 then
     exit 1

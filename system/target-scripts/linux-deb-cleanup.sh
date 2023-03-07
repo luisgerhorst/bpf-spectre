@@ -11,7 +11,8 @@
         | awk '{ print $2 }' \
         | sort --reverse \
         | tail --lines=+5)
-    sudo dpkg -r $rs
+    sudo dpkg --remove $rs
+    sudo dpkg --purge $rs
     set -e
     sudo --non-interactive apt-get -y autoremove
 }

@@ -54,7 +54,7 @@ linux-samples:
 .PHONY: linux-selftests
 linux-selftests:
 	$(MAKE) -C $(LINUX) vmlinux
-	env -i PATH=$(PATH) $(MAKE) -C $(LINUX)/tools/testing/selftests/bpf -k all > .build/make-linux-selftests.stdout 2> .build/make-linux-selftests.stderr || true
+	env -i PATH=$(PATH) $(MAKE) -j $(shell nproc) -C $(LINUX)/tools/testing/selftests/bpf -k all > .build/make-linux-selftests.stdout 2> .build/make-linux-selftests.stderr || true
 	./linux-selftests.sh
 
 # .PHONY: prog-%

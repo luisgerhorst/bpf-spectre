@@ -22,7 +22,6 @@
     # Boots target with linux-build ready for target-scpsh.
     make -j $(nproc) all
 
-    make -C bpf-samples .build/$BPF_OBJ
     cp -f bpf-samples/.build/$BPF_OBJ $dst/$BPF_OBJ
 
     tempd=$(mktemp -d)

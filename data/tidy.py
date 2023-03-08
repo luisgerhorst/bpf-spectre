@@ -115,6 +115,19 @@ def tidy_bpftool_loadall_log(brp, values):
         else:
             return d
 
+        # TODO: handle multiple funcs
+        #
+        # Validating f8() func#1...
+        # 2: R1=ctx(off=0,imm=0) R10=fp0
+        # ; return f7(skb);
+        # 2: (85) call pc+1
+        # Func#2 is global and valid. Skipping.
+        # 3: R0_w=scalar()
+        # ; return f7(skb);
+        # 3: (95) exit
+        # Func#1 is safe for any args that match its prototype
+        # Validating f7() func#2...
+        # 4: R1=ctx(off=0,imm=0) R10=fp0
     speculative = False         # assume insn 0 is invoked non-speculatively
     l_prev = "NA"
     for l in lines:

@@ -15,18 +15,20 @@
 
 	cs="sudo capsh $capsh_args -- -c"
 
-	sudo --non-interactive bpftool --version > ${bpftool_dst}/version
-	$cs 'capsh --print' > ${dst}/capsh-print
-	mkdir ${bpftool_dst}/loadall_type
+	sudo --non-interactive bpftool --version > ${bpftool_dst}/version &
+	$cs 'capsh --print' > ${dst}/capsh-print &
+	mkdir ${bpftool_dst}/loadall_type &
 
 	path=/sys/fs/bpf/$(basename $obj .bpf.o)
-
 	# Clean up leftovers from failed previous runs.
-	sudo rm -rfd $path
+	sudo rm -rfd $path &
+
 	# sudo bpftool --bpffs > ${bpftool_dst}/bpffs-init
 
 	# Must happen before load for bpf sysctls.
-	./bench-runtime-begin.sh $@
+	./bench-runtime-begin.sh $@ &
+
+	wait
 
 	set +e
 	$cs "bpftool --debug prog loadall $obj $path" 2> ${bpftool_dst}/loadall.log
@@ -70,14 +72,16 @@
 	IFS=$'\n'
 	for prog in $(sudo find "$path" -type f)
 	do
-		sudo bpftool prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog)
-		sudo bpftool prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog)
-		sudo bpftool --json --pretty prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog).json
-		sudo bpftool --json --pretty prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog).json
+		sudo bpftool prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog) &
+		sudo bpftool prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog) &
+		sudo bpftool --json --pretty prog dump xlated pinned "$prog" > ${bpftool_dst}/xlated.$(basename $prog).json &
+		sudo bpftool --json --pretty prog dump jited pinned "$prog" > ${bpftool_dst}/jited.$(basename $prog).json &
 		# sudo bpftool --json prog dump jited pinned "$prog" opcodes > ${bpftool_dst}/jited-opcodes.$(basename $prog)
 		# sudo bpftool prog dump jited pinned "$prog" linum > ${bpftool_dst}/jited-linum.$(basename $prog)
 	done
 	unset IFS
+
+	wait
 
 	# TODO: bpftool prog profile PROG [duration DURATION] METRICs
 
@@ -118,9 +122,9 @@
 	done
 	unset IFS
 
-	./bench-runtime-end.sh $@
-
-	sudo rm -rfd $path
+	./bench-runtime-end.sh $@ &
+	sudo rm -rfd $path &
+	wait
 
 	exit
 }

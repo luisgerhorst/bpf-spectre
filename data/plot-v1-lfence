@@ -11,9 +11,9 @@ expr <- ed %>%
   ungroup()
 expr <- ed %>%
   inner_join(expr) %>%
-  distinct(BPF_OBJ, SYSCTL, .keep_all=TRUE)
+  distinct(BPF_OBJ, LINUX_GIT_CHECKOUT, SYSCTL, .keep_all=TRUE)
 
-ggplot(expr, aes(SYSCTL,
+ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL),
                  colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
                  fill=paste(verification_error_speculative) # , verification_error
                  )) +
@@ -35,7 +35,7 @@ ggplot(expr, aes(verification_error)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("x")
 
-ggplot(expr, aes(SYSCTL, fill=paste(bpftool_loadall_exitcode, verification_error_speculative, verification_error))) +
+ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL), fill=paste(bpftool_loadall_exitcode, verification_error_speculative, verification_error))) +
   geom_histogram(stat = "count", position="stack") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")

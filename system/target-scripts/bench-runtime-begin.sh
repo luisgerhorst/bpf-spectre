@@ -55,7 +55,8 @@ fi
 mkdir $dst/sysctl.d
 sudo sysctl --version > $dst/sysctl.d/version &
 sudo sysctl --system 2>&1 > /dev/null
-sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 net.core.bpf_jit_harden=0
+sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 || true # not supported on mainline
+sudo sysctl --write net.core.bpf_jit_harden=0
 sudo sysctl --all > $dst/sysctl.d/default
 sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
 

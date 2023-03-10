@@ -5,42 +5,30 @@ MERGE_CONFIGS ?=
 
 RAMDISK=qemu-ramdisk.img
 
-LINUX=linux
-BZIMAGE=$(LINUX)/arch/x86_64/boot/bzImage
+LINUX ?= linux
+BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
+KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
+LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
+LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 # Parallel make is OK.
 MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
+
 export LD_LIBRARY_PATH=/usr/local/lib
 
-# HACK: Before running the rules, update *.git_{rev|status} for each repo. We
-# can then use them as dependencies to avoid recompilation of subprojects if
-# nothing changed in their file tree.
-#
-# TODO: Move into prepare.sh
-REPOS := $(LINUX)
 _dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(T))
-_dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .build/$(repo).git_rev))
-_dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
-
-LINUX_SRC = .build/$(LINUX).git_rev_status
-LINUX_SRC_COMPONENTS = .build/$(LINUX).git_rev .build/$(LINUX).git_status
-$(LINUX_SRC): $(LINUX_SRC_COMPONENTS)
-	touch $@
-
-# Must be prepared.
-$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/$(LINUX).git_rev .build/$(LINUX).git_status
-	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
-
-KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
-
-LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
-
-# BUG: linux sync problem if making target with -j32
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 .PHONY: all
 all: $(TARGET)
+
+#
+# Prepare
+#
+
+$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/$(LINUX).git_rev .build/$(LINUX).git_status
+	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
+	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
 
 #
 # Linux Files
@@ -164,10 +152,6 @@ bzImage: $(BZIMAGE)
 menuconfig: linux/.config
 	$(MAKE) -C $(LINUX) menuconfig
 	cp linux/.config $(CONFIG)
-
-.PHONY: tags
-tags: linux/.config
-	$(MAKE) -C $(LINUX) tags
 
 #
 # QEMU Debian Phony

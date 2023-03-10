@@ -166,10 +166,6 @@ mrproper: clean
 	echo "4" | sudo tee /proc/sys/kernel/perf_event_paranoid
 	rm -f .perf_event_paranoid_-1
 
-.PHONY: install-deps
-install-deps: .perf_event_paranoid_-1
-	sudo apt install golang llvm
-	echo "On Debian Bullseye/Ubuntu Jammy, follow https://apt.llvm.org/ to install llvm-15" && false
 
 .perf_event_paranoid_-1:
 	echo "-1" | sudo tee /proc/sys/kernel/perf_event_paranoid

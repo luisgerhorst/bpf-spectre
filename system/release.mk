@@ -7,9 +7,6 @@ RAMDISK=qemu-ramdisk.img
 
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
-KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
-LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
-LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 # Parallel make is OK.
@@ -26,9 +23,14 @@ all: $(TARGET)
 # Prepare
 #
 
+LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
+LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
+
 $(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/$(LINUX).git_rev .build/$(LINUX).git_status
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
 	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
+
+KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
 
 #
 # Linux Files
@@ -147,11 +149,6 @@ $(TS)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
 
 .PHONY: bzImage
 bzImage: $(BZIMAGE)
-
-.PHONY: menuconfig
-menuconfig: linux/.config
-	$(MAKE) -C $(LINUX) menuconfig
-	cp linux/.config $(CONFIG)
 
 #
 # QEMU Debian Phony

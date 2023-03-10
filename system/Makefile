@@ -1,12 +1,35 @@
+LINUX_MAIN ?= linux-main
+
 .PHONY: all
-all: .build/deps
+all: release-all
+
+.PHONY: release-%
+release-%: configure .build/deps
+	$(MAKE) -f release.mk $*
+
+#
+# Configure
+#
+
+.PHONY: configure
+configure:
 	./scripts/configure.sh
-	$(MAKE) -f target.mk all
+
+linux%/.config: configure
+
+.PHONY: menuconfig
+menuconfig: $(LINUX_MAIN)/.config
+	$(MAKE) -C $(LINUX_MAIN) menuconfig
+	cp $(LINUX_MAIN)/.config $(CONFIG)
+
+#
+# etc
+#
 
 .PHONY: clean
 clean:
 	$(MAKE) -C bpf-samples clean
-	$(MAKE) -C linux clean
+	$(MAKE) -C linux-main mrproper
 	rm -rfd .build .run
 
 .PHONY: install-deps

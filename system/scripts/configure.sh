@@ -14,6 +14,7 @@ popd
 MAKE=${MAKE:-make}
 MERGE_CONFIGS=${MERGE_CONFIGS:-}
 
+# TODO: auto gen .build/env/$VAR
 if [ ! -e .build/merge_configs_value ] \
     || [ "$(cat .build/merge_configs_value)" != "${MERGE_CONFIGS}" ]
 then
@@ -22,8 +23,7 @@ fi
 
 for LINUX in linux linux-main
 do
-    ${MAKE} -f target.mk LINUX=$LINUX $LINUX/.config &
-    ./scripts/update-git-rev $LINUX .build/$LINUX.git_rev &
-    ./scripts/update-git-status $(repo) .build/$(repo).git_status &
+    ${MAKE} -f release.mk LINUX=$LINUX $LINUX/.config
+    ./scripts/update-git-rev $LINUX .build/$LINUX.git_rev
+    ./scripts/update-git-status $LINUX .build/$LINUX.git_status
 done
-wait

@@ -48,7 +48,7 @@ vbi:
 
 .PHONY: $(LINUX)/.config
 $(LINUX)/.config:
-	$(MAKE) LINUX=linux-main -C .. -f target.mk linux-main/.config
+	$(MAKE) LINUX=linux-main -C .. linux-main/.config
 	$(MAKE) -j $(shell nproc)  -C $(LINUX) vmlinux
 
 .PHONY: linux-samples

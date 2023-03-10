@@ -12,7 +12,7 @@ burst_len=$2
 # make-style var=value args instead.
 env_exports="$(export -p)"
 
-pushd ../system
+pushd ../src
 
 # Also sets default SuT ($T) and related variables.
 . ./env.sh

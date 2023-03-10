@@ -1,24 +1,24 @@
 [submodule "tests/libbpf-bootstrap"]
-	path = system/bpf-samples/external/libbpf-bootstrap
+	path = src/bpf-samples/external/libbpf-bootstrap
 	url = git@gitlab.cs.fau.de:un65esoq/libbpf-bootstrap.git
 [submodule "tests/bpf/cilium"]
-	path = system/bpf-samples/external/cilium
+	path = src/bpf-samples/external/cilium
 	url = git@github.com:cilium/cilium.git
 [submodule "tests/bpf/linux-build/linux"]
-	path = system/linux-main
+	path = src/linux-main
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
 [submodule "tests/bpf/samples/vbpf"]
-	path = system/bpf-samples/external/vbpf
+	path = src/bpf-samples/external/vbpf
 	url = git@gitlab.cs.fau.de:un65esoq/vbpf-ebpf-samples.git
 [submodule "tests/bpf/external/bcc"]
-	path = system/bpf-samples/external/bcc
+	path = src/bpf-samples/external/bcc
 	url = git@github.com:iovisor/bcc.git
 [submodule "spectector-proj"]
-	path = system/bpf-samples/spectector-proj
+	path = src/bpf-samples/spectector-proj
 	url = git@gitlab.cs.fau.de:un65esoq/spectector-bpf.git
 [submodule "system/bpf-samples/external/katran"]
-	path = system/bpf-samples/external/katran
+	path = src/bpf-samples/external/katran
 	url = git@github.com:luisgerhorst/katran.git
 [submodule "system/bpf-samples/external/calico"]
-	path = system/bpf-samples/external/calico
+	path = src/bpf-samples/external/calico
 	url = git@github.com:projectcalico/calico.git

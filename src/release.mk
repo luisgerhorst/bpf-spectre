@@ -52,7 +52,7 @@ $(BZIMAGE): $(LINUX_TREE)
 		./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/ \
 	&& touch $@
 
-# TODO: use git	archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
+# TODO: use git	worktree add/archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
 .build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
 	rm -rfd $@ && mkdir -p $(dir $@)
 	flock .build/linux.lock bash -c ' \

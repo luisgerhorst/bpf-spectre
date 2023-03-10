@@ -26,7 +26,7 @@ Install all dependencies, see `make install-deps` in the subdirectories.
 
 Boot the VM (system under test):
 
-    make -C system qemu
+    make -C src qemu
 
 This might take some time the first time as it builds the kernel and installs
 Debian. Alternatively boot the physical target machine (with any kernel) for the
@@ -34,7 +34,7 @@ non-demo benchmark suites.
 
 In another terminal on the control system (connects to the SuTs, can be the same as the development system):
 
-    ./bench/run.sh --suite idle
+    ./test/run.sh --suite idle
 
 The latter also installs and sets up all benchmark dependencies (e.g., boot the kernel) on the target SuT.
 
@@ -43,13 +43,13 @@ Plot and open the results on the development system:
     make -C data -k -j $(getconf _NPROCESSORS_ONLN) all
     open data/plots/*-idle.pdf
 
-To set up the physical SuTs, see `system`.
+To set up the physical SuTs, see `src`.
 
 ## Data Flow
 
-    system/{linux, *}
-      -- make -C system --> System under Test (Target)
-      -- ./bench/run.sh --> data/.raw/*/
+    src/{linux, *}
+      -- make -C src --> System under Test (Target)
+      -- ./test/run.sh --> data/.raw/*/
       -- ./data/tidy.py --> data/.tidy/*.tsv.gz
       -- ./data/plot-*  --> data/plots/*.pdf
 

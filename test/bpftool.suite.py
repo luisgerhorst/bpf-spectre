@@ -13,12 +13,14 @@ import yaml # pyyaml
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
-    for p in Path("../system/bpf-samples/.build/").glob("*.bpf.o"):
+    for p in Path("../src/bpf-samples/.build/").glob("*.bpf.o"):
         p.unlink()
-    subprocess.run(["make", "-j", str(multiprocessing.cpu_count()), "-C", "../system/bpf-samples", "all"],
+    subprocess.run(["make",
+                    # "-j", str(multiprocessing.cpu_count()),
+                    "-C", "../src/bpf-samples", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
-    T = os.getenv("T", default="faui49easy5")
+    T = os.getenv("T", default="faui49easy6")
 
     suite = []
     append_T(suite, T)
@@ -30,18 +32,28 @@ def append_T(suite, T):
     priv_spec_mit="configs/priv-spec-mit.defconfig"
 
     # All programs:
-    for prog_path in Path("../system/bpf-samples/.build/").glob("*.bpf.o"):
+    for prog_path in Path("../src/bpf-samples/.build/").glob("*.bpf.o"):
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.o
 
-        if "custom_varstackw" not in prog:
-            continue
+        # if "linux-selftests_" not in prog:
+        #     continue
 
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (ca, sc) in [(unpr, "")]:
+        for (ca, sc, b) in [
+                # (unpr, ""),
+                # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2"),
+                (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-lfence"),
+                (priv, "kernel.bpf_spec_v1=2", "bpf-spectre"),
+                # (priv, "kernel.bpf_spec_v4=2"),
+                # (priv, "net.core.bpf_jit_harden=2"),
+                (priv, "net.core.bpf_jit_harden=0", "master")
+        ]:
             suite.append({
                 "bench_script": "bpftool",
-                "boot": {},
+                "boot": {
+                    "LINUX_GIT_CHECKOUT": b,
+                },
                 "run": {
                     "T": T,
                     "CPUFREQ": "base",

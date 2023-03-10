@@ -1,4 +1,4 @@
-# Benchmark Runner
+# Benchmark/Test Runner
 
 ## Usage
 
@@ -7,7 +7,8 @@ For some `$name.suite.{py,yaml}`, run:
 ``` sh
 ./run.sh --suite $name
 ```
+<!-- TODO: BENCHRUN_DATA -> TESTRUN_DATA -->
 
 By default, the results go into `$BENCHRUN_DATA`. See `./run.sh --help`.
 
-Checks out repos and compiles parts of `../system`. Connects to remote SuTs.
+Compiles parts of `../src`. Connects to remote SuTs.

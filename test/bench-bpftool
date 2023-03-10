@@ -14,7 +14,7 @@
     set +x
     env_exports="$(export -p)"
 
-    pushd ../system
+    pushd ../src
 
     # Also sets default SuT ($T) and related variables.
     . ./env.sh

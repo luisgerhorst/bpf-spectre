@@ -15,18 +15,26 @@ export LD_LIBRARY_PATH=/usr/local/lib
 # HACK: Before running the rules, update *.git_{rev|status} for each repo. We
 # can then use them as dependencies to avoid recompilation of subprojects if
 # nothing changed in their file tree.
-REPOS := linux
+#
+# TODO: Move into prepare.sh
+REPOS := $(LINUX)
 _dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(T))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-rev $(repo) .build/$(repo).git_rev))
 _dummy := $(foreach repo,$(REPOS),$(shell ./scripts/update-git-status $(repo) .build/$(repo).git_status))
 
-LINUX_SRC = .build/linux.git_rev_status
-LINUX_SRC_COMPONENTS = .build/linux.git_rev .build/linux.git_status
+LINUX_SRC = .build/$(LINUX).git_rev_status
+LINUX_SRC_COMPONENTS = .build/$(LINUX).git_rev .build/$(LINUX).git_status
 $(LINUX_SRC): $(LINUX_SRC_COMPONENTS)
 	touch $@
 
-LINUX_TREE = linux/.config $(LINUX_SRC)
+# Must be prepared.
+$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/$(LINUX).git_rev .build/$(LINUX).git_status
+	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
+	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
+
 KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
+
+LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
 
 # BUG: linux sync problem if making target with -j32
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
@@ -37,18 +45,6 @@ all: $(TARGET)
 #
 # Linux Files
 #
-
-# To initially create the file:
-.build/merge_configs_value:
-	echo -n '$(MERGE_CONFIGS)' > $@
-# To detect when the variable value was changed:
-_dummy := $(shell test "$(shell cat .build/merge_configs_value)" = '$(MERGE_CONFIGS)' \
-	|| echo -n '$(MERGE_CONFIGS)' > .build/merge_configs_value)
-
-$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/linux.git_rev .build/linux.git_status
-	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
-	$(eval KERNEL_RELEASE=$$(shell ./scripts/linux-release.sh $(LINUX)))
 
 $(BZIMAGE): $(LINUX_TREE)
 	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage vmlinux
@@ -66,6 +62,7 @@ $(BZIMAGE): $(LINUX_TREE)
 		./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/ \
 	&& touch $@
 
+# TODO: use git	archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
 .build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
 	rm -rfd $@ && mkdir -p $(dir $@)
 	flock .build/linux.lock bash -c ' \

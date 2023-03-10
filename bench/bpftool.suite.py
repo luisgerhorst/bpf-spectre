@@ -15,7 +15,9 @@ def main():
 
     for p in Path("../system/bpf-samples/.build/").glob("*.bpf.o"):
         p.unlink()
-    subprocess.run(["make", "-j", str(multiprocessing.cpu_count()), "-C", "../system/bpf-samples", "all"],
+    subprocess.run(["make",
+                    # "-j", str(multiprocessing.cpu_count()),
+                    "-C", "../system/bpf-samples", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
     T = os.getenv("T", default="faui49easy6")

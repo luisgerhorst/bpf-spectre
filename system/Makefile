@@ -1,6 +1,6 @@
 .PHONY: all
 all: .build/deps
-	./scripts/checkout.sh
+	./scripts/prepare.sh
 	$(MAKE) -f target.mk all
 
 .PHONY: clean
@@ -12,6 +12,9 @@ clean:
 .PHONY: install-deps
 install-deps: .build/deps
 
-.build/deps:
+.build/deps: | .build
 	sudo apt install autossh dwarves
 	touch $@
+
+.build:
+	mkdir $@

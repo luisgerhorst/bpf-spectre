@@ -13,3 +13,6 @@ dist/
 /data/archive/scratch*.tar.gz
 /system/bpf-samples/make-linux-selftests.stderr
 /system/bpf-samples/make-linux-selftests.stdout
+/system/linux/
+/system/linux-main.git_status
+/system/linux-main.git_status.full

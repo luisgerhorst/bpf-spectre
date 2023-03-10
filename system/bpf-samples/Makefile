@@ -26,7 +26,7 @@ CUSTOM = $(patsubst $(PREFIX)/prog/%.bpf.s,%,$(CUSTOM_S))
 
 KATRAN = $(patsubst %,katran_%,balancer_kern healthchecking_ipip healthchecking_kern xdp_pktcntr xdp_root)
 
-LINUX=../linux
+LINUX=../linux-main
 
 #  $(KATRAN)
 PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
@@ -46,14 +46,18 @@ all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples linux-selftests
 vbi:
 	./vbi.sh
 
+.PHONY: $(LINUX)/.config
+$(LINUX)/.config:
+	$(MAKE) LINUX=linux-main -C .. -f target.mk linux-main/.config
+	$(MAKE) -j $(shell nproc)  -C $(LINUX) vmlinux
+
 .PHONY: linux-samples
-linux-samples:
-	$(MAKE) -C $(LINUX)/samples/bpf
+linux-samples: $(LINUX)/.config
+	env -i PATH=$(PATH) $(MAKE) -C $(LINUX)/samples/bpf
 	./linux-samples.sh
 
 .PHONY: linux-selftests
-linux-selftests:
-	$(MAKE) -C $(LINUX) vmlinux
+linux-selftests: $(LINUX)/.config
 	env -i PATH=$(PATH) $(MAKE) -j $(shell nproc) -C $(LINUX)/tools/testing/selftests/bpf -k all > .build/make-linux-selftests.stdout 2> .build/make-linux-selftests.stderr || true
 	./linux-selftests.sh
 

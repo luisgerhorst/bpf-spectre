@@ -5,7 +5,7 @@
 	path = system/bpf-samples/external/cilium
 	url = git@github.com:cilium/cilium.git
 [submodule "tests/bpf/linux-build/linux"]
-	path = system/linux
+	path = system/linux-main
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
 [submodule "tests/bpf/samples/vbpf"]
 	path = system/bpf-samples/external/vbpf

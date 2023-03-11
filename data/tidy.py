@@ -183,8 +183,8 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
     jited = None
     f = "bpftool/jited." + prog + ".json"
     try:
-        # Fixup for bpftool's invalid \' escapes no longer required: .replace("\\'", "'")
-        s = brp.joinpath(f).read_text()
+        # Fixup for bpftool's invalid \' escapes in old kernels.
+        s = brp.joinpath(f).read_text().replace("\\'", "'")
         jited = json.loads(s)
         # Likely caused by bpftool segfault for some linux test programs.
     except json.decoder.JSONDecodeError as je:

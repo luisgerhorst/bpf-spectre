@@ -1,5 +1,5 @@
 D ?= scratch
-BENCHRUN_DATA ?= .raw
+TESTRUN_DATA ?= .raw
 
 ALL_MAKEFILES=Makefile data.mk
 RM=rm
@@ -10,7 +10,7 @@ RM=rm
 .PHONY: all
 all: plots/$(D).pdf
 
-.tidy/$(D).tsv.gz: tidy.py $(BENCHRUN_DATA)/$(D)/suite-run.log $(ALL_MAKEFILES) | .tidy
+.tidy/$(D).tsv.gz: tidy.py $(TESTRUN_DATA)/$(D)/suite-run.log $(ALL_MAKEFILES) | .tidy
 	./tidy.py --data $(D) 2>&1 | tee $@.log
 
 plots/$(D)/%/.plot.log: .tidy/$(D).tsv.gz plot-% plotlib.R $(ALL_MAKEFILES) | plots

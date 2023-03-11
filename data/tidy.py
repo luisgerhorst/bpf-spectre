@@ -18,7 +18,7 @@ from joblib import Parallel, delayed
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
-    raw_dir = Path(os.getenv("BENCHRUN_DATA", default=".raw"))
+    raw_dir = Path(os.getenv("TESTRUN_DATA", default=".raw"))
     parser = argparse.ArgumentParser(description="Convert raw benchmark data into tidy tabular format: https://tidyr.tidyverse.org/articles/tidy-data.html")
     parser.add_argument("-d", "--data")
     parser.add_argument("-r", "--raw-path", default=raw_dir.joinpath("scratch"))

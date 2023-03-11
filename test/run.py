@@ -46,12 +46,12 @@ def main():
                    check=True)
 
 def parse_args():
-    raw_dir = Path(os.getenv("BENCHRUN_DATA", default="../data/.raw"))
+    raw_dir = Path(os.getenv("TESTRUN_DATA", default="../data/.raw"))
 
     parser = argparse.ArgumentParser(description="Run each benchmark burst_len times in a row, repeat suite rep times.")
     parser.add_argument("-s", "--suite")
     parser.add_argument("-n", "--data-name", help="Suffix appended to auto-generated path.")
-    parser.add_argument("-p", "--data-path", help="Relative to BENCHRUN_DATA. For example, set this to 'scratch' for test-runs.")
+    parser.add_argument("-p", "--data-path", help="Relative to TESTRUN_DATA. For example, set this to 'scratch' for test-runs.")
     parser.add_argument("-r", "--reps", default=1, type=int)
     parser.add_argument("-b", "--burst-len", default=5, type=int)
     parser.add_argument("--random-seed", default=time.time_ns(), type=int)

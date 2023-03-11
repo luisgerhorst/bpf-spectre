@@ -9,8 +9,8 @@ RM=rm
 .PHONY: all
 all: plots
 
-RAW_DIRS=$(filter %/, $(wildcard $(BENCHRUN_DATA)/*/))
-PLOTS=$(RAW_DIRS:$(BENCHRUN_DATA)/%/=plots-%)
+RAW_DIRS=$(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
+PLOTS=$(RAW_DIRS:$(TESTRUN_DATA)/%/=plots-%)
 
 .PHONY: plots
 plots: $(PLOTS)

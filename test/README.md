@@ -7,8 +7,7 @@ For some `$name.suite.{py,yaml}`, run:
 ``` sh
 ./run.sh --suite $name
 ```
-<!-- TODO: BENCHRUN_DATA -> TESTRUN_DATA -->
 
-By default, the results go into `$BENCHRUN_DATA`. See `./run.sh --help`.
+By default, the results go into `$TESTRUN_DATA`. See `./run.sh --help`.
 
 Compiles parts of `../src`. Connects to remote SuTs.

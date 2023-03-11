@@ -7,6 +7,7 @@ RAMDISK=qemu-ramdisk.img
 
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
+LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
 TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
 
 # Parallel make is OK.
@@ -17,7 +18,11 @@ export LD_LIBRARY_PATH=/usr/local/lib
 _dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(T))
 
 .PHONY: all
-all: $(TARGET)
+all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg $(LINUX_PERF_TARXZ) \
+	.build/$(VM).qcow2
+
+.PHONY: target
+target: $(TARGET)
 
 #
 # Prepare
@@ -69,8 +74,6 @@ $(BZIMAGE): $(LINUX_TREE)
 .build/linux-src/d.tar.gz: .build/linux-src.d
 	mkdir -p $(dir $@)
 	env -C $< tar cf - . | pigz > $@
-
-LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
 
 $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	rm -f linux/perf-*.tar.xz $@ \

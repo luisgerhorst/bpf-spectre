@@ -3,6 +3,9 @@ LINUX_MAIN ?= linux-main
 .PHONY: all
 all: release-all
 
+.PHONY: target
+target: release-target
+
 .PHONY: release-%
 release-%: configure .build/deps
 	$(MAKE) -f release.mk $*
@@ -35,12 +38,12 @@ clean:
 .PHONY: install-deps
 install-deps: .build/deps
 
-.build/deps: Makefile | .build
-	sudo apt install autossh dwarves golang
+.build/deps: | .build
+	sudo --non-interactive apt install autossh dwarves golang
 	rm -f .build/llvm.sh # https://apt.llvm.org/
 	env -C .build wget https://apt.llvm.org/llvm.sh
 	chmod +x .build/llvm.sh
-	sudo ./.build/llvm.sh 15 all
+	sudo --non-interactive ./.build/llvm.sh 15 all
 	make -C linux-main headers_install # for linux/samples/bpf
 	touch $@
 

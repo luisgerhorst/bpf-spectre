@@ -20,7 +20,7 @@
     . ./env.sh
 
     # Boots target with linux-build ready for target-scpsh.
-    make -j $(nproc) all
+    make -j $(nproc) target
 
     cp -f bpf-samples/.build/$BPF_OBJ $dst/$BPF_OBJ
 

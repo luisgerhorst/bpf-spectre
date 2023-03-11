@@ -26,7 +26,7 @@ Install all dependencies, see `make install-deps` in the subdirectories.
 
 Boot the VM (system under test):
 
-    make -C src qemu
+    make -C src release-qemu
 
 This might take some time the first time as it builds the kernel and installs
 Debian. Alternatively boot the physical target machine (with any kernel) for the

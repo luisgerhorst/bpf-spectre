@@ -24,10 +24,10 @@ eval_save("x")
 
 expr <- expr %>% filter(ble_min == 0)
 
-ggplot(expr, aes(verification_time_usec)) +
+ggplot(expr, aes(verification_time_usec, colour=Project)) +
   stat_ecdf() +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
+  facet_grid(cols=vars(`BPF Program Type`), scales="free")
 eval_save("x")
 
 ggplot(expr, aes(verification_error)) +

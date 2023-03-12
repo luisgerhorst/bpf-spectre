@@ -23,7 +23,8 @@ fi
 
 for LINUX in linux linux-main
 do
-    ${MAKE} -f release.mk LINUX=$LINUX $LINUX/.config
     ./scripts/update-git-rev $LINUX .build/$LINUX.git_rev
     ./scripts/update-git-status $LINUX .build/$LINUX.git_status
+    # TODO: localmodconfig for i4lab
+    ${MAKE} -f release.mk LINUX=$LINUX $LINUX/.config
 done

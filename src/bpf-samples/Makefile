@@ -43,7 +43,7 @@ endif
 all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples linux-selftests
 
 .PHONY: vbi
-vbi:
+vbi: | .build
 	./vbi.sh
 
 .PHONY: $(LINUX)/.config
@@ -52,12 +52,12 @@ $(LINUX)/.config:
 	$(MAKE) -j $(shell nproc)  -C $(LINUX) vmlinux
 
 .PHONY: linux-samples
-linux-samples: $(LINUX)/.config
+linux-samples: $(LINUX)/.config | .build
 	env -i PATH=$(PATH) $(MAKE) -C $(LINUX)/samples/bpf
 	./linux-samples.sh
 
 .PHONY: linux-selftests
-linux-selftests: $(LINUX)/.config
+linux-selftests: $(LINUX)/.config | .build
 	env -i PATH=$(PATH) $(MAKE) -j $(shell nproc) -C $(LINUX)/tools/testing/selftests/bpf -k all > .build/make-linux-selftests.stdout 2> .build/make-linux-selftests.stderr || true
 	./linux-selftests.sh
 
@@ -66,7 +66,7 @@ linux-selftests: $(LINUX)/.config
 # 	$(MAKE) .build/katran_$*.bpf.o .build/katran_$*.bpf.objdump .build/katran_$*.bpf.readelf
 
 .PHONY: prog-%
-prog-%:
+prog-%: | .build
 	$(MAKE) .build/$*.bpf.o .build/$*.bpf.objdump .build/$*.bpf.readelf
 
 #
@@ -74,7 +74,7 @@ prog-%:
 #
 
 .PHONY: prog/lbe_%.bpf.s
-prog/lbe_%.bpf.s: | prog
+prog/lbe_%.bpf.s: | prog .build
 	$(MAKE) -C external/libbpf-bootstrap/examples/c .output/$*.bpf.s
 	ln -fs ../external/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
 
@@ -92,7 +92,7 @@ prog/lbe_%.bpf.s: | prog
 #
 
 .PHONY: prog/cilium_%.bpf.s
-prog/cilium_%.bpf.s: Makefile | prog
+prog/cilium_%.bpf.s: Makefile | prog .build
 	$(MAKE) -C external/cilium/bpf $(CILIUM_ARGS) bpf_$*.s
 	ln -fs ../external/cilium/bpf/bpf_$*.s $@
 

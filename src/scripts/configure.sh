@@ -13,6 +13,7 @@ commit_ish=${LINUX_GIT_CHECKOUT:-${current_branch}}
 git worktree add --force ../${LINUX} $commit_ish \
     || env -C ../${LINUX} git checkout --force --detach $commit_ish
 popd
+make -C $LINUX mrproper
 
 # TODO: auto gen .build/env/$VAR
 if [ ! -e .build/merge_configs_value ] \

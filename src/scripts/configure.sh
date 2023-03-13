@@ -7,19 +7,17 @@ LINUX_MAIN=${LINUX_MAIN:-linux-main}
 MAKE=${MAKE:-make}
 MERGE_CONFIGS=${MERGE_CONFIGS:-}
 
+old_rev=$(env -C $LINUX git rev-parse HEAD || echo null)
 pushd $LINUX_MAIN
-current_branch=$(git rev-parse --abbrev-ref HEAD)
-commit_ish=${LINUX_GIT_CHECKOUT:-${current_branch}}
+current_main_branch=$(git rev-parse --abbrev-ref HEAD)
+commit_ish=${LINUX_GIT_CHECKOUT:-${current_main_branch}}
 git worktree add --force ../${LINUX} $commit_ish \
     || env -C ../${LINUX} git checkout --force --detach $commit_ish
 popd
-make -C $LINUX mrproper
-
-# TODO: auto gen .build/env/$VAR
-if [ ! -e .build/merge_configs_value ] \
-    || [ "$(cat .build/merge_configs_value)" != "${MERGE_CONFIGS}" ]
+new_rev=$(env -C $LINUX git rev-parse HEAD)
+if [ $old_rev != $new_rev ]
 then
-    echo -n "${MERGE_CONFIGS}" > .build/merge_configs_value
+    $MAKE -C $LINUX clean # to prevent missing headers when making libbbpf
 fi
 
 for linux in ${LINUX} ${LINUX_MAIN}

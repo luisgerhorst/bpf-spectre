@@ -48,22 +48,22 @@ vbi: | .build
 
 .PHONY: $(LINUX)/.config
 $(LINUX)/.config:
-	$(MAKE) LINUX=linux-main -C .. linux-main/.config
-	$(MAKE) -j $(shell nproc)  -C $(LINUX) vmlinux
+	$(MAKE) -C .. configure
+	$(MAKE) -j $(shell nproc) -C $(LINUX) all headers_install
 
 .PHONY: linux-samples
 linux-samples: $(LINUX)/.config | .build
-	env -i PATH=$(PATH) $(MAKE) -C $(LINUX)/samples/bpf
+	env -i PATH=$(PATH) $(MAKE) V=1 -C $(LINUX)/samples/bpf
 	./linux-samples.sh
 
+# ARCH=x86_64 CROSS_COMPILE=x86_64-linux-gnu-
 .PHONY: linux-selftests
 linux-selftests: $(LINUX)/.config | .build
-	env -i PATH=$(PATH) $(MAKE) -j $(shell nproc) -C $(LINUX)/tools/testing/selftests/bpf -k all > .build/make-linux-selftests.stdout 2> .build/make-linux-selftests.stderr || true
+	env -i PATH=$(PATH) $(MAKE) \
+		-C $(LINUX)/tools/testing/selftests/bpf all \
+		V=1 -j $(shell nproc) -k \
+		2> .build/make-linux-selftests.stderr > .build/make-linux-selftests.stdout || true
 	./linux-selftests.sh
-
-# .PHONY: prog-%
-# prog-%:
-# 	$(MAKE) .build/katran_$*.bpf.o .build/katran_$*.bpf.objdump .build/katran_$*.bpf.readelf
 
 .PHONY: prog-%
 prog-%: | .build

@@ -1,3 +1,5 @@
+include env.mk
+
 LINUX_MAIN ?= linux-main
 
 .PHONY: all
@@ -17,6 +19,7 @@ release-%: configure .build/deps
 .PHONY: configure
 configure:
 	./scripts/configure.sh
+	$(MAKE) -C linux-main headers_install
 
 linux%/.config: configure
 

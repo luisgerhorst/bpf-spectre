@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s nullglob
 set -x
 
-linux=../linux
+linux=../linux-main
 bpf=$linux/tools/testing/selftests/bpf
 
-for o in ${bpf}/*.bpf.o
+# -maxdepth 1: exclude no_alu32
+list=$(find "${bpf}/" -name '*.bpf.o' -not -path '**/bpf/no_alu32/*.bpf.o' | sort)
+if ! test -e linux-selftests.list
+then
+   echo "$list" >  linux-selftests.list
+fi
+test "$list" = "$(cat linux-selftests.list)"
+
+IFS=$'\n'
+for o in $list
 do
     name=$(basename --suffix=.bpf.o $o)
     ln -fs ../$o .build/linux-selftests_$name.bpf.o
 done
-
-if cat .build/make-linux-selftests.stderr | \
-    grep --extended-regexp "^make: .+ Error [0-9]+$" | \
-    grep --invert-match "test_deny_namespace.bpf.o" | \
-    grep --invert-match "test_bpf_nf_fail.bpf.o" | \
-    grep --invert-match "test_bpf_nf.bpf.o" | \
-    grep --invert-match "xdp_synproxy_kern.bpf.o" | \
-    grep --invert-match "bpf_testmod.ko" | \
-    grep --invert-match "find_vma_fail1.bpf.o"
-then
-    exit 1
-fi
+unset IFS

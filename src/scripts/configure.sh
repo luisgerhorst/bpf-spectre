@@ -17,7 +17,9 @@ popd
 new_rev=$(env -C $LINUX git rev-parse HEAD)
 if [ $old_rev != $new_rev ]
 then
-    $MAKE -C $LINUX clean # to prevent missing headers when making libbbpf
+    # To prevent missing headers when making libbbpf. Also, generated config is
+    # invalid after source change.
+    $MAKE -C $LINUX mrproper
 fi
 
 for linux in ${LINUX} ${LINUX_MAIN}

@@ -49,7 +49,7 @@ vbi: | .build
 .PHONY: $(LINUX)/.config
 $(LINUX)/.config:
 	$(MAKE) -C .. configure
-	$(MAKE) -j $(shell nproc) -C $(LINUX) all headers_install
+	# $(MAKE) -j $(shell nproc) -C $(LINUX) all headers_install
 
 .PHONY: linux-samples
 linux-samples: $(LINUX)/.config | .build

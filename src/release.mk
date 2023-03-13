@@ -83,7 +83,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 		&& $(MAKE) perf-tarxz-src-pkg \
 	    && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
 	' \
-	&& mkdir -p $(dir $@) && mv -f $$(find linux -name 'perf-*.tar.xz') $@
+	&& mkdir -p $(dir $@) && mv -f $$(find -L linux -name 'perf-*.tar.xz') $@
 
 #
 # Debian VM Files

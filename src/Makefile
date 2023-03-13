@@ -23,10 +23,12 @@ configure:
 
 linux%/.config: configure
 
-.PHONY: menuconfig
-menuconfig: $(LINUX_MAIN)/.config
-	$(MAKE) -C $(LINUX_MAIN) menuconfig
-	cp $(LINUX_MAIN)/.config $(CONFIG)
+.PHONY: linux-%config
+linux-%config: $(LINUX_MAIN)/.config
+	$(MAKE) -C $(LINUX_MAIN) $*config
+	$(MAKE) -C $(LINUX_MAIN) savedefconfig
+	cp $(LINUX_MAIN)/defconfig $(CONFIG)
+	cp $(LINUX_MAIN)/.config $(CONFIG).config
 
 #
 # etc

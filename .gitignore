@@ -14,3 +14,7 @@ dist/
 /*/bpf-samples/make-linux-selftests.stderr
 /*/bpf-samples/make-linux-selftests.stdout
 /*/linux/
+/src/linux.HEAD/
+/src/linux
+/src/linux-checkouts/HEAD/
+/src/.linux.HEAD/

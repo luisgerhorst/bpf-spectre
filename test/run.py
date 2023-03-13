@@ -54,7 +54,7 @@ def parse_args():
     parser.add_argument("-p", "--data-path", help="Relative to TESTRUN_DATA. For example, set this to 'scratch' for test-runs.")
     parser.add_argument("-r", "--reps", default=1, type=int)
     parser.add_argument("-b", "--burst-len", default=5, type=int)
-    parser.add_argument("--random-seed", default=time.time_ns(), type=int)
+    parser.add_argument("--random-seed", default=0, type=int)
     args = parser.parse_args()
 
     # Allow reproducible shuffling of the suite.

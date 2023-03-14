@@ -10,8 +10,11 @@ MERGE_CONFIGS=${MERGE_CONFIGS:-}
 checkout=${LINUX_GIT_CHECKOUT:-HEAD}
 # Same directory because of make deb-pkg.
 lco=.linux.$checkout
+if ! test -e $lco/.git
+then
+    env -C $LINUX_MAIN git worktree add --force ../$lco $checkout
+fi
 old_rev=$(env -C $lco git rev-parse HEAD || echo null)
-env -C $LINUX_MAIN git worktree add --force ../$lco $checkout || true
 env -C $lco git checkout --force --detach $checkout
 new_rev=$(env -C $lco git rev-parse HEAD)
 if [ $old_rev != $new_rev ]

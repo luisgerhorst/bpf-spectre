@@ -27,4 +27,7 @@
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
 [submodule "src/.linux.bpf-spectre-v1-lfence"]
 	path = src/.linux.bpf-spectre-v1-lfence
-	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/
+	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
+[submodule "src/.linux.master"]
+	path = src/.linux.master
+	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git

@@ -1,0 +1,177 @@
+Module                  Size  Used by
+tcp_diag               16384  0
+inet_diag              24576  1 tcp_diag
+unix_diag              16384  0
+sctp                  430080  4
+atm                    69632  0
+aegis128               20480  0
+aes_generic            36864  1 aegis128
+aegis128_aesni         20480  0
+algif_aead             16384  0
+fcrypt                 20480  0
+jitterentropy_rng      16384  0
+drbg                   40960  0
+ansi_cprng             16384  0
+algif_rng              16384  0
+blake2b_generic        20480  0
+ccm                    20480  0
+cmac                   16384  0
+md4                    16384  0
+michael_mic            16384  0
+nhpoly1305             16384  0
+poly1305_generic       16384  0
+libpoly1305            16384  2 nhpoly1305,poly1305_generic
+poly1305_x86_64        28672  0
+rmd128                 20480  0
+rmd160                 20480  0
+rmd256                 20480  0
+rmd320                 20480  0
+sha3_generic           16384  0
+sha512_ssse3           49152  0
+sha512_generic         16384  1 sha512_ssse3
+streebog_generic       32768  0
+tgr192                 24576  0
+wp512                  32768  0
+xxhash_generic         16384  0
+algif_hash             16384  0
+blowfish_generic       16384  0
+blowfish_x86_64        24576  0
+blowfish_common        20480  2 blowfish_generic,blowfish_x86_64
+cast5_avx_x86_64       49152  0
+cast5_generic          24576  1 cast5_avx_x86_64
+des_generic            16384  0
+des3_ede_x86_64        40960  0
+libdes                 24576  2 des_generic,des3_ede_x86_64
+ecb                    16384  0
+salsa20_generic        16384  0
+chacha_generic         16384  0
+chacha_x86_64          28672  0
+libchacha              16384  2 chacha_x86_64,chacha_generic
+camellia_generic       32768  0
+camellia_aesni_avx2    28672  0
+camellia_aesni_avx_x86_64    28672  1 camellia_aesni_avx2
+camellia_x86_64        53248  2 camellia_aesni_avx_x86_64,camellia_aesni_avx2
+cast6_avx_x86_64       69632  0
+cast6_generic          16384  1 cast6_avx_x86_64
+cast_common            16384  4 cast5_generic,cast6_avx_x86_64,cast6_generic,cast5_avx_x86_64
+serpent_avx2           49152  0
+serpent_avx_x86_64     49152  1 serpent_avx2
+serpent_sse2_x86_64    53248  0
+serpent_generic        32768  3 serpent_avx2,serpent_sse2_x86_64,serpent_avx_x86_64
+twofish_generic        20480  0
+twofish_avx_x86_64     53248  0
+twofish_x86_64_3way    28672  1 twofish_avx_x86_64
+twofish_x86_64         16384  2 twofish_x86_64_3way,twofish_avx_x86_64
+twofish_common         24576  4 twofish_x86_64,twofish_generic,twofish_x86_64_3way,twofish_avx_x86_64
+xts                    16384  0
+algif_skcipher         16384  0
+af_alg                 32768  4 algif_hash,algif_skcipher,algif_aead,algif_rng
+dm_mod                163840  0
+nfsv3                  57344  1
+rpcsec_gss_krb5        32768  0
+nfsv4                 917504  0
+dns_resolver           16384  1 nfsv4
+nfs                   434176  3 nfsv4,nfsv3
+nfs_ssc                16384  2 nfsv4,nfs
+fscache               397312  2 nfsv4,nfs
+overlay               147456  0
+amd64_edac_mod         40960  0
+edac_mce_amd           32768  1 amd64_edac_mod
+kvm_amd               118784  0
+kvm                   937984  1 kvm_amd
+irqbypass              16384  1 kvm
+ghash_clmulni_intel    16384  0
+nls_ascii              16384  1
+nls_cp437              20480  1
+vfat                   20480  1
+fat                    86016  1 vfat
+aesni_intel           372736  0
+eeepc_wmi              16384  0
+libaes                 16384  2 aesni_intel,aes_generic
+asus_wmi               45056  1 eeepc_wmi
+crypto_simd            16384  10 camellia_aesni_avx_x86_64,camellia_aesni_avx2,cast6_avx_x86_64,aegis128_aesni,serpent_avx2,serpent_sse2_x86_64,aesni_intel,serpent_avx_x86_64,cast5_avx_x86_64,twofish_avx_x86_64
+cryptd                 24576  2 crypto_simd,ghash_clmulni_intel
+glue_helper            16384  10 camellia_aesni_avx_x86_64,camellia_x86_64,camellia_aesni_avx2,cast6_avx_x86_64,twofish_x86_64_3way,serpent_avx2,serpent_sse2_x86_64,aesni_intel,serpent_avx_x86_64,twofish_avx_x86_64
+battery                24576  1 asus_wmi
+sparse_keymap          16384  1 asus_wmi
+rapl                   20480  0
+rfkill                 32768  2 asus_wmi
+video                  61440  1 asus_wmi
+wmi_bmof               16384  0
+ccp                   110592  1 kvm_amd
+efi_pstore             16384  0
+pcspkr                 16384  0
+sp5100_tco             20480  0
+rng_core               16384  1 ccp
+k10temp                16384  0
+watchdog               32768  1 sp5100_tco
+evdev                  28672  2
+acpi_cpufreq           32768  0
+nfsd                  602112  13
+auth_rpcgss           155648  2 nfsd,rpcsec_gss_krb5
+psmouse               184320  0
+nfs_acl                16384  2 nfsd,nfsv3
+lockd                 126976  3 nfsd,nfsv3,nfs
+grace                  16384  2 nfsd,lockd
+msr                    16384  64
+parport_pc             40960  0
+ppdev                  24576  0
+drm                   626688  0
+lp                     20480  0
+sunrpc                675840  28 nfsd,nfsv4,auth_rpcgss,lockd,nfsv3,rpcsec_gss_krb5,nfs_acl,nfs
+binfmt_misc            24576  1
+parport                73728  3 parport_pc,lp,ppdev
+fuse                  167936  2
+configfs               57344  1
+efivarfs               16384  1
+ip_tables              36864  0
+x_tables               53248  1 ip_tables
+autofs4                53248  6
+ext4                  942080  2
+crc16                  16384  1 ext4
+mbcache                16384  1 ext4
+jbd2                  151552  1 ext4
+raid10                 65536  0
+raid456               184320  0
+async_raid6_recov      24576  1 raid456
+async_memcpy           20480  2 raid456,async_raid6_recov
+async_pq               20480  2 raid456,async_raid6_recov
+async_xor              20480  3 async_pq,raid456,async_raid6_recov
+async_tx               20480  5 async_pq,async_memcpy,async_xor,raid456,async_raid6_recov
+xor                    24576  1 async_xor
+raid6_pq              122880  3 async_pq,raid456,async_raid6_recov
+libcrc32c              16384  2 raid456,sctp
+crc32c_generic         16384  0
+raid1                  53248  0
+raid0                  24576  0
+multipath              20480  0
+linear                 20480  0
+md_mod                188416  6 raid1,raid10,raid0,linear,raid456,multipath
+hid_generic            16384  0
+usbhid                 65536  0
+hid                   151552  2 usbhid,hid_generic
+ahci                   40960  0
+libahci                45056  1 ahci
+xhci_pci               20480  0
+libata                299008  2 libahci,ahci
+xhci_hcd              311296  1 xhci_pci
+e1000e                311296  0
+nvme                   49152  4
+scsi_mod              270336  1 libata
+usbcore               331776  3 xhci_hcd,usbhid,xhci_pci
+nvme_core             131072  6 nvme
+crc32_pclmul           16384  0
+crc32c_intel           24576  5
+t10_pi                 16384  1 nvme_core
+ptp                    32768  1 e1000e
+crc_t10dif             20480  1 t10_pi
+i2c_piix4              28672  0
+crct10dif_generic      16384  0
+pps_core               24576  1 ptp
+crct10dif_pclmul       16384  1
+crct10dif_common       16384  3 crct10dif_generic,crc_t10dif,crct10dif_pclmul
+usb_common             16384  2 xhci_hcd,usbcore
+wmi                    36864  2 asus_wmi,wmi_bmof
+gpio_amdpt             20480  0
+gpio_generic           16384  1 gpio_amdpt
+button                 24576  0

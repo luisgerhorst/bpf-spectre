@@ -1,0 +1,108 @@
+Module                  Size  Used by
+msr                    16384  0
+nfsv3                  69632  1
+rpcsec_gss_krb5        45056  0
+nfsv4                1159168  0
+dns_resolver           16384  1 nfsv4
+nfs                   589824  3 nfsv4,nfsv3
+fscache               389120  1 nfs
+netfs                  61440  1 fscache
+overlay               184320  0
+rfkill                 40960  3
+nls_ascii              16384  1
+nls_cp437              20480  1
+vfat                   24576  1
+fat                   102400  1 vfat
+intel_rapl_msr         20480  0
+intel_rapl_common      32768  1 intel_rapl_msr
+x86_pkg_temp_thermal    20480  0
+intel_powerclamp       20480  0
+coretemp               20480  0
+crct10dif_pclmul       16384  1
+ghash_clmulni_intel    16384  0
+sha512_ssse3           53248  0
+sha512_generic         16384  1 sha512_ssse3
+aesni_intel           405504  0
+crypto_simd            20480  1 aesni_intel
+mei_wdt                16384  0
+cryptd                 32768  2 crypto_simd,ghash_clmulni_intel
+cdc_acm                49152  0
+evdev                  28672  7
+sg                     49152  0
+rapl                   16384  0
+iTCO_wdt               16384  0
+intel_cstate           24576  0
+intel_uncore          253952  0
+serio_raw              20480  0
+iTCO_vendor_support    16384  1 iTCO_wdt
+mei_me                 61440  1
+fujitsu_laptop         32768  0
+sparse_keymap          16384  1 fujitsu_laptop
+mei                   184320  3 mei_wdt,mei_me
+intel_pch_thermal      20480  0
+pcspkr                 16384  0
+efi_pstore             16384  0
+acpi_pad               28672  0
+tpm_crb                20480  0
+tpm_tis                16384  0
+button                 24576  0
+tpm_tis_core           36864  1 tpm_tis
+tpm                   106496  3 tpm_tis,tpm_crb,tpm_tis_core
+rng_core               24576  1 tpm
+nfsd                  831488  5
+auth_rpcgss           180224  2 nfsd,rpcsec_gss_krb5
+nfs_acl                16384  2 nfsd,nfsv3
+binfmt_misc            28672  1
+lockd                 147456  3 nfsd,nfsv3,nfs
+fuse                  188416  3
+grace                  16384  2 nfsd,lockd
+configfs               65536  1
+sunrpc                802816  28 nfsd,nfsv4,auth_rpcgss,lockd,nfsv3,rpcsec_gss_krb5,nfs_acl,nfs
+efivarfs               28672  1
+ip_tables              40960  0
+x_tables               65536  1 ip_tables
+autofs4                57344  6
+ext4                 1089536  2
+crc16                  16384  1 ext4
+mbcache                20480  1 ext4
+jbd2                  192512  1 ext4
+raid10                 73728  0
+raid456               196608  0
+async_raid6_recov      24576  1 raid456
+async_memcpy           20480  2 raid456,async_raid6_recov
+async_pq               20480  2 raid456,async_raid6_recov
+async_xor              20480  3 async_pq,raid456,async_raid6_recov
+xor                    24576  1 async_xor
+async_tx               20480  5 async_pq,async_memcpy,async_xor,raid456,async_raid6_recov
+raid6_pq              122880  3 async_pq,raid456,async_raid6_recov
+libcrc32c              16384  1 raid456
+crc32c_generic         16384  0
+raid1                  61440  0
+raid0                  24576  0
+multipath              20480  0
+linear                 20480  0
+md_mod                221184  6 raid1,raid10,raid0,linear,raid456,multipath
+hid_generic            16384  0
+usbhid                 69632  0
+hid                   167936  2 usbhid,hid_generic
+sd_mod                 90112  5
+t10_pi                 24576  1 sd_mod
+crc64_rocksoft         20480  1 t10_pi
+crc64                  20480  1 crc64_rocksoft
+ahci                   49152  4
+xhci_pci               24576  0
+libahci                57344  1 ahci
+xhci_hcd              352256  1 xhci_pci
+crc32_pclmul           16384  0
+libata                446464  2 libahci,ahci
+crc32c_intel           24576  5
+psmouse               212992  0
+usbcore               397312  4 xhci_hcd,usbhid,cdc_acm,xhci_pci
+i2c_i801               36864  0
+e1000e                364544  0
+i2c_smbus              20480  1 i2c_i801
+scsi_mod              315392  3 sd_mod,libata,sg
+usb_common             20480  2 xhci_hcd,usbcore
+scsi_common            16384  3 scsi_mod,libata,sg
+video                  73728  1 fujitsu_laptop
+wmi                    40960  1 video

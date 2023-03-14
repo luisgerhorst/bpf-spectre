@@ -144,6 +144,10 @@ def tidy_bpftool_loadall_log(brp, values):
             else:
                 d["verification_error_msg"] = l_prev
                 d["verification_error_speculative"] = speculative
+        if re.match(r"^libbpf: failed to guess program type from ELF section '.+'$", l_prev) is not None:
+            if re.match(r"^libbpf: supported section.+ names are: .+$", l) is not None:
+                d["bpftool_loadall_error"] = "libbpf: failed to guess program type from ELF section '*'"
+                d["bpftool_loadall_error_reason_msg"] = l_prev + "; " + l
         if re.match(r"^Error:.*$", l) is not None:
             d["bpftool_loadall_error"] = l
             d["bpftool_loadall_error_reason_msg"] = l_prev

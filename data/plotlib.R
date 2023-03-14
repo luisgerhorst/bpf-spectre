@@ -118,6 +118,7 @@ DATA <- ALL_DATA %>%
       ),
     Project = case_when(
       str_detect(BPF_OBJ, "^lbe_") ~ "libbpf/examples",
+      str_detect(BPF_OBJ, "^vbi-") ~ "vbpf-imports",
       TRUE ~ str_extract(BPF_OBJ, "^[a-z-]+")
     ),
     `BPF Program Type` = factor(

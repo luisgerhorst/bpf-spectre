@@ -35,11 +35,22 @@ ggplot(expr, aes(verification_error)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("x")
 
-ggplot(expr, aes(SYSCTL, fill=paste(bpftool_loadall_exitcode, verification_error_speculative, verification_error))) +
+e <- DATA %>%
+  distinct(BPF_OBJ, User, SYSCTL, .keep_all=TRUE)
+ggplot(e, aes(paste(User, SYSCTL, sep=", "),
+              colour=paste(bpftool_loadall_exitcode, bpftool_loadall_error, sep=", "),
+              fill=verification_error)) +
+  scale_fill_viridis_d() +
   geom_histogram(stat = "count", position="stack") +
-  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-  facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
-eval_save("lahist")
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save("errors")
+
+w <- expr %>%
+  filter(bpftool_loadall_exitcode > 0, is.na(bpftool_loadall_error))
+ggplot(w, aes(BPF_OBJ, fill=SYSCTL)) +
+  geom_histogram(stat = "count", position="stack") +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save("NA-errors")
 
 DATA <- DATA %>%
   filter(bpftool_run_exitcode == 0, bpftool_loadall_exitcode == 0)

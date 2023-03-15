@@ -6,7 +6,7 @@ dist/
 /system/bpf-samples/.perf_event_paranoid_-1
 /test/.data/
 /test/.build/
-/data/plots/**.pdf
+/data/plots/
 !/data/plots/23-02-26_23-56_bpftool/bpftool/0004-errors.pdf
 /data/.tidy/
 /data/.raw/

@@ -44,7 +44,7 @@ clean:
 install-deps: .build/deps
 
 .build/deps: | .build
-	sudo --non-interactive apt install autossh dwarves golang
+	sudo --non-interactive apt install autossh dwarves golang bpf-gcc
 	rm -f .build/llvm.sh # https://apt.llvm.org/
 	env -C .build wget https://apt.llvm.org/llvm.sh
 	chmod +x .build/llvm.sh

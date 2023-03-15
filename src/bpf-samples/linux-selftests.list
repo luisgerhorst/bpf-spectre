@@ -203,7 +203,6 @@
 ../linux-main/tools/testing/selftests/bpf/linked_maps2.bpf.o
 ../linux-main/tools/testing/selftests/bpf/linked_vars1.bpf.o
 ../linux-main/tools/testing/selftests/bpf/linked_vars2.bpf.o
-../linux-main/tools/testing/selftests/bpf/load_bytes_relative.bpf.o
 ../linux-main/tools/testing/selftests/bpf/local_storage_bench.bpf.o
 ../linux-main/tools/testing/selftests/bpf/local_storage.bpf.o
 ../linux-main/tools/testing/selftests/bpf/local_storage_rcu_tasks_trace_bench.bpf.o
@@ -454,7 +453,6 @@
 ../linux-main/tools/testing/selftests/bpf/test_tcpbpf_kern.bpf.o
 ../linux-main/tools/testing/selftests/bpf/test_tcp_check_syncookie_kern.bpf.o
 ../linux-main/tools/testing/selftests/bpf/test_tc_peer.bpf.o
-../linux-main/tools/testing/selftests/bpf/test_tcp_estats.bpf.o
 ../linux-main/tools/testing/selftests/bpf/test_tcp_hdr_options.bpf.o
 ../linux-main/tools/testing/selftests/bpf/test_tcpnotify_kern.bpf.o
 ../linux-main/tools/testing/selftests/bpf/test_tc_tunnel.bpf.o

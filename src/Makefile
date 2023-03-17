@@ -17,7 +17,7 @@ release-%: configure .build/deps
 #
 
 .PHONY: configure
-configure:
+configure: | .build
 	./scripts/configure.sh
 	$(MAKE) -C linux-main headers_install
 
@@ -31,12 +31,22 @@ linux-%config: $(LINUX_MAIN)/.config
 	cp $(LINUX_MAIN)/.config $(CONFIG).config
 
 #
+# kselftest
+#
+
+.PHONY: kselftest
+# TODO: Add llvm-15 on target to deps.
+kselftest: target
+	./scripts/target-scpsh '$(MAKE) -C ../target_prefix/linux-src SKIP_TARGETS=alsa TARGETS=bpf kselftest'
+
+#
 # etc
 #
 
 .PHONY: clean
 clean:
 	$(MAKE) -C bpf-samples clean
+	$(MAKE) -C linux mrproper
 	$(MAKE) -C linux-main mrproper
 	rm -rfd .build .run
 
@@ -44,7 +54,7 @@ clean:
 install-deps: .build/deps
 
 .build/deps: | .build
-	sudo --non-interactive apt install autossh dwarves golang bpf-gcc
+	sudo --non-interactive apt install autossh dwarves golang
 	rm -f .build/llvm.sh # https://apt.llvm.org/
 	env -C .build wget https://apt.llvm.org/llvm.sh
 	chmod +x .build/llvm.sh

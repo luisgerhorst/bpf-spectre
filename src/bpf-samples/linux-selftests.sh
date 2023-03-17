@@ -14,9 +14,6 @@ list=$(find -L "${bpf}/" -name '*.bpf.o' \
 if ! test -e linux-selftests.list
 then
    echo "$list" > linux-selftests.list
-else
-   echo "$list" > .build/linux-selftests.list
-   diff -u linux-selftests.list .build/linux-selftests.list || true
 fi
 
 IFS=$'\n'
@@ -24,7 +21,12 @@ for o in $(cat linux-selftests.list)
 do
     name=$(basename --suffix=.bpf.o $o)
     p=.build/linux-selftests_$name.bpf.o
-    test -e $o
+    if ! test -e $o
+    then
+       echo "$list" > linux-selftests.list.new
+       diff -u linux-selftests.list linux-selftests.list.new
+       exit 1
+    fi
     ln -fs ../$o $p
 done
 unset IFS

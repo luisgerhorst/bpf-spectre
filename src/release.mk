@@ -31,9 +31,9 @@ target: $(TARGET)
 LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
 
-$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/$(LINUX).git_rev .build/$(LINUX).git_status
+$(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_CONFIGS) .build/env/LINUX_GIT_CHECKOUT .build/$(LINUX).git_rev .build/$(LINUX).git_status release.mk
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
+	$(MAKE) -C $(LINUX) olddefconfig prepare savedefconfig
 
 KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
 

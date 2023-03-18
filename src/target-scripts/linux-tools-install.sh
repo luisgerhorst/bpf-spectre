@@ -27,14 +27,14 @@
 	sudo --non-interactive cpupower frequency-info \
         || sudo make STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install
 
-    if ! ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
-    then
-            make -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig prepare
-            make SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
-                -j $(getconf _NPROCESSORS_ONLN) -k -C ../target_prefix/linux-src/tools/testing/selftests \
-                install || true
-            ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
-    fi
+    # if ! ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
+    # then
+    #         make -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig prepare
+    #         make SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
+    #             -j $(getconf _NPROCESSORS_ONLN) -k -C ../target_prefix/linux-src/tools/testing/selftests \
+    #             install || true
+    #         ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
+    # fi
 
     exit
 }

@@ -8,10 +8,12 @@ RAMDISK=qemu-ramdisk.img
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
+
+# .build/target-state/$(T)/linux-perf
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 
 # Parallel make is OK.
-MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
+# MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
 
 export LD_LIBRARY_PATH=/usr/local/lib
 
@@ -65,7 +67,7 @@ $(BZIMAGE): $(LINUX_TREE)
 		&& popd && git clone --depth 1 $(LINUX) $@ \
 	    && pushd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
 	'
-	make -C $@ mrproper
+	$(MAKE) -C $@ mrproper
 	cp $(LINUX)/.config $@/.config
 	cp $(LINUX)/vmlinux $@/vmlinux
 	rm -rfd $@/.git

@@ -5,7 +5,8 @@
     set -x
 
     sudo --non-interactive apt-get --assume-yes install \
-        clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev
+        clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev \
+        dwarves bpftool
 
     prefix=/usr/local
     stow=$prefix/stow
@@ -20,6 +21,13 @@
     pushd $stow
     sudo stow --override '.*' --stow $br
     popd
+
+    if ! test -d /usr/lib/llvm-15/bin
+    then
+            wget https://apt.llvm.org/llvm.sh
+            chmod +x llvm.sh
+            sudo ./llvm.sh 15 all
+    fi
 
     # TODO: The assumes the tools are not modified. If they work, reinstall is
     # skipped. If we modify the tools, we should use install-prefix + stow.

@@ -34,11 +34,13 @@ linux-%config: $(LINUX_MAIN)/.config
 # kselftest
 #
 
+MAKE_KSELFTEST="PATH=/usr/lib/llvm-15/bin:/usr/local/sbin:$$PATH $(MAKE) -C ../target_prefix/linux-src SKIP_TARGETS=alsa TARGETS=bpf BPFTOOL=$$(which bpftool)"
+
 .PHONY: kselftest
 # TODO: Add llvm-15 on target to deps.
 kselftest: target
-	./scripts/target-scpsh 'PATH=/usr/lib/llvm-15/bin:$$PATH $(MAKE) -C ../target_prefix/linux-src SKIP_TARGETS=alsa TARGETS=bpf -j $$(nproc) all kselftest-all'
-	./scripts/target-scpsh 'PATH=/usr/lib/llvm-15/bin:$$PATH $(MAKE) -C ../target_prefix/linux-src SKIP_TARGETS=alsa TARGETS=bpf kselftest'
+	./scripts/target-scpsh '$(MAKE_KSELFTEST) -j $$(nproc) kselftest-all'
+	./scripts/target-scpsh '$(MAKE_KSELFTEST) kselftest'
 
 #
 # etc

@@ -9,7 +9,7 @@ set -e
 TREE=$1
 REV_FILE=$2
 
-rev=`env -C "${TREE}" git rev-parse --short HEAD`
+rev=`env -C "${TREE}" git rev-parse HEAD`
 
 if [ -f "${REV_FILE}" ]
 then

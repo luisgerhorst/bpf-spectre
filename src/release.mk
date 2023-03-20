@@ -8,10 +8,12 @@ RAMDISK=qemu-ramdisk.img
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools .build/target-state/$(T)/linux-perf
+
+# .build/target-state/$(T)/linux-perf
+TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 
 # Parallel make is OK.
-MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
+# MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
 
 export LD_LIBRARY_PATH=/usr/local/lib
 
@@ -31,9 +33,9 @@ target: $(TARGET)
 LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
 
-$(LINUX)/.config: $(CONFIG) $(MERGE_CONFIGS) .build/merge_configs_value .build/$(LINUX).git_rev .build/$(LINUX).git_status
+$(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_CONFIGS) .build/env/LINUX_GIT_CHECKOUT .build/$(LINUX).git_rev .build/$(LINUX).git_status release.mk
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	yes '' | $(MAKE) -C $(LINUX) oldconfig prepare
+	$(MAKE) -C $(LINUX) olddefconfig prepare savedefconfig
 
 KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
 
@@ -65,7 +67,7 @@ $(BZIMAGE): $(LINUX_TREE)
 		&& popd && git clone --depth 1 $(LINUX) $@ \
 	    && pushd $(LINUX) && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
 	'
-	make -C $@ mrproper
+	$(MAKE) -C $@ mrproper
 	cp $(LINUX)/.config $@/.config
 	cp $(LINUX)/vmlinux $@/vmlinux
 	rm -rfd $@/.git

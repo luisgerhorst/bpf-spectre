@@ -36,7 +36,7 @@
 
 	booted_cmdline=$(tssh cat /proc/cmdline)
 	booted_release=$(tssh uname -r)
-	if [[ "${booted_release}" = "${release}" ]] && [[ "${booted_cmdline}" = *${cmdline}* ]]
+	if [ "${booted_release}" = "${release}" ] && [[ "${booted_cmdline}" = *${cmdline}* ]]
 	then
 		exit 0
 	fi

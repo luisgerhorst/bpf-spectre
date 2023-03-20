@@ -21,6 +21,7 @@
     KERNEL_CONFIG_MD5SUM=$(cat $LINUX/defconfig | md5sum | cut --characters=1-6)
     LOCALVERSION=-$USER+$KERNEL_COMMIT+$KERNEL_CONFIG_MD5SUM$KERNEL_STATUS_MD5SUM
 
+    # TODO: Write to linux/localversion, set var to ""
     echo "$LOCALVERSION"
     exit
 }

@@ -55,9 +55,8 @@ $(BZIMAGE): $(LINUX_TREE)
 #
 
 .build/linux-pkg: $(LINUX_TREE)
-	MAKE='$(MAKE)' flock .build/linux.lock \
-		./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/ \
-	&& touch $@
+	MAKE='$(MAKE) -j $(shell nproc)' flock .build/linux.lock ./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/
+	touch $@
 
 # TODO: use git	worktree add/archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
 .build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
@@ -119,7 +118,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 .build/target-state/faui49%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 	./scripts/target-linux-deb-boot $< && touch $@
 
-.build/target-state/%-vm/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
+.build/target-state/%.local/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 	./scripts/target-linux-deb-boot $< && touch $@
 
 TS = .build/target-state/$(T)

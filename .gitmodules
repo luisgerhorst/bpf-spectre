@@ -25,9 +25,12 @@
 [submodule "src/.linux.bpf-spectre"]
 	path = src/.linux.bpf-spectre
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
+	branch = bpf-spectre
 [submodule "src/.linux.bpf-spectre-v1-lfence"]
 	path = src/.linux.bpf-spectre-v1-lfence
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
+	branch = bpf-spectre-v1-lfence
 [submodule "src/.linux.master"]
 	path = src/.linux.master
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
+	branch = master

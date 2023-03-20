@@ -26,12 +26,11 @@ then
     lco=.linux.$checkout
     if ! test -e $lco/.git
     then
-        env -C $LINUX_MAIN git worktree add --force ../$lco origin/$checkout
+        env -C $LINUX_MAIN git worktree add --force ../$lco $checkout
     fi
 
     old_rev=$(env -C $l git rev-parse HEAD || echo null)
-    env -C $l git fetch
-    env -C $l git checkout origin/$checkout
+    env -C $l git checkout $checkout
     new_rev=$(env -C $l git rev-parse HEAD)
     if [ $old_rev != $new_rev ]
     then
@@ -48,5 +47,6 @@ do
     ./scripts/update-git-status $linux .build/$linux.git_status
     ${MAKE} -f release.mk LINUX=$linux $linux/.config
     test "$MERGE_CONFIGS" != "" \
-        || diff $CONFIG $linux/defconfig
+        || diff $CONFIG $linux/defconfig \
+        || true
 done

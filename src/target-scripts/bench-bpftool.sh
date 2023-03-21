@@ -85,14 +85,19 @@
 
 	# TODO: bpftool prog profile PROG [duration DURATION] METRICs
 
+	kvm=$(lscpu | grep 'KVM' > /dev/null; echo $?)
+
 	IFS=$'\n'
 	for prog in $(sudo find "$path" -type f)
 	do
 		ec=unused
 
-		sync
-		echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
-		sleep 1
+		if [ "$kvm" = "1" ]
+		then
+			sync
+			echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
+			sleep 1
+		fi
 		for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 		do
 

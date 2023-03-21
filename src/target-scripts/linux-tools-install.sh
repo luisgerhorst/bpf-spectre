@@ -6,7 +6,8 @@
 
     sudo --non-interactive apt-get --assume-yes install \
         clang libcap-ng-dev libfuse-dev libcpupower-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev \
-        dwarves bpftool
+        dwarves bpftool \
+        gettext
 
     prefix=/usr/local
     stow=$prefix/stow

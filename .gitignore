@@ -19,3 +19,5 @@ dist/
 /src/linux
 /src/linux-checkouts/HEAD/
 /src/.linux.HEAD/
+/src/configs/debian.local.config
+/src/configs/qemu-debian.config

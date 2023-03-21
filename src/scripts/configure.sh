@@ -7,39 +7,32 @@ set -x
 . ./env.sh
 
 mkdir -p .build/env
+set +x
 env -0 | while IFS='=' read -r -d '' n v; do
     if [ ! -e .build/env/$n ] || [ "$(cat .build/env/$n)" != "$v" ]
     then
         echo -n "$v" > .build/env/$n
     fi
 done
+set -x
 
 LINUX=${LINUX:-linux}
 LINUX_MAIN=${LINUX_MAIN:-linux-main}
 MAKE=${MAKE:-make}
 
 checkout=$LINUX_GIT_CHECKOUT
-lco=linux-main
+l=linux-main
 if test $checkout != HEAD-dirty
 then
     # Same directory because of make deb-pkg.
-    lco=.linux.$checkout
-    if ! test -e $lco/.git
-    then
-        env -C $LINUX_MAIN git worktree add --force ../$lco $checkout
-    fi
+    l=.linux.$checkout
 
-    old_rev=$(env -C $l git rev-parse HEAD || echo null)
-    env -C $l git checkout $checkout
-    new_rev=$(env -C $l git rev-parse HEAD)
-    if [ $old_rev != $new_rev ]
+    if ! test -e $l/.git
     then
-        # To prevent missing headers when making libbbpf. Also, generated config is
-        # invalid after source change.
-        $MAKE -C $l mrproper
+        env -C $LINUX_MAIN git worktree add --force ../$l $checkout
     fi
 fi
-ln --no-target-directory -sf $lco $LINUX
+ln --no-target-directory -sf $l $LINUX
 
 for linux in ${LINUX} ${LINUX_MAIN}
 do

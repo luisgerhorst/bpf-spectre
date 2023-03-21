@@ -27,6 +27,6 @@ fi
 
 echo 1 > sudo tee /proc/sys/kernel/nmi_watchdog &
 
-sudo sysctl --load=$dst/sysctl.d/default 2>&1 > /dev/null &
+sudo sysctl --load=$dst/sysctl.d/default 2> /dev/null 1> /dev/null &
 
 wait

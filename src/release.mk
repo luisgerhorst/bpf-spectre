@@ -33,7 +33,7 @@ target: $(TARGET)
 LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
 
-$(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_CONFIGS) .build/env/LINUX_GIT_CHECKOUT .build/$(LINUX).git_rev .build/$(LINUX).git_status release.mk
+$(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_CONFIGS) .build/env/LINUX_GIT_CHECKOUT .build/$(LINUX).git_rev .build/$(LINUX).git_status
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
 	$(MAKE) -C $(LINUX) olddefconfig prepare savedefconfig
 
@@ -45,6 +45,7 @@ KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
 
 $(BZIMAGE): $(LINUX_TREE)
 	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage vmlinux
+	touch $@
 
 #
 # Linux Release Files
@@ -151,8 +152,8 @@ $(TS)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
 # Linux Phony
 #
 
-.PHONY: bzImage
-bzImage: $(BZIMAGE)
+# .PHONY: bzImage
+# bzImage: $(BZIMAGE)
 
 #
 # QEMU Debian Phony

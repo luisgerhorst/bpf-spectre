@@ -7,3 +7,5 @@ PROJ_NAME=oseval
 TARGET_PREFIX ?= /srv/scratch/$(USER)/.$(PROJ_NAME)/$(shell hostname -s)
 LINUX_GIT_CHECKOUT ?= HEAD-dirty
 MERGE_CONFIGS ?=
+
+export PATH := /usr/lib/llvm-15/bin:$(PATH)

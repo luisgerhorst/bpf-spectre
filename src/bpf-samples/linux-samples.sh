@@ -3,7 +3,7 @@ set -euo pipefail
 shopt -s nullglob
 set -x
 
-lsb=../linux/samples/bpf
+lsb=../linux-main/samples/bpf
 
 rm -f .build/linux-samples_*.bpf.o
 

@@ -193,8 +193,9 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
         # Likely caused by bpftool segfault for some linux test programs.
     except json.decoder.JSONDecodeError as je:
         print("%s/%s: %s" % (brp, f, je), file=sys.stderr)
-        # df["bpftool_jited_insncnt_total"] = [None]
-        raise je
+        df["bpftool_jited_insncnt_total"] = [None]
+        return df
+        # raise je
 
     # Init actually used fields here, otherwise 0 is NA.
     counts = {}

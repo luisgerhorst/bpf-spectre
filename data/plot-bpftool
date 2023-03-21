@@ -36,8 +36,8 @@ ggplot(expr, aes(verification_error)) +
 eval_save("x")
 
 e <- DATA %>%
-  distinct(BPF_OBJ, User, SYSCTL, .keep_all=TRUE)
-ggplot(e, aes(paste(User, SYSCTL, sep=", "),
+  distinct(uname_a, BPF_OBJ, User, SYSCTL, .keep_all=TRUE)
+ggplot(e, aes(paste(LINUX_GIT_CHECKOUT, User, SYSCTL, sep=", "),
               colour=paste(bpftool_loadall_exitcode, bpftool_loadall_error, sep=", "),
               fill=verification_error)) +
   scale_fill_viridis_d() +

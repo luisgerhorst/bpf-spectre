@@ -30,6 +30,7 @@ def main():
     brps = sorted(raw_path.iterdir())
     br_dfs = Parallel(n_jobs=-1, verbose=1)(delayed(bench_run_df)(brp) for brp in brps)
     tidy_df = pd.concat(br_dfs)
+    tidy_df["data"] = raw_path.name
 
     logging.debug("\n%s", tidy_df)
     tidy_path.parent.mkdir(parents=True, exist_ok=True)

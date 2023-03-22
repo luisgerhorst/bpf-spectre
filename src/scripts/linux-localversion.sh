@@ -12,7 +12,7 @@
     $MAKE -C $LINUX savedefconfig > /dev/null
 
     KERNEL_COMMIT=$(env -C ${LINUX} git rev-parse --short HEAD | cut --characters=1-6)
-    diff="$(env -C $LINUX git diff)"
+    diff="$(env -C $LINUX git diff-index --patch-with-raw HEAD)"
     KERNEL_STATUS_MD5SUM="+$(echo "$diff" | md5sum | cut --characters=1-6)"
     if test "$diff" = ""
     then

@@ -10,8 +10,16 @@ RM=rm
 .PHONY: all
 all: plots/$(D).pdf
 
-.tidy/$(D).tsv.gz: tidy.py $(TESTRUN_DATA)/$(D)/suite-run.log $(ALL_MAKEFILES) | .tidy
-	./tidy.py --data $(D) 2>&1 | tee $@.log
+.tidy/%.tsv.gz: tidy.py $(TESTRUN_DATA)/%/suite-run.log $(ALL_MAKEFILES) | .tidy
+	./tidy.py --data $* 2>&1 | tee $@.log
+
+d_parts=$(subst +, ,$(D))
+d_tsvs=$(d_parts:%=.tidy/%.tsv.gz)
+
+ifneq ($(D),$(d_parts))
+.tidy/$(D).tsv.gz: $(d_tsvs) cat-tsv.py $(ALL_MAKEFILES) | .tidy
+	./cat-tsv.py --input $(d_tsvs) --output $@ 2>&1 | tee $@.log
+endif
 
 plots/$(D)/%/.plot.log: .tidy/$(D).tsv.gz plot-% plotlib.R $(ALL_MAKEFILES) | plots
 	$(RM) -rfd $(dir $@) && mkdir -p $(dir $@)

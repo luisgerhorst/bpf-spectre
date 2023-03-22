@@ -10,7 +10,9 @@ RM=rm
 all: plots
 
 RAW_DIRS=$(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
-PLOTS=$(RAW_DIRS:$(TESTRUN_DATA)/%/=plots-%)
+DATA_EXTRA=23-03-21_bsel-refactor+scratch
+DATA=$(RAW_DIRS:$(TESTRUN_DATA)/%/=%) $(DATA_EXTRA)
+PLOTS=$(DATA:%=plots-%)
 
 .PHONY: plots
 plots: $(PLOTS)

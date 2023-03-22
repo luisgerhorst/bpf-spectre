@@ -15,8 +15,8 @@ expr <- ed %>%
   distinct(BPF_OBJ, LINUX_GIT_CHECKOUT, SYSCTL, .keep_all=TRUE)
 
 ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL),
-                 colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
-                 fill=paste(verification_error_speculative) # , verification_error
+                 ## colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
+                 fill=paste(verification_error_speculative, verification_error),
                  )) +
   geom_histogram(stat = "count") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
@@ -52,8 +52,8 @@ eval_save("obj-nospec-errors")
 ##
 ## Remove throw and check that lfence is added.
 
-ggplot(expr, aes(verification_error)) +
-  geom_histogram(stat = "count") +
+ggplot(expr, aes(verification_error, colour=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
+  geom_histogram(stat = "count", position="dodge") +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("x")
 

@@ -44,10 +44,10 @@ def append_T(suite, T):
                 # (unpr, "net.core.bpf_jit_harden=0", "master"),
                 # (priv, "net.core.bpf_jit_harden=0", "master"),
                 # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2"),
-                (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-lfence"),
+                # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-lfence"),
                 # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre"),
                 # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
-                (priv, "kernel.bpf_spec_v1=2", "bsel-refactor"),
+                (priv, "kernel.bpf_spec_v1=2", "HEAD-dirty"),
                 # (priv, "kernel.bpf_spec_v4=2"),
                 # (priv, "net.core.bpf_jit_harden=2"),
         ]:

@@ -153,6 +153,11 @@ def tidy_bpftool_loadall_log(brp, values):
             d["bpftool_loadall_error"] = l
             d["bpftool_loadall_error_reason_msg"] = l_prev
         l_prev = l
+    if values["bpftool_loadall_exitcode"] == "0":
+        d["bpftool_loadall_error"] = "NA"
+        d["bpftool_loadall_error_reason_msg"] = "NA"
+        d["verification_error_msg"] = "NA"
+        d["verification_error_speculative"] = "NA"
     return d
 
 def tidy_bpftool(bench_run_path, values, yaml, burst_pos):

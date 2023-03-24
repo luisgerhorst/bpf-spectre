@@ -16,7 +16,7 @@ def main():
     for p in Path("../src/bpf-samples/.build/").glob("*.bpf.o"):
         p.unlink()
     subprocess.run(["make",
-                    # "-j", str(multiprocessing.cpu_count()),
+                    "-j", str(multiprocessing.cpu_count()),
                     "-C", "../src/bpf-samples", "all"],
                    check=True, stdout=sys.stderr.buffer)
 

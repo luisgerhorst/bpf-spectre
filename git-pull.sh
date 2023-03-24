@@ -6,7 +6,7 @@ set -x
 
 MAKE=${MAKE:-make}
 
-git pull
+git pull --recurse-submodules
 
 for dir in src/.linux.*
 do

@@ -19,44 +19,34 @@ ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL),
                  fill=paste(verification_error_speculative, verification_error),
                  )) +
   geom_histogram(stat = "count") +
-  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   scale_fill_viridis_d() +
   facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")
 eval_save("verierror")
 
 d <- expr %>%
+  filter(verification_error_speculative)
+ggplot(d, aes(BPF_OBJ, verification_error,
+              shape=verification_error_speculative,
+              colour=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+eval_save("v1-lfence-spec-errors")
+
+d <- expr %>%
   filter(!verification_error_speculative)
-ggplot(d, aes(paste(verification_error_speculative, verification_error),
-              fill=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
-  geom_histogram(stat = "count", position="dodge") +
+ggplot(d, aes(BPF_OBJ, verification_error,
+              shape=verification_error_speculative,
+              colour=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
+  geom_point() +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("v1-lfence-nospec-errors")
 
-## d <- d %>%
-##   filter(LINUX_GIT_CHECKOUT == "bpf-spectre-v1-lfence")
-print(d$BPF_OBJ)
-ggplot(d, aes(verification_error, paste(BPF_OBJ), colour=LINUX_GIT_CHECKOUT)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
-eval_save("obj-nospec-errors")
-## BUG: libbpf: failed to load object 'linux-selftests_test_stack_var_off.bpf.o'
-##
-## CAPSH_ARGS: --drop=
-## CPUFREQ: base
-## LINUX_GIT_CHECKOUT: bpf-spectre-v1-lfence
-## MERGE_CONFIGS: ''
-## SYSCTL: kernel.bpf_spec_v1=2
-##
-## 23: (71) r1 = *(u8 *)(r3 +0)
-## R3 variable offset stack read prohibited for spec_v1, var_off=(0x0; 0xf)
-##
-## Remove throw and check that lfence is added.
-
-ggplot(expr, aes(paste(verification_error), colour=paste(LINUX_GIT_CHECKOUT, SYSCTL),
-                 fill=verification_error_speculative)) +
+ggplot(expr, aes(paste(verification_error),
+                 colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, uname_a))) +
   geom_histogram(stat = "count", position="dodge") +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
-eval_save("x")
+  theme(axis.text.x = element_text(angle = 90, hjust=1)) +
+  facet_grid(rows=vars(verification_error_speculative), scales="free")
+eval_save("veri-err-list")
 
 ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL), fill=paste(bpftool_loadall_exitcode, verification_error_speculative))) +
   geom_histogram(stat = "count", position="stack") +
@@ -79,7 +69,8 @@ s <- d %>%
 d <- d %>%
   left_join(s) %>%
   distinct(BPF_OBJ, bpftool_prog, .keep_all=T)
-p <- ggplot(d, aes(`lfence / Total Instructions [%]`, colour=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
+p <- ggplot(d, aes(`lfence / Total Instructions [%]`,
+                   colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, uname_a))) +
   stat_ecdf() +
   scale_colour_viridis_d()
 eval_save("fences")

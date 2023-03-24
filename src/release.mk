@@ -152,8 +152,8 @@ $(TS)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
 # Linux Phony
 #
 
-# .PHONY: bzImage
-# bzImage: $(BZIMAGE)
+.PHONY: bzImage
+bzImage: $(BZIMAGE)
 
 #
 # QEMU Debian Phony

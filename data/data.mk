@@ -1,7 +1,7 @@
 D ?= scratch
 TESTRUN_DATA ?= .raw
 
-ALL_MAKEFILES=Makefile data.mk
+# ALL_MAKEFILES=Makefile data.mk
 RM=rm
 
 # Don't remove intermediate files.

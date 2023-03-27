@@ -34,3 +34,7 @@
 	path = src/.linux.master
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
 	branch = master
+[submodule "src/.linux.bpf-spectre-err-lfence"]
+	path = src/.linux.bpf-spectre-err-lfence
+	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
+	branch = bpf-spectre-err-lfence

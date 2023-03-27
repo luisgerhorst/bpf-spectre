@@ -10,7 +10,7 @@ RM=rm
 all: plots
 
 RAW_DIRS=$(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
-DATA_EXTRA=23-03-08_18-07_bpftool+scratch 23-03-16_bpftool+scratch 23-03-21_bsel-refactor+scratch
+DATA_EXTRA=23-03-21_bsel-refactor+scratch 23-03-24_20-00_bpftool+scratch
 DATA=$(RAW_DIRS:$(TESTRUN_DATA)/%/=%) $(DATA_EXTRA)
 PLOTS=$(DATA:%=plots-%)
 

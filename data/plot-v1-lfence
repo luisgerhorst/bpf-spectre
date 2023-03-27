@@ -14,7 +14,7 @@ expr <- ed %>%
   filter(ble_min == 0) %>%
   distinct(BPF_OBJ, LINUX_GIT_CHECKOUT, SYSCTL, .keep_all=TRUE)
 
-ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL),
+ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h),
                  ## colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
                  fill=paste(verification_error_speculative, verification_error),
                  )) +
@@ -27,8 +27,9 @@ d <- expr %>%
   filter(verification_error_speculative)
 ggplot(d, aes(BPF_OBJ, verification_error,
               shape=verification_error_speculative,
-              colour=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
+              colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h))) +
   geom_point() +
+  geom_jitter() +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("v1-lfence-spec-errors")
 
@@ -36,19 +37,20 @@ d <- expr %>%
   filter(!verification_error_speculative)
 ggplot(d, aes(BPF_OBJ, verification_error,
               shape=verification_error_speculative,
-              colour=paste(LINUX_GIT_CHECKOUT, SYSCTL))) +
+              colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h))) +
   geom_point() +
+  geom_jitter() +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("v1-lfence-nospec-errors")
 
 ggplot(expr, aes(paste(verification_error),
-                 colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, uname_a))) +
+                 colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h))) +
   geom_histogram(stat = "count", position="dodge") +
   theme(axis.text.x = element_text(angle = 90, hjust=1)) +
   facet_grid(rows=vars(verification_error_speculative), scales="free")
 eval_save("veri-err-list")
 
-ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL), fill=paste(bpftool_loadall_exitcode, verification_error_speculative))) +
+ggplot(expr, aes(paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h), fill=paste(bpftool_loadall_exitcode, verification_error_speculative))) +
   geom_histogram(stat = "count", position="stack") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   facet_grid(cols=vars(Project), rows=vars(`BPF Program Type`), scales="free")

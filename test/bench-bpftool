@@ -37,5 +37,8 @@ ${env_exports}
     mv --no-clobber --target-directory=${dst} ${dst}/.tmp-$(basename $0)/*
     rm -d ${dst}/.tmp-$(basename $0)
 
+    env -C linux git log --pretty=format:"%h (\"%s\")" -1 > ${dst}/values/linux_git_rev_h
+    env -C linux git log --pretty=format:"%h" -1 > ${dst}/values/linux_git_rev
+
     exit
 }

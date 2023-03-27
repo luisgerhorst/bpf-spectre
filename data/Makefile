@@ -50,3 +50,6 @@ install-deps:
 	pip3 install pyyaml seaborn joblib
 	Rscript -e 'install.packages(c("tidyverse", "argparse", "scriptName", "tikzDevice", "gghighlight", "ggpubr", "broom", "plyr", "plotly"))' \
 		|| echo "run 'R' interactively and call install.packages() manually to choose lib install path" && false
+
+plots .tidy:
+	mkdir -p $@

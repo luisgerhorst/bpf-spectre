@@ -34,3 +34,7 @@
 	path = src/.linux.bpf-spectre-v1-nospec
 	url = git@gitlab.cs.fau.de:un65esoq/linux-sec.git
 	branch = bpf-spectre-v1-nospec
+[submodule "src/bpf-samples/external/xdp-tools"]
+	path = src/bpf-samples/external/xdp-tools
+	url = git@github.com:xdp-project/xdp-tools.git
+	branch = master

@@ -17,8 +17,27 @@ PLOTS=$(DATA:%=plots-%)
 .PHONY: plots
 plots: $(PLOTS)
 
+# Hack: Use flock to limit concurrency.
+.tidy/%.tsv.gz: tidy.py $(TESTRUN_DATA)/%/suite-run.log $(ALL_MAKEFILES) | .tidy
+	nice flock .tidy/$<.lock ./tidy.py --data $* 2>&1 | tee $@.log
+
+define gen_cat_tsv_rule
+# Input: D
+
+d_parts=$(subst +, ,$(D))
+d_tsvs=$(d_parts:%=.tidy/%.tsv.gz)
+
+ifneq ($(D),$(d_parts))
+.tidy/$(D).tsv.gz: $(d_tsvs) cat-tsv.py $(ALL_MAKEFILES) | .tidy
+	nice ./cat-tsv.py --input $(d_tsvs) --output $@ 2>&1 | tee $@.log
+endif
+
+endef # gen_cat_tsv_rule
+
+$(foreach D,$(DATA),$(gen_cat_tsv_rule))
+
 .PHONY: plots-%
-plots-%:
+plots-%: .tidy/%.tsv.gz
 	$(MAKE) -f data.mk D=$*
 
 .PHONY: clean

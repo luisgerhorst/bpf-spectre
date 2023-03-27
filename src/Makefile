@@ -56,8 +56,9 @@ clean:
 .PHONY: install-deps
 install-deps: | .build/deps
 
+# gcc-multilib: https://github.com/xdp-project/xdp-tutorial/issues/44
 .build/deps: | .build
-	sudo apt install autossh dwarves golang
+	sudo apt install autossh dwarves golang gcc-multilib
 	rm -f .build/llvm.sh # https://apt.llvm.org/
 	env -C .build wget https://apt.llvm.org/llvm.sh
 	chmod +x .build/llvm.sh

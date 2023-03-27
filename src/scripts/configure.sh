@@ -30,6 +30,7 @@ then
     if ! test -e $l/.git
     then
         env -C $LINUX_MAIN git worktree add --force ../$l $checkout
+        env -C $l git checkout --detach HEAD # prevent worktree checkout conflicts
     fi
 fi
 ln --no-target-directory -sf $l $LINUX

@@ -70,13 +70,9 @@ s <- d %>%
   ungroup()
 d <- d %>%
   left_join(s) %>%
-  distinct(BPF_OBJ, bpftool_prog, .keep_all=T)
+  distinct(SYSCTL, uname_a, BPF_OBJ, bpftool_prog, .keep_all=T)
 p <- ggplot(d, aes(`lfence / Total Instructions [%]`,
-                   colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, uname_a))) +
+                   colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h))) +
   stat_ecdf() +
   scale_colour_viridis_d()
 eval_save("fences")
-
-
-g <- DATA %>%
-  filter(bpftool_run_exitcode == 0, bpftool_loadall_exitcode == 0)

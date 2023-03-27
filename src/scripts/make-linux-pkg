@@ -31,12 +31,12 @@
     fi
 
     set +e
-    $RM linux-*_${KERNEL_RELEASE}-*_amd64.buildinfo
-    $RM linux-*_${KERNEL_RELEASE}-*_amd64.changes
-    $RM linux-headers-${KERNEL_RELEASE}_${KERNEL_RELEASE}-*_amd64.deb
-    $RM linux-image-${KERNEL_RELEASE}_${KERNEL_RELEASE}-*_amd64.deb
-    $RM linux-image-${KERNEL_RELEASE}-dbg_${KERNEL_RELEASE}-*_amd64.deb
-    $RM linux-libc-dev_${KERNEL_RELEASE}-*_amd64.deb
+    $RM linux-*_amd64.buildinfo
+    $RM linux-*_amd64.changes
+    $RM linux-headers-*_amd64.deb
+    $RM linux-image-*_amd64.deb
+    $RM linux-image-*_amd64.deb
+    $RM linux-libc-dev_*_amd64.deb
     set -e
 
     LOCALVERSION=$(./scripts/linux-localversion.sh $LINUX)
@@ -52,14 +52,14 @@
     TMP=$(mktemp -d --suffix -$USER-$(basename $0))/
 
     ls -al > "${TMP}kernel.filenames"
-    mv linux-*_${KERNEL_RELEASE}-*_amd64.buildinfo "${TMP}linux_amd64.buildinfo"
-    mv linux-*_${KERNEL_RELEASE}-*_amd64.changes "${TMP}linux_amd64.changes"
-    mv linux-headers-${KERNEL_RELEASE}_${KERNEL_RELEASE}-*_amd64.deb "${TMP}linux-headers_amd64.deb"
-    mv linux-image-${KERNEL_RELEASE}_${KERNEL_RELEASE}-*_amd64.deb "${TMP}linux-image_amd64.deb"
+    mv linux-*_amd64.buildinfo "${TMP}linux_amd64.buildinfo"
+    mv linux-*_amd64.changes "${TMP}linux_amd64.changes"
+    mv linux-headers-${KERNEL_RELEASE}_*-*_amd64.deb "${TMP}linux-headers_amd64.deb"
+    mv linux-image-${KERNEL_RELEASE}_*-*_amd64.deb "${TMP}linux-image_amd64.deb"
     set +e
-    mv linux-image-${KERNEL_RELEASE}-dbg_${KERNEL_RELEASE}-*_amd64.deb "${TMP}linux-image-dbg_amd64.deb"
+    mv linux-image-${KERNEL_RELEASE}-dbg_*-*_amd64.deb "${TMP}linux-image-dbg_amd64.deb"
     set -e
-    mv linux-libc-dev_${KERNEL_RELEASE}-*_amd64.deb "${TMP}linux-libc-dev_amd64.deb"
+    mv linux-libc-dev_*_amd64.deb "${TMP}linux-libc-dev_amd64.deb"
     echo ${KERNEL_RELEASE} > "${TMP}kernel.release"
 
     rm -rfd "${DST}"

@@ -1,7 +1,7 @@
 TESTRUN_DATA ?= .raw
 
-ALL_MAKEFILES = Makefile data.mk
-RM=rm
+ALL_MAKEFILES := data.mk
+RM := rm
 
 # Don't remove intermediate files.
 .SECONDARY:
@@ -9,10 +9,11 @@ RM=rm
 .PHONY: all
 all: plots
 
-RAW_DIRS=$(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
-DATA_EXTRA=23-03-21_bsel-refactor+scratch 23-03-24_20-00_bpftool+scratch
-DATA=$(RAW_DIRS:$(TESTRUN_DATA)/%/=%) $(DATA_EXTRA)
-PLOTS=$(DATA:%=plots-%)
+RAW_DIRS := $(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
+DATA_REAL := $(RAW_DIRS:$(TESTRUN_DATA)/%/=%)
+DATA_VIRT := 23-03-21_bsel-refactor+scratch 23-03-24_20-00_bpftool+scratch
+DATA := $(DATA_REAL) $(DATA_VIRT)
+PLOTS := $(DATA:%=plots-%)
 
 .PHONY: plots
 plots: $(PLOTS)
@@ -21,20 +22,17 @@ plots: $(PLOTS)
 .tidy/%.tsv.gz: tidy.py $(TESTRUN_DATA)/%/suite-run.log $(ALL_MAKEFILES) | .tidy
 	nice flock .tidy/$<.lock ./tidy.py --data $* 2>&1 | tee $@.log
 
-define gen_cat_tsv_rule
-# Input: D
+define cat_tsv_targets # args: D
 
-d_parts=$(subst +, ,$(D))
-d_tsvs=$(d_parts:%=.tidy/%.tsv.gz)
+$(D)_parts = $$(subst +, ,$(D))
+$(D)_tsvs = $$(patsubst %,.tidy/%.tsv.gz,$$($(D)_parts))
 
-ifneq ($(D),$(d_parts))
-.tidy/$(D).tsv.gz: $(d_tsvs) cat-tsv.py $(ALL_MAKEFILES) | .tidy
-	nice ./cat-tsv.py --input $(d_tsvs) --output $@ 2>&1 | tee $@.log
-endif
+.tidy/$(D).tsv.gz: $$($(D)_tsvs) cat-tsv.py $(ALL_MAKEFILES) | .tidy
+	nice ./cat-tsv.py --input $$($(D)_tsvs) --output $$@ 2>&1 | tee $$@.log
 
-endef # gen_cat_tsv_rule
+endef # cat_tsv_targets
 
-$(foreach D,$(DATA),$(gen_cat_tsv_rule))
+$(foreach D,$(DATA_VIRT),$(eval $(cat_tsv_targets)))
 
 .PHONY: plots-%
 plots-%: .tidy/%.tsv.gz

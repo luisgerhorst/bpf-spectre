@@ -20,7 +20,7 @@ def main():
                     "-C", "../src/bpf-samples", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
-    T = os.getenv("T", default="faui49easy5")
+    T = os.getenv("T", default="refit7")
 
     suite = []
     append_T(suite, T)
@@ -35,8 +35,8 @@ def append_T(suite, T):
     for prog_path in Path("../src/bpf-samples/.build/").glob("*.bpf.o"):
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.o
 
-        # if "cilium_" not in prog:
-        #     continue
+        if "linux-samples_" not in prog:
+            continue
 
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
@@ -45,10 +45,10 @@ def append_T(suite, T):
                 # (priv, "net.core.bpf_jit_harden=0", "master"),
                 # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "bpf-spectre"),
                 # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre"),
-                (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec~1"),
-                (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
+                # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec~1"),
+                # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
                 # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
-                # (priv, "kernel.bpf_spec_v1=2", "HEAD-dirty"),
+                (priv, "kernel.bpf_spec_v1=2", "HEAD-dirty"),
                 # (priv, "kernel.bpf_spec_v4=2"),
                 # (priv, "net.core.bpf_jit_harden=2"),
         ]:

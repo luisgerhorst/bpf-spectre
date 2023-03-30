@@ -17,7 +17,7 @@ TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
 
 export LD_LIBRARY_PATH=/usr/local/lib
 
-_dummy := $(shell mkdir -p .build .build/bpf-samples .run .build/target-state/$(T))
+_dummy := $(shell mkdir -p .build .build/bpf-samples .build/target-state/$(T))
 
 .PHONY: all
 all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg $(LINUX_PERF_TARXZ) \
@@ -91,6 +91,7 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 # Debian VM Files
 #
 
+# TODO: Replace with GNOME Boxes and regular grub-based reboot.
 .build/qemu-debian-netboot.tar.gz:
 	curl --location --output $@ https://deb.debian.org/debian/dists/bullseye/main/installer-amd64/current/images/netboot/netboot.tar.gz
 
@@ -106,21 +107,18 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 	cp $< $@
 
 # Expected to fail if booted qemu runs outdated kernel.
-.run/debian.ssh_port: $(LINUX_TREE)
+.build/debian.ssh_port: $(LINUX_TREE)
 	T=qemu-debian ./scripts/target-scpsh 'systemctl poweroff' && echo "boot qemu with new kernel!" && exit 1
 
 #
 # Target SuT State
 #
 
-.build/target-state/qemu-debian: .run/debian.ssh_port
+.build/target-state/%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
+	./scripts/target-linux-deb-boot $< && touch $@
+
+.build/target-state/qemu-debian/kernel: .build/debian.ssh_port
 	touch $@
-
-.build/target-state/faui49%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
-	./scripts/target-linux-deb-boot $< && touch $@
-
-.build/target-state/%.local/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
-	./scripts/target-linux-deb-boot $< && touch $@
 
 TS = .build/target-state/$(T)
 
@@ -161,7 +159,7 @@ bzImage: $(BZIMAGE)
 
 .PHONY: qemu
 qemu: .build/$(VM).qcow2 $(BZIMAGE)
-	./scripts/qemu-debian-boot .run/$(VM).ssh_port $^
+	./scripts/qemu-debian-boot .build/$(VM).ssh_port $^
 
 .PHONY: ssh
 ssh:

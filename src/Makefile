@@ -51,7 +51,7 @@ clean:
 	$(MAKE) -C bpf-samples clean
 	$(MAKE) -C linux mrproper
 	$(MAKE) -C linux-main mrproper
-	rm -rfd .build .run
+	rm -rfd .build
 
 .PHONY: install-deps
 install-deps: | .build/deps

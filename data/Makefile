@@ -11,12 +11,16 @@ all: plots
 
 RAW_DIRS := $(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
 DATA_REAL := $(RAW_DIRS:$(TESTRUN_DATA)/%/=%)
-DATA_VIRT := 23-03-21_bsel-refactor+scratch 23-03-24_20-00_bpftool+scratch
+DATA_VIRT := 23-03-21_bsel-refactor+scratch 23-03-24_20-00_bpftool+scratch 23-04-06_bcc+23-04-06_bcc-2
 DATA := $(DATA_REAL) $(DATA_VIRT)
-PLOTS := $(DATA:%=plots-%)
+PLOTS := $(DATA:%=d-%)
 
 .PHONY: plots
 plots: $(PLOTS)
+
+.PHONY: d-%
+d-%: .tidy/%.tsv.gz
+	$(MAKE) -f data.mk D=$*
 
 # Hack: Use flock to limit concurrency.
 .tidy/%.tsv.gz: tidy.py $(TESTRUN_DATA)/%/suite-run.log $(ALL_MAKEFILES) | .tidy
@@ -33,10 +37,6 @@ $(D)_tsvs = $$(patsubst %,.tidy/%.tsv.gz,$$($(D)_parts))
 endef # cat_tsv_targets
 
 $(foreach D,$(DATA_VIRT),$(eval $(cat_tsv_targets)))
-
-.PHONY: plots-%
-plots-%: .tidy/%.tsv.gz
-	$(MAKE) -f data.mk D=$*
 
 .PHONY: clean
 clean:

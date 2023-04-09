@@ -13,8 +13,12 @@ mkdir -p $dst/workload $dst/values
 # Environment from suite definition:
 export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
 export PERF_FLAGS=${PERF_FLAGS:-} # e.g. --all-cpus
+export WORKLOAD_PREPARE=${WORKLOAD_PREPARE:-true}
+export WORKLOAD_CLEANUP=${WORKLOAD_CLEANUP:-true}
 
-./bench-runtime-start.sh $@
+./bench-runtime-begin.sh $@
+
+${WORKLOAD_PREPARE}
 
 sync
 echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
@@ -39,6 +43,9 @@ do
 		break
 	fi
 done
+
+# Must run in same pwd as _PREPARE.
+${WORKLOAD_CLEANUP}
 
 ./bench-runtime-end.sh $@
 

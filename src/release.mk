@@ -3,21 +3,20 @@ include env.mk
 # Files to be merged into $(CONFIG) to create final $(LINUX)/.config
 MERGE_CONFIGS ?=
 
-RAMDISK=qemu-ramdisk.img
+RAMDISK := qemu-ramdisk.img
 
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
-LINUX_PERF_TARXZ=.build/linux-perf/linux-perf.tar.xz
-
-# .build/target-state/$(T)/linux-perf
-TARGET = .build/target-state/$(T)/kernel .build/target-state/$(T)/linux-tools
+LINUX_PERF_TARXZ := .build/linux-perf/linux-perf.tar.xz
+TS := .build/target-state/$(T)
+TARGET := $(TS)/kernel $(TS)/linux-tools $(TS)/linux-perf
 
 # Parallel make is OK.
 # MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
 
-export LD_LIBRARY_PATH=/usr/local/lib
+export LD_LIBRARY_PATH := /usr/local/lib
 
-_dummy := $(shell mkdir -p .build .build/bpf-samples .build/target-state/$(T))
+_dummy := $(shell mkdir -p .build .build/bpf-samples $(TS))
 
 .PHONY: all
 all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg $(LINUX_PERF_TARXZ) \
@@ -30,14 +29,14 @@ target: $(TARGET)
 # Prepare
 #
 
-LINUX_SRC = .build/$(LINUX).git_rev .build/$(LINUX).git_status
-LINUX_TREE = $(LINUX)/.config $(LINUX_SRC)
+LINUX_SRC := .build/$(LINUX).git_rev .build/$(LINUX).git_status
+LINUX_TREE := $(LINUX)/.config $(LINUX_SRC)
 
 $(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_CONFIGS) .build/env/LINUX_GIT_CHECKOUT .build/$(LINUX).git_rev .build/$(LINUX).git_status
 	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
 	$(MAKE) -C $(LINUX) olddefconfig prepare savedefconfig
 
-KERNEL_RELEASE = $(shell ./scripts/linux-release.sh $(LINUX))
+KERNEL_RELEASE := $(shell ./scripts/linux-release.sh $(LINUX))
 
 #
 # Linux Files
@@ -119,8 +118,6 @@ $(LINUX_PERF_TARXZ): $(LINUX_TREE)
 
 .build/target-state/qemu-debian/kernel: .build/debian.ssh_port
 	touch $@
-
-TS = .build/target-state/$(T)
 
 $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'

@@ -33,7 +33,8 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec~1"),
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
             # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
-            (priv, "kernel.bpf_spec_v1=2", "HEAD-dirty"),
+            (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
+            (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),
     ]:
@@ -46,9 +47,10 @@ def append_T(suite, T):
                 "T": T,
                 "CPUFREQ": "base",
                 "SYSCTL": sc,
+                "CAPSH_ARGS": "NA",
                 "MERGE_CONFIGS": "",
                 "WORKLOAD_PREPARE": "sudo systemctl start memcached",
-                "WORKLOAD": "memtier_benchmark --version",
+                "WORKLOAD": "memtier_benchmark",
                 "WORKLOAD_CLEANUP": "sudo systemctl disable memcached",
             },
         })

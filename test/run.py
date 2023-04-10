@@ -53,7 +53,7 @@ def parse_args():
     parser.add_argument("-n", "--data-name", help="Suffix appended to auto-generated path.")
     parser.add_argument("-p", "--data-path", help="Relative to TESTRUN_DATA. For example, set this to 'scratch' for test-runs.")
     parser.add_argument("-r", "--reps", default=1, type=int)
-    parser.add_argument("-b", "--burst-len", default=5, type=int)
+    parser.add_argument("-b", "--burst-len", default=3, type=int)
     parser.add_argument("--random-seed", default=0, type=int)
     args = parser.parse_args()
 
@@ -70,7 +70,7 @@ def parse_args():
 
     return args, suite_path, suite_run_path
 
-RETRY_MAX = 10
+RETRY_MAX = 1
 
 def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
     i = 0

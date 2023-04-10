@@ -8,7 +8,7 @@ RAMDISK := qemu-ramdisk.img
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 TS := .build/target-state/$(T)
-TARGET := $(TS)/kernel $(TS)/linux-tools
+TARGET := $(TS)/kernel $(TS)/linux-tools $(TS)/bcc
 
 # Parallel make is OK.
 # MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
@@ -71,6 +71,7 @@ $(BZIMAGE): $(LINUX_TREE)
 	rm -rfd $@/.git
 	touch $@
 
+# TODO: Remove as now supported by target-scpsh
 .build/linux-src/d.tar.gz: .build/linux-src.d
 	mkdir -p $(dir $@)
 	env -C $< tar cf - . | pigz > $@
@@ -116,6 +117,15 @@ $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 $(TS)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
 	./scripts/target-scpsh -C target-scripts "./linux-tools-install.sh"
+	touch $@
+
+.PHONY: $(TS)/bcc
+$(TS)/bcc: $(TS)/linux-tools $(TS)/kernel
+	$(MAKE) -C bpf-samples/external/bcc/libbpf-tools
+	$(MAKE) DESTDIR=$(shell realpath .build/bcc-libbpf-tools-install) prefix=/usr/local -C bpf-samples/external/bcc/libbpf-tools install
+	./scripts/target-scpsh "sudo rm -rfd /usr/local/stow/bcc"
+	./scripts/target-scpsh -C .build/bcc-libbpf-tools-install/usr/local "sudo cp --force --recursive . /usr/local/stow/bcc"
+	./scripts/target-scpsh "env -C /usr/local/stow sudo stow --override '.*' --stow bcc"
 	touch $@
 
 #

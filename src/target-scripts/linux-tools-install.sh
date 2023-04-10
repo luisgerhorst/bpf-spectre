@@ -10,14 +10,14 @@
     sudo --non-interactive apt-get --assume-yes install \
         libcap-ng-dev libfuse-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev \
         dwarves gettext stow \
-        memcached
+        memcached \
+        arping bison clang-format cmake dh-python \
+        dpkg-dev pkg-kde-tools ethtool flex inetutils-ping iperf \
+        libbpf-dev libclang-dev libclang-cpp-dev libedit-dev libelf-dev \
+        libfl-dev libzip-dev linux-libc-dev llvm-dev libluajit-5.1-dev \
+        luajit python3-netaddr python3-pyroute2 python3-setuptools python3
 
     sudo systemctl disable memcached
-
-    # Debian-only:
-    sudo --non-interactive apt-get --assume-yes install \
-        libcpupower-dev bpftool \
-        || true
 
     prefix=/usr/local
     stow=$prefix/stow
@@ -37,6 +37,29 @@
         sudo stow --override '.*' --stow $r
         popd
     done
+
+    r=bcc
+    if ! test -d $stow/$r
+    then
+            # Don't know why they put the prefix after the DESTDIR...
+            tmp=$(mktemp -d)
+            # make -j $(nproc) -C ../target_prefix/bcc clean
+            # rm -rfd ../target_prefix/bcc/build
+            # mkdir -p ../target_prefix/bcc/build
+            # pushd ../target_prefix/bcc/build
+            # cmake ..
+            pushd ../target_prefix/bcc/libbpf-tools # built on control system by release.mk
+            sudo rm -rfd .output
+            sudo make clean
+            # make -j $(nproc) APPS=bashreadline
+            sudo make DESTDIR=$tmp prefix=$prefix APPS=bashreadline install
+            popd
+            sudo mv $tmp$prefix $stow/$r
+            sudo rm -rfd $tmp
+    fi
+    pushd $stow
+    sudo stow --override '.*' --stow $r
+    popd
 
     if ! test -d /usr/lib/llvm-15/bin
     then

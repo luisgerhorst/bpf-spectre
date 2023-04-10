@@ -26,7 +26,7 @@ sleep 1
 for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
 	set +e
-	env -i sudo --preserve-env $(which perf_$(uname -r)) stat \
+	env -i sudo --preserve-env perf stat \
 		--output ${dst}/workload/${burst_pos}.perf -x , \
 		-e duration_time \
 		-e task-clock \

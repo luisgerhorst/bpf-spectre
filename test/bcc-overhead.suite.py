@@ -38,8 +38,12 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),
     ]:
-        mb = "memtier_benchmark --port=11211 --protocol=memcache_binary"
-        for w in ["sudo " + mb, "sudo perf ftrace " + mb]:
+        mb = "/usr/bin/memtier_benchmark --port=11211 --protocol=memcache_binary"
+        for w in [
+                "sudo " + mb,
+                "sudo ./bpftrace-syscount-comm.sh " + mb,
+                "sudo trace " + mb
+        ]:
             suite.append({
                 "bench_script": "workload-perf",
                 "boot": {

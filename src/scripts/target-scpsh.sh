@@ -50,7 +50,12 @@ guest_temp=$(${ssh} mktemp -d)
 
 if [ $working_dir_defined -eq 1 ]
 then
-	${scp} -r ${working_dir} ${SSH_DEST}:${guest_temp}/working_dir
+	tmp=$(mktemp)
+	env -C $working_dir tar cf - . | pigz > $tmp
+	${scp} $tmp ${SSH_DEST}:${guest_temp}/working_dir.tar.gz
+	rm -f $tmp
+	${ssh} mkdir ${guest_temp}/working_dir
+	${ssh} tar xf ${guest_temp}/working_dir.tar.gz --directory=${guest_temp}/working_dir
 else
 	${ssh} "mkdir ${guest_temp}/working_dir"
 fi

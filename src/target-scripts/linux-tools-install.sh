@@ -10,7 +10,7 @@
     sudo --non-interactive apt-get --assume-yes install \
         libcap-ng-dev libfuse-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev \
         dwarves gettext stow \
-        memcached \
+        memcached libevent-openssl-2.1-7 \
         arping bison clang-format cmake dh-python \
         dpkg-dev pkg-kde-tools ethtool flex inetutils-ping iperf \
         libbpf-dev libclang-dev libclang-cpp-dev libedit-dev libelf-dev \
@@ -38,8 +38,9 @@
         popd
     done
 
+    # TODO: fix for debian, rm from release.mk
     r=bcc
-    if ! test -d $stow/$r
+    if ! test -d $stow/$r && false
     then
             # Don't know why they put the prefix after the DESTDIR...
             tmp=$(mktemp -d)
@@ -57,9 +58,9 @@
             sudo mv $tmp$prefix $stow/$r
             sudo rm -rfd $tmp
     fi
-    pushd $stow
-    sudo stow --override '.*' --stow $r
-    popd
+    # pushd $stow
+    # sudo stow --override '.*' --stow $r
+    # popd
 
     if ! test -d /usr/lib/llvm-15/bin
     then

@@ -7,9 +7,8 @@ RAMDISK := qemu-ramdisk.img
 
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
-LINUX_PERF_TARXZ := .build/linux-perf/linux-perf.tar.xz
 TS := .build/target-state/$(T)
-TARGET := $(TS)/kernel $(TS)/linux-tools $(TS)/linux-perf
+TARGET := $(TS)/kernel $(TS)/linux-tools
 
 # Parallel make is OK.
 # MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
@@ -19,7 +18,7 @@ export LD_LIBRARY_PATH := /usr/local/lib
 _dummy := $(shell mkdir -p .build .build/bpf-samples $(TS))
 
 .PHONY: all
-all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg $(LINUX_PERF_TARXZ) \
+all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
 	.build/$(VM).qcow2
 
 .PHONY: target
@@ -76,16 +75,6 @@ $(BZIMAGE): $(LINUX_TREE)
 	mkdir -p $(dir $@)
 	env -C $< tar cf - . | pigz > $@
 
-$(LINUX_PERF_TARXZ): $(LINUX_TREE)
-	rm -f linux/perf-*.tar.xz $@ \
-	&& flock .build/linux.lock bash -c ' \
-		cd $(LINUX) \
-		&& git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
-		&& $(MAKE) perf-tarxz-src-pkg \
-	    && git reset --soft HEAD^ && git reset && git reset --soft HEAD^ \
-	' \
-	&& mkdir -p $(dir $@) && mv -f $$(find -L linux -name 'perf-*.tar.xz') $@
-
 #
 # Debian VM Files
 #
@@ -127,20 +116,6 @@ $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 $(TS)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
 	./scripts/target-scpsh -C target-scripts "./linux-tools-install.sh"
-	touch $@
-
-# Could also be installed from ../target_prefix/linux-src on target, but this
-# was copied from AnyCall and works.
-
-# Installs custom's perf as perf_$(uname -r) into /usr/local to
-# distinguish it from the systems regular perf. To be used by bench-scripts.
-$(TS)/linux-perf: $(LINUX_PERF_TARXZ) .build/target-state/$(T)/kernel
-	./scripts/target-scpsh 'sudo perf_$$(uname -r) stat true' \
-	|| ./scripts/target-scpsh 'rm -rfd ../target_prefix/linux-perf/$$(uname -r) && mkdir -p ../target_prefix/linux-perf/$$(uname -r)' \
-	&& ./scripts/target-scpsh -C $(dir $(LINUX_PERF_TARXZ)) 'tar xf linux-perf.tar.xz -C ../target_prefix/linux-perf/$$(uname -r)' \
-	&& ./scripts/target-scpsh 'sudo apt-get install --yes flex bison libtraceevent-dev' \
-	&& ./scripts/target-scpsh 'make -j $$(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-perf/$$(uname -r)/perf*/tools/perf' \
-	&& ./scripts/target-scpsh 'sudo ln -sf $$(realpath ../target_prefix/linux-perf/$$(uname -r)/perf*/tools/perf/perf) /usr/local/bin/perf_$$(uname -r)'
 	touch $@
 
 #

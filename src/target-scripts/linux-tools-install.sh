@@ -4,7 +4,6 @@
     shopt -s nullglob
     set -x
 
-
     sudo --non-interactive apt-get -y --fix-broken install # install deps
 
     # Ubuntu and Debian:
@@ -20,21 +19,24 @@
         libcpupower-dev bpftool \
         || true
 
-
     prefix=/usr/local
     stow=$prefix/stow
     sudo mkdir -p $stow
-    br=bpftool-$(uname -r)
-    if ! test -d $stow/$br
-    then
-            # Don't know why the put the prefix after the DESTDIR...
-            tmp=$(mktemp -d)
-            sudo make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools bpf_install
-            sudo mv $tmp$prefix $stow/$br
-    fi
-    pushd $stow
-    sudo stow --override '.*' --stow $br
-    popd
+    for t in bpf perf
+    do
+        r=linux-tools-$t-$(uname -r)
+        if ! test -d $stow/$r
+        then
+                # Don't know why they put the prefix after the DESTDIR...
+                tmp=$(mktemp -d)
+                sudo make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
+                sudo mv $tmp$prefix $stow/$r
+                sudo rm -rfd $tmp
+        fi
+        pushd $stow
+        sudo stow --override '.*' --stow $r
+        popd
+    done
 
     if ! test -d /usr/lib/llvm-15/bin
     then
@@ -42,6 +44,10 @@
             chmod +x llvm.sh
             sudo ./llvm.sh 15 all
     fi
+
+    # TODO: The assumes the following tools are not modified. If they work,
+    # reinstall is skipped. If we modify the tools in the linux tree, we should
+    # use install-prefix + stow.
 
     if ! memtier_benchmark --version
     then
@@ -57,12 +63,28 @@
             rm -rfd $tmp
     fi
 
-    # TODO: The assumes the following tools are not modified. If they work,
-    # reinstall is skipped. If we modify the tools in the linux tree, we should
-    # use install-prefix + stow.
-    
-	sudo --non-interactive cpupower frequency-info \
-        || sudo make STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools cpupower_install
+    # Debian has these installed by default.
+    if ! sudo --non-interactive cpupower frequency-info
+    then
+            prefix=/usr
+            stow=$prefix/stow
+            sudo mkdir -p $stow
+            for t in cpupower
+            do
+                r=linux-tools-$t-$(uname -r)
+                if ! test -d $stow/$r
+                then
+                        # Don't know why they put the prefix after the DESTDIR...
+                        tmp=$(mktemp -d)
+                        sudo make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
+                        sudo mv $tmp$prefix $stow/$r
+                        sudo rm -rfd $tmp
+                fi
+                pushd $stow
+                sudo stow --override '.*' --stow $r
+                popd
+            done
+    fi
 
     # if ! ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
     # then

@@ -38,22 +38,24 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),
     ]:
-        suite.append({
-            "bench_script": "workload-perf",
-            "boot": {
-                "LINUX_GIT_CHECKOUT": b,
-            },
-            "run": {
-                "T": T,
-                "CPUFREQ": "base",
-                "SYSCTL": sc,
-                "CAPSH_ARGS": "NA",
-                "MERGE_CONFIGS": "",
-                "WORKLOAD_PREPARE": "sudo systemctl start memcached",
-                "WORKLOAD": "memtier_benchmark",
-                "WORKLOAD_CLEANUP": "sudo systemctl disable memcached",
-            },
-        })
+        mb = "memtier_benchmark --port=11211 --protocol=memcache_binary"
+        for w in ["sudo " + mb, "sudo perf ftrace " + mb]:
+            suite.append({
+                "bench_script": "workload-perf",
+                "boot": {
+                    "LINUX_GIT_CHECKOUT": b,
+                },
+                "run": {
+                    "T": T,
+                    "CPUFREQ": "base",
+                    "SYSCTL": sc,
+                    "CAPSH_ARGS": "NA",
+                    "MERGE_CONFIGS": "",
+                    "WORKLOAD_PREPARE": "sudo systemctl start memcached",
+                    "WORKLOAD": w,
+                    "WORKLOAD_CLEANUP": "sudo systemctl disable memcached",
+                },
+            })
 
 if __name__ == "__main__":
     main()

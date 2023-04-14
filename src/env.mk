@@ -8,4 +8,5 @@ TARGET_PREFIX ?= /srv/scratch/$(USER)/.$(PROJ_NAME)/$(shell hostname -s)
 LINUX_GIT_CHECKOUT ?= HEAD-dirty
 MERGE_CONFIGS ?=
 
+# Be careful, does not affect the target scripts.
 export PATH := /usr/lib/llvm-15/bin:$(PATH)

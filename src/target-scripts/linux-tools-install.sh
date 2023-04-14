@@ -15,9 +15,18 @@
         dpkg-dev pkg-kde-tools ethtool flex inetutils-ping iperf \
         libbpf-dev libclang-dev libclang-cpp-dev libedit-dev libelf-dev \
         libfl-dev libzip-dev linux-libc-dev llvm-dev libluajit-5.1-dev \
-        luajit python3-netaddr python3-pyroute2 python3-setuptools python3
+        luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
+        libz-dev libbpf-dev
 
     sudo systemctl disable memcached
+
+    if ! test -d /usr/lib/llvm-15/bin
+    then
+            wget https://apt.llvm.org/llvm.sh
+            chmod +x llvm.sh
+            sudo ./llvm.sh 15 all
+    fi
+    export PATH=/usr/lib/llvm-15/bin:$PATH # required for bcc/libbpf-tools
 
     prefix=/usr/local
     stow=$prefix/stow
@@ -38,36 +47,21 @@
         popd
     done
 
-    # TODO: fix for debian, rm from release.mk
-    r=bcc
-    if ! test -d $stow/$r && false
+    r=bcc-libbpf-tools-${BCC_LOCALVERSION}
+    if ! test -d $stow/$r
     then
-            # Don't know why they put the prefix after the DESTDIR...
             tmp=$(mktemp -d)
-            # make -j $(nproc) -C ../target_prefix/bcc clean
-            # rm -rfd ../target_prefix/bcc/build
-            # mkdir -p ../target_prefix/bcc/build
-            # pushd ../target_prefix/bcc/build
-            # cmake ..
-            pushd ../target_prefix/bcc/libbpf-tools # built on control system by release.mk
-            sudo rm -rfd .output
-            sudo make clean
-            # make -j $(nproc) APPS=bashreadline
-            sudo make DESTDIR=$tmp prefix=$prefix APPS=bashreadline install
+            pushd ../target_prefix/bcc/libbpf-tools
+            sudo make -j $(nproc) clean
+            make -j $(nproc) -k all || true
+            sudo make DESTDIR=$tmp prefix=$prefix -k install || true
             popd
             sudo mv $tmp$prefix $stow/$r
             sudo rm -rfd $tmp
     fi
-    # pushd $stow
-    # sudo stow --override '.*' --stow $r
-    # popd
-
-    if ! test -d /usr/lib/llvm-15/bin
-    then
-            wget https://apt.llvm.org/llvm.sh
-            chmod +x llvm.sh
-            sudo ./llvm.sh 15 all
-    fi
+    pushd $stow
+    sudo stow --override '.*' --stow $r
+    popd
 
     # TODO: The assumes the following tools are not modified. If they work,
     # reinstall is skipped. If we modify the tools in the linux tree, we should

@@ -8,7 +8,7 @@ RAMDISK := qemu-ramdisk.img
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 TS := .build/target-state/$(T)
-TARGET := $(TS)/kernel $(TS)/linux-tools $(TS)/bcc
+TARGET := $(TS)/kernel $(TS)/linux-tools
 
 # Parallel make is OK.
 # MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
@@ -36,6 +36,7 @@ $(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_C
 	$(MAKE) -C $(LINUX) olddefconfig prepare savedefconfig
 
 KERNEL_RELEASE := $(shell ./scripts/linux-release.sh $(LINUX))
+BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)
 
 #
 # Linux Files
@@ -114,18 +115,14 @@ $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
-# selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
-$(TS)/linux-tools: .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
-	./scripts/target-scpsh -C target-scripts "./linux-tools-install.sh"
+.PHONY: $(TS)/bcc
+$(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
+	./scripts/target-scpsh -C bpf-samples/external/bcc "sudo cp --force --recursive . ../target_prefix/bcc"
 	touch $@
 
-.PHONY: $(TS)/bcc
-$(TS)/bcc: $(TS)/linux-tools $(TS)/kernel
-	$(MAKE) -C bpf-samples/external/bcc/libbpf-tools
-	$(MAKE) DESTDIR=$(shell realpath .build/bcc-libbpf-tools-install) prefix=/usr/local -C bpf-samples/external/bcc/libbpf-tools install
-	./scripts/target-scpsh "sudo rm -rfd /usr/local/stow/bcc"
-	./scripts/target-scpsh -C .build/bcc-libbpf-tools-install/usr/local "sudo cp --force --recursive . /usr/local/stow/bcc"
-	./scripts/target-scpsh "env -C /usr/local/stow sudo stow --override '.*' --stow bcc"
+# selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
+$(TS)/linux-tools: $(TS)/bcc .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
+	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
 	touch $@
 
 #

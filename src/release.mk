@@ -115,7 +115,6 @@ $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
 
-.PHONY: $(TS)/bcc
 $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 	./scripts/target-scpsh -C bpf-samples/external/bcc "sudo cp --force --recursive . ../target_prefix/bcc"
 	touch $@

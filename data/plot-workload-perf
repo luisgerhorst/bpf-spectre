@@ -10,10 +10,9 @@ for (m in perf_metrics) {
   print(m)
   ggplot(DATA, aes(y=paste(WORKLOAD), x=get(m), colour=SYSCTL)) +
     geom_smooth(linetype = "dashed", method = "lm") +
-    geom_point() +
     geom_jitter() +
-    facet_grid(rows=vars(T, workload_exitcode),
-               cols=vars(CPUFREQ, bench_script),
+    facet_grid(rows=vars(hostname_short, workload_exitcode),
+               cols=vars(uname_a, CPUFREQ, bench_script),
                labeller=label_both, scales="free")
   eval_save(paste0(m, "-point"))
 }

@@ -76,3 +76,9 @@ p <- ggplot(d, aes(`lfence / Total Instructions [%]`,
   stat_ecdf() +
   scale_colour_viridis_d()
 eval_save("fences")
+p <- ggplot(d, aes(x=`lfence / Total Instructions [%]`,
+                   y=paste(BPF_OBJ, bpftool_prog),
+                   colour=paste(LINUX_GIT_CHECKOUT, SYSCTL, linux_git_rev_h))) +
+  geom_jitter() +
+  scale_colour_viridis_d()
+eval_save("fences")

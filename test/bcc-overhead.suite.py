@@ -23,6 +23,48 @@ def append_T(suite, T):
     priv="--drop="
     unpr="--drop=cap_sys_admin --drop=cap_perfmon"
 
+    # bcc upstream -= javagc
+    bcc_apps = ["memleak", "opensnoop", "bashreadline", "bindsnoop",
+                "biolatency", "biopattern",
+                #
+                # BUG: prog does not load
+                # "biosnoop",
+                "biostacks", "biotop", "bitesize",
+                "cachestat", "capable", "cpudist",
+                #
+                # in kvm: failed to open '/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq': No such file or directory
+                "cpufreq",
+                "drsnoop", "execsnoop",
+                "exitsnoop", "filelife",
+                #
+                # Needs file?:
+                # "filetop",
+                #
+                # Filesystem must be specified with -t:
+                "fsdist -t ext4",
+                "fsslower -t ext4",
+                #
+                # Needs function to trace:
+                "funclatency do_sys_open",
+                "funclatency -m do_nanosleep",
+                "funclatency -u vfs_read",
+                "gethostlatency", "hardirqs", "klockstat",
+	            "ksnoop info ip_send_skb",
+                "llcstat",
+                #
+                # TODO: for this, enable more perf cpu events?
+                "mdflush",
+                "mountsnoop", "numamove", "offcputime", "oomkill",
+                # TODO: kvm: failed to set attach target for do_page_cache_ra: No such process
+                "readahead",
+                "runqlat",
+                "runqlen", "runqslower", "sigsnoop",
+                "slabratetop --noclear",
+                "softirqs", "solisten",
+                "statsnoop", "syscount", "tcptracer", "tcpconnect", "tcpconnlat",
+                "tcplife",
+                "tcprtt", "tcpstates", "tcpsynbl", "tcptop", "vfsstat", "wakeuptime"]
+
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.
     for (ca, sc, b) in [
@@ -39,11 +81,16 @@ def append_T(suite, T):
             # (priv, "net.core.bpf_jit_harden=2"),
     ]:
         mb = "/usr/bin/memtier_benchmark --port=11211 --protocol=memcache_binary"
+
+        bamb = []
+        for ba in bcc_apps:
+           bamb += ["sudo ./sigint-wrap.sh --siw-trace " + ba + " --siw-command " + mb]
+
         for w in [
                 "sudo " + mb,
-                "sudo ./bpftrace-syscount-comm.sh " + mb,
                 "sudo trace " + mb
-        ]:
+                # "sudo ./bpftrace-syscount-comm.sh " + mb
+        ] + bamb:
             suite.append({
                 "bench_script": "workload-perf",
                 "boot": {

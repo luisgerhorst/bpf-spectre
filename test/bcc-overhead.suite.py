@@ -67,6 +67,7 @@ def append_T(suite, T):
 
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.
+    sc_d = "kernel.bpf_stats_enabled=1"
     for (ca, sc, b) in [
             # (unpr, "net.core.bpf_jit_harden=0", "master"),
             # (priv, "net.core.bpf_jit_harden=0", "master"),
@@ -75,11 +76,13 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec~1"),
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
             # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
-            (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
+            (priv, " net.core.bpf_jit_harden=0", "HEAD-dirty"),
             (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),
     ]:
+        sc = sc_d + " " + sc
+
         # The default 4 threads x 50 clients x 10k requests takes 13s.
         mb = "/usr/bin/memtier_benchmark --port=11211 --protocol=memcache_binary"
 

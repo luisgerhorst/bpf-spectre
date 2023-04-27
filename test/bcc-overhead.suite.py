@@ -80,7 +80,11 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),
     ]:
+        # The default 4 threads x 50 clients x 10k requests takes 13s.
         mb = "/usr/bin/memtier_benchmark --port=11211 --protocol=memcache_binary"
+
+        # pts uses --hide-histogram --protocol=memcache_text --pipeline=16 --threads=$(nproc) --clients=1 --test-time=60.
+        mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
 
         bamb = []
         for ba in bcc_apps:
@@ -102,9 +106,10 @@ def append_T(suite, T):
                     "SYSCTL": sc,
                     "CAPSH_ARGS": "NA",
                     "MERGE_CONFIGS": "",
-                    "WORKLOAD_PREPARE": "sudo systemctl start memcached",
+                    # pts uses --conn-limit=4096 --threads=$(nproc)
+                    "WORKLOAD_PREPARE": "memcached --port=$RANDOM_PORT --conn-limit=4096 --threads=$(nproc) & echo $! > memcached_pid",
                     "WORKLOAD": w,
-                    "WORKLOAD_CLEANUP": "sudo systemctl disable memcached",
+                    "WORKLOAD_CLEANUP": "kill $(cat memcached_pid)",
                 },
             })
 

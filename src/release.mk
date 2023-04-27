@@ -7,7 +7,10 @@ RAMDISK := qemu-ramdisk.img
 
 LINUX ?= linux
 BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
-TS := .build/target-state/$(T)
+
+# Should be in a directory that disappears on reboot to invalidate state of VMM
+# virtual machines.
+TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
 TARGET := $(TS)/kernel $(TS)/linux-tools
 
 # Parallel make is OK.
@@ -104,11 +107,13 @@ $(BZIMAGE): $(LINUX_TREE)
 # Target SuT State
 #
 
-.build/target-state/%/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
+$(TS)/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 	./scripts/target-linux-deb-boot $< && touch $@
 
-.build/target-state/qemu-debian/kernel: .build/debian.ssh_port
-	touch $@
+# BUG
+#
+# .build/target-state/qemu-debian/kernel: .build/debian.ssh_port
+# 	touch $@
 
 $(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'

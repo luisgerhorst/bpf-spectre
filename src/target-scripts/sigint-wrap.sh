@@ -20,6 +20,7 @@ do
     fi
 done
 
+set -m
 $t 1> $(basename $0).stdout 2> $(basename $0).stderr &
 $c
 kill -SIGINT %%

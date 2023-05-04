@@ -84,22 +84,14 @@ def append_T(suite, T):
         sc = sc_d + " " + sc
 
         # The default 4 threads x 50 clients x 10k requests takes 13s.
-        mb = "/usr/bin/memtier_benchmark --port=11211 --protocol=memcache_binary"
-
+        mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary"
+        #
         # pts uses --hide-histogram --protocol=memcache_text --pipeline=16 --threads=$(nproc) --clients=1 --test-time=60.
-        mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
+        # mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
 
-        bamb = []
         for ba in bcc_apps:
-           bamb += ["sudo ./sigint-wrap.sh --siw-trace " + ba + " --siw-command " + mb]
-
-        for w in [
-                "sudo " + mb,
-                "sudo trace " + mb
-                # "sudo ./bpftrace-syscount-comm.sh " + mb
-        ] + bamb:
             suite.append({
-                "bench_script": "workload-perf",
+                "bench_script": "workload-bpf-tracer",
                 "boot": {
                     "LINUX_GIT_CHECKOUT": b,
                 },
@@ -111,7 +103,8 @@ def append_T(suite, T):
                     "MERGE_CONFIGS": "",
                     # pts uses --conn-limit=4096 --threads=$(nproc)
                     "WORKLOAD_PREPARE": "memcached --port=$RANDOM_PORT --conn-limit=4096 --threads=$(nproc) & echo $! > memcached_pid",
-                    "WORKLOAD": w,
+                    "TRACER": "sudo " + ba,
+                    "WORKLOAD": mb,
                     "WORKLOAD_CLEANUP": "kill $(cat memcached_pid)",
                 },
             })

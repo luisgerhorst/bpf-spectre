@@ -88,14 +88,24 @@ def dict_into_df(df, prefix, value):
     elif isinstance(value, list):
         for i, subvalue in enumerate(value):
             df = dict_into_df(df, ps + str(i), subvalue)
+        df = df.copy()
         df[prefix] = " ".join(map(str, value))
     else:
+        df = df.copy()
         df[prefix] = value
     return df
 
 def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
+    elif yaml["bench_script"] == "workload-bpf-tracer":
+        df = pd.concat([
+            tidy_bpf_tracer(bench_run_path, burst_pos, yaml),
+            tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
+        ], axis=1)
+        # print("tidy_bench_run: ")
+        # print(df)
+        return df
     else:
         return pd.concat([
             tidy_bpftool(bench_run_path, values, yaml, burst_pos),
@@ -243,6 +253,28 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
             mu = str(row.metric_unit).lower().replace(" ", "_").replace("/", "p")
             df["perf_" + counter_name + "_" + mu] = row.metric_value
 
+    return df
+
+def tidy_bpf_tracer(bench_run_path, burst_pos, yaml):
+    j = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
+    df = dict_into_df(pd.DataFrame(), "bpftool_prog_show", j)
+
+    # Accumulate
+    f = ["run_time_ns", "run_cnt", "bytes_jited", "bytes_xlated", "bytes_memlock"]
+    d = {}
+    for n in f:
+        d["bps_" + n] = [0]
+    for prog in j:
+        for n in f:
+            try:
+                d["bps_" + n][0] = d["bps_" + n][0] + int(prog[n])
+            except KeyError as e:
+                pass
+
+    df = pd.concat([
+        df,
+        pd.DataFrame(d, index=[0])
+    ], axis=1)
     return df
 
 def tidy_kselftest_bpf_bench(br_path, burst_pos):

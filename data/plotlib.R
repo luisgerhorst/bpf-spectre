@@ -122,8 +122,8 @@ DATA <- ALL_DATA %>%
     SYSCTL = case_when(
       is.na(SYSCTL) ~ "Default (bpf_*=0)",
       SYSCTL == "net.core.bpf_jit_harden=0" ~ "Default (bpf_*=0)",
-      TRUE ~ SYSCTL,
-      ),
+      TRUE ~ SYSCTL
+    ),
     Project = case_when(
       str_detect(BPF_OBJ, "^lbe_") ~ "libbpf/examples",
       str_detect(BPF_OBJ, "^vbi-") ~ "vbpf-imports",

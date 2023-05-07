@@ -13,9 +13,6 @@
 [submodule "tests/bpf/external/bcc"]
 	path = src/bpf-samples/external/bcc
 	url = git@github.com:iovisor/bcc.git
-[submodule "spectector-proj"]
-	path = src/bpf-samples/spectector-proj
-	url = git@gitlab.cs.fau.de:un65esoq/spectector-bpf.git
 [submodule "system/bpf-samples/external/katran"]
 	path = src/bpf-samples/external/katran
 	url = git@github.com:luisgerhorst/katran.git

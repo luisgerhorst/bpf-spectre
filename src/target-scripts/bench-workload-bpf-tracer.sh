@@ -16,7 +16,8 @@ set -x
 dst=$1
 burst_len=$2
 
-mkdir -p $dst/workload $dst/values
+bpftool_dst=${dst}/bpftool
+mkdir -p $dst/workload $dst/values $bpftool_dst
 
 # Environment from suite definition:
 export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
@@ -37,6 +38,8 @@ echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 sleep 1
 for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
+	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.init.bpftool_prog_show.json 2>&1
+
 	bash -c "$TRACER" > $dst/workload/${burst_pos}.trace 2>&1 &
 	tracer_pid=$!
 
@@ -55,6 +58,39 @@ do
 
 	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.bpftool_prog_show.json 2>&1
 	sudo bpftool prog show > $dst/workload/${burst_pos}.bpftool_prog_show 2>&1
+
+	echo -n "" > ${dst}/values/bpftool_progs
+	set +x
+	IFS=$'\n'
+	for	line in $(cat $dst/workload/${burst_pos}.bpftool_prog_show.json)
+	do
+		if [[ $(echo "$line" | cut -d '"' -f 2) == "id" ]]
+		then
+			set -x
+
+			# Program ID:
+			prog=$(echo "$line" | cut -d ':' -f 2 | cut -d , -f 1 | cut -d ' ' -f 2)
+
+			set +e
+			sudo bpftool prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog
+			ec=$?
+			set -e
+			if [ $ec != 0 ]
+			then
+				echo "Warning: Parsed invalid id from JSON." 1>&2
+				continue
+			fi
+
+			sudo bpftool prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog
+			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog.json
+			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog.json
+
+			echo -n " $prog" >> ${dst}/values/bpftool_progs
+			set +x
+		fi
+	done
+	unset IFS
+	set -x
 
 	sudo kill -SIGINT $tracer_pid
 

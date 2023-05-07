@@ -48,10 +48,11 @@ def bench_run_df(bench_run_path):
 
     burst_len = int(values["burst_len"])
     for burst_pos in range(0, burst_len):
-        df = tidy_bench_run(bench_run_path, values, yaml, burst_pos)
-        df = dict_into_df(df, None, yaml)
         df = pd.concat([
-            df,
+            dict_into_df(
+                tidy_bench_run(bench_run_path, values, yaml, burst_pos),
+                None, yaml
+            ),
             tidy_values,
             pd.DataFrame({
                 "bench_run_name": bench_run_path.name,
@@ -100,11 +101,9 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
     elif yaml["bench_script"] == "workload-bpf-tracer":
         df = pd.concat([
-            tidy_bpf_tracer(bench_run_path, burst_pos, yaml),
+            tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values),
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
         ], axis=1)
-        # print("tidy_bench_run: ")
-        # print(df)
         return df
     else:
         return pd.concat([
@@ -170,7 +169,7 @@ def tidy_bpftool_loadall_log(brp, values):
         d["verification_error_speculative"] = "NA"
     return d
 
-def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
+def tidy_bpftool(bench_run_path, values, yaml, burst_pos, bpftool_run=True):
     if values["bpftool_loadall_exitcode"] != "0" or "bpftool_progs" not in values:
         # bpftool only exports data for the last repetition (burst_pos == repeat argument).
         return pd.DataFrame({ "observation": ["bench_run"] })
@@ -182,7 +181,6 @@ def tidy_bpftool(bench_run_path, values, yaml, burst_pos):
         df = pd.DataFrame({
             "observation": ["bpftool_prog_run"],
             "bpftool_prog": [prog],
-            "bpftool_run_exitcode": [rec]
         })
 
         df = tidy_bpftool_jited_into_df(bench_run_path, prog, df)
@@ -255,25 +253,47 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
 
     return df
 
-def tidy_bpf_tracer(bench_run_path, burst_pos, yaml):
-    j = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
-    df = dict_into_df(pd.DataFrame(), "bpftool_prog_show", j)
+# Sums up info accross all loaded BPF programs.
+def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
+    init_progs = json.load(bench_run_path.joinpath("workload/%d.init.bpftool_prog_show.json" % burst_pos).open())
+    progs = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
 
-    # Accumulate
+    # Accumulate json items, skip systemd progs.
     f = ["run_time_ns", "run_cnt", "bytes_jited", "bytes_xlated", "bytes_memlock"]
     d = {}
+    insncnt_dfs = []
     for n in f:
-        d["bps_" + n] = [0]
-    for prog in j:
+        d["bpftool_prog_show_" + n] = [0]
+    d["bpftool_prog_show_cnt"] = [0]
+    for prog in progs:
+
+        is_init = False
+        for ip in init_progs:
+            if ip["id"] == prog["id"]:
+                assert ip["tag"] == prog["tag"]
+                is_init = True
+                break
+        if is_init:
+            assert prog["pids"][0]["comm"] == "systemd"
+            continue
+
         for n in f:
             try:
-                d["bps_" + n][0] = d["bps_" + n][0] + int(prog[n])
+                d["bpftool_prog_show_" + n][0] = d["bpftool_prog_show_" + n][0] + int(prog[n])
             except KeyError as e:
                 pass
+        d["bpftool_prog_show_cnt"][0] += 1
+
+        prog_id = str(prog["id"])
+        insncnt_df = tidy_bpftool_jited_into_df(bench_run_path, prog_id, pd.DataFrame())
+        insncnt_dfs.append(insncnt_df)
+    insncnts_df = pd.concat(insncnt_dfs, axis=0)
+    insncnts_df = insncnts_df.agg(['sum']).reset_index(drop=True)
+    print(insncnts_df)
 
     df = pd.concat([
-        df,
-        pd.DataFrame(d, index=[0])
+        pd.DataFrame(d, index=[0]),
+        insncnts_df
     ], axis=1)
     return df
 

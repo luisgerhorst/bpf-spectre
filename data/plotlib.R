@@ -95,12 +95,15 @@ ALL_DATA <- read_tsv(
   )
 )
 
+cols = c(bpftool_jited_insncnt_lfence = NA_integer_,
+         bpftool_jited_insncnt_total = NA_integer_)
+
 DATA <- ALL_DATA %>%
+  tibble::add_column(!!!cols[!names(cols) %in% names(.)]) %>%
   mutate(
+    ## TODO: Do these introduce 0s?
     bpftool_loadall_exitcode = ifelse("bpftool_loadall_exitcode" %in% names(ALL_DATA), bpftool_loadall_exitcode, NA),
     BPF_OBJ = ifelse("BPF_OBJ" %in% names(ALL_DATA), BPF_OBJ, NA),
-    bpftool_jited_insncnt_lfence = ifelse("bpftool_jited_insncnt_lfence" %in% names(ALL_DATA), bpftool_jited_insncnt_lfence, NA),
-    bpftool_jited_insncnt_total = ifelse("bpftool_jited_insncnt_total" %in% names(ALL_DATA), bpftool_jited_insncnt_total, NA),
     bpftool_loadall_error_reason_msg = ifelse("bpftool_loadall_error_reason_msg" %in% names(ALL_DATA), bpftool_loadall_error_reason_msg, NA),
     verification_error = ifelse("verification_error" %in% names(ALL_DATA), verification_error, NA),
     verification_error_msg = ifelse("verification_error_msg" %in% names(ALL_DATA), verification_error_msg, NA),

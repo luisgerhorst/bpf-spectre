@@ -274,7 +274,10 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
                 is_init = True
                 break
         if is_init:
-            assert prog["pids"][0]["comm"] == "systemd"
+            try:
+                assert prog["pids"][0]["comm"] == "systemd"
+            except KeyError as e:
+                pass
             continue
 
         for n in f:

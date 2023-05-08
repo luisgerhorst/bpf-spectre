@@ -51,7 +51,7 @@ clean:
 	$(MAKE) -C bpf-samples clean
 	$(MAKE) -C linux mrproper
 	$(MAKE) -C linux-main mrproper
-	rm -rfd .build
+	rm -rfd .build $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state
 
 .PHONY: install-deps
 install-deps: | .build/deps
@@ -62,9 +62,9 @@ install-deps: | .build/deps
 	rm -f .build/llvm.sh # https://apt.llvm.org/
 	env -C .build wget https://apt.llvm.org/llvm.sh
 	chmod +x .build/llvm.sh
-	sudo ./.build/llvm.sh 15 all
+	# sudo ./.build/llvm.sh 15 all
 	make -C linux-main headers_install # for linux/samples/bpf
 	touch $@
 
 .build:
-	mkdir $@
+	mkdir -p $@

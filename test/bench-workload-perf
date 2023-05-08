@@ -20,7 +20,7 @@ pushd ../src
 . ./env.sh
 
 # Boots target with linux-build ready for target-scpsh.
-make target
+make -j $(nproc) target
 
 set +x
 ./scripts/target-scpsh -o ${dst}/.tmp -C ./target-scripts "

@@ -18,6 +18,11 @@
         luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
         libz-dev libbpf-dev
 
+    # HACK to build bcc libbpf-tools javagc on Debian
+    # https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory
+    test -e /usr/include/asm \
+        || sudo ln -s /usr/include/asm-generic /usr/include/asm
+
     sudo systemctl disable memcached
 
     if ! test -d /usr/lib/llvm-15/bin
@@ -52,9 +57,10 @@
     then
             tmp=$(mktemp -d)
             pushd ../target_prefix/bcc/libbpf-tools
-            sudo make -j $(nproc) clean
-            make -j $(nproc) -k all || true
-            sudo make DESTDIR=$tmp prefix=$prefix -k install || true
+            sudo make USE_BLAZESYM=0 -j $(nproc) clean
+            sudo chown -R $USER .
+            make USE_BLAZESYM=0 -j $(nproc) -k all || true
+            sudo make USE_BLAZESYM=0 DESTDIR=$tmp prefix=$prefix -k install || true
             popd
             sudo mv $tmp$prefix $stow/$r
             sudo rm -rfd $tmp

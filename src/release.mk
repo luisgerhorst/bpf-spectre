@@ -115,7 +115,7 @@ $(TS)/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 # .build/target-state/qemu-debian/kernel: .build/debian.ssh_port
 # 	touch $@
 
-$(TS)/linux-src: .build/linux-src/d.tar.gz .build/target-state/$(T)/kernel
+$(TS)/linux-src: .build/linux-src/d.tar.gz $(TS)/kernel
 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
 	touch $@
@@ -125,7 +125,7 @@ $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 	touch $@
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
-$(TS)/linux-tools: $(TS)/bcc .build/target-state/$(T)/linux-src .build/target-state/$(T)/kernel
+$(TS)/linux-tools: $(TS)/bcc $(TS)/linux-src $(TS)/kernel
 	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
 	touch $@
 

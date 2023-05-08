@@ -7,6 +7,8 @@ summary(DATA)
 cns <- colnames(DATA)
 perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")
                     | startsWith(cns, "bpftool_prog_show_")
+                    | startsWith(cns, "bpftool_jited_insncnt_addq")
+                    | startsWith(cns, "bpftool_jited_insncnt_total")
                     | startsWith(cns, "bpftool_jited_insncnt_lfence")]
 for (m in perf_metrics) {
   print(m)

@@ -4,8 +4,16 @@ source("plotlib.R")
 
 summary(DATA)
 
+DATA <- DATA %>%
+  filter(burst_pos > 0, bpftool_prog_show_run_time_ns > 500*1000*1000) %>%
+  mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
+  group_by(uname_a, WORKLOAD, TRACER) %>%
+  mutate(across(where(is.numeric), ~ .x / mean(.x, na.rm = TRUE), .names = "norm_{.col}")) %>%
+  ungroup()
+
 cns <- colnames(DATA)
-perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")
+perf_metrics <- cns[startsWith(cns, "norm_perf_") & ! startsWith(cns, "norm_perf_counter_run_time_")
+                    | startsWith(cns, "norm_bpftool_prog_show_")
                     | startsWith(cns, "bpftool_prog_show_")
                     | startsWith(cns, "bpftool_jited_insncnt_addq")
                     | startsWith(cns, "bpftool_jited_insncnt_total")

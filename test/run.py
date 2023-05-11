@@ -40,7 +40,7 @@ def main():
     os.dup2(suite_log_tee.stdin.fileno(), sys.stderr.fileno())
 
     print(args)
-    run_suite(suite_dir, suite_run_path, suite, args.reps, args.burst_len)
+    run_suite(suite_dir, suite_run_path, suite, args.reps, args.burst_len, args.retry_max)
 
     subprocess.run(["make", "-k", "-C", "../data/archive", suite_run_path.name + ".tar.gz"],
                    check=True)
@@ -52,8 +52,9 @@ def parse_args():
     parser.add_argument("-s", "--suite")
     parser.add_argument("-n", "--data-name", help="Suffix appended to auto-generated path.")
     parser.add_argument("-p", "--data-path", help="Relative to TESTRUN_DATA. For example, set this to 'scratch' for test-runs.")
-    parser.add_argument("-r", "--reps", default=1, type=int)
-    parser.add_argument("-b", "--burst-len", default=3, type=int)
+    parser.add_argument("-r", "--reps", default=1, type=int, help="Repeat whole run REP times (to check reproducibility).")
+    parser.add_argument("-b", "--burst-len", default=3, type=int, help="Repeat each test BURST_LEN times (to check hot/cold caches).")
+    parser.add_argument("--retry-max", default=10, type=int, help="Max retries for test runs (to mitigate network errors).")
     parser.add_argument("--random-seed", default=0, type=int)
     args = parser.parse_args()
 
@@ -70,9 +71,7 @@ def parse_args():
 
     return args, suite_path, suite_run_path
 
-RETRY_MAX = 1
-
-def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
+def run_suite(suite_dir, suite_run_path, suite, reps, burst_len, retry_max):
     i = 0
     bar = ProgressBar(reps * len(suite), max_width=40)
     for rep in range(0, reps):
@@ -87,14 +86,14 @@ def run_suite(suite_dir, suite_run_path, suite, reps, burst_len):
             human_name = urllib.parse.quote_plus('-'.join(map(str, bench_list)).replace("=", "-"))[0:128]
             name = '{:06d}.{}'.format(i, human_name.replace(".", "-"))
             tmp = None
-            for retry in range(0, RETRY_MAX):
+            for retry in range(0, retry_max):
                 tmp = suite_run_path.joinpath("%s.retry-%d.incomplete-bench-run" % (name, retry))
                 tmp.mkdir()
                 try:
                     run_bench(suite_dir, tmp, bench, burst_len, retry)
                     break
                 except subprocess.CalledProcessError as e:
-                    if retry == RETRY_MAX-1:
+                    if retry == retry_max-1:
                         raise e
                     time.sleep(retry*60)
             os.rename(tmp, suite_run_path.joinpath("%s.bench-run" % (name)))

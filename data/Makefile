@@ -11,7 +11,7 @@ all: plots
 
 RAW_DIRS := $(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
 DATA_REAL := $(RAW_DIRS:$(TESTRUN_DATA)/%/=%)
-DATA_VIRT := 23-03-21_bsel-refactor+scratch 23-03-24_20-00_bpftool+scratch 23-04-06_bcc+23-04-06_bcc-2
+DATA_VIRT :=
 DATA := $(DATA_REAL) $(DATA_VIRT)
 PLOTS := $(DATA:%=d-%)
 

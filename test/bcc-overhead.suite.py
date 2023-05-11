@@ -76,7 +76,9 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec~1"),
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
             # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
-            (priv, " net.core.bpf_jit_harden=0", "HEAD-dirty"),
+            (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
+            (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+            (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
             (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),
@@ -84,10 +86,10 @@ def append_T(suite, T):
         sc = sc_d + " " + sc
 
         # The default 4 threads x 50 clients x 10k requests takes 13s.
-        mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary"
+        # mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary"
         #
         # pts uses --hide-histogram --protocol=memcache_text --pipeline=16 --threads=$(nproc) --clients=1 --test-time=60.
-        # mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
+        mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
 
         for ba in bcc_apps:
             suite.append({

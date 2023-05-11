@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-set -m # allow sigint to background processes
 bash -n "$(command -v "$0")"
 # On the SuT: Benchmarks workload performance.
 
@@ -40,8 +39,10 @@ for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
 	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.init.bpftool_prog_show.json 2>&1
 
+	set -m # allow sigint to background processes
 	bash -c "$TRACER" > $dst/workload/${burst_pos}.trace 2>&1 &
 	tracer_pid=$!
+	set +m
 
 	set +e
 	env -i sudo --preserve-env perf stat \
@@ -66,10 +67,9 @@ do
 	do
 		if [[ $(echo "$line" | cut -d '"' -f 2) == "id" ]]
 		then
-			set -x
-
 			# Program ID:
 			prog=$(echo "$line" | cut -d ':' -f 2 | cut -d , -f 1 | cut -d ' ' -f 2)
+			echo "prog=$prog" 1>&2
 
 			set +e
 			sudo bpftool prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog
@@ -81,18 +81,23 @@ do
 				continue
 			fi
 
-			sudo bpftool prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog
-			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog.json
-			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog.json
+			sudo bpftool prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog &
+			p1=$!
+			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog.json &
+			p2=$!
+			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog.json &
+			p3=$!
+			wait $p1
+			wait $p2
+			wait $p3
 
 			echo -n " $prog" >> ${dst}/values/bpftool_progs
-			set +x
 		fi
 	done
 	unset IFS
 	set -x
 
-	sudo kill -SIGINT $tracer_pid
+	sudo kill -SIGINT $tracer_pid || true # might have terminated already
 
 	set +e
 	wait $tracer_pid
@@ -111,3 +116,4 @@ bash -c "export RANDOM_PORT='$RANDOM_PORT'; ${WORKLOAD_CLEANUP}"
 ./bench-runtime-end.sh $@
 
 echo -n $exitcode > ${dst}/values/workload_exitcode
+echo -n $tracer_ec > ${dst}/values/tracer_exitcode

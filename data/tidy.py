@@ -98,13 +98,23 @@ def dict_into_df(df, prefix, value):
 
 def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
-        return tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
+        return tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
     elif yaml["bench_script"] == "workload-bpf-tracer":
-        df = pd.concat([
-            tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values),
-            tidy_workload_perf(bench_run_path, burst_pos, yaml, values["workload_exitcode"])
+        # TODO
+        wdf = pd.DataFrame({ "observation": ["bench_run"] })
+        try:
+            wdf = tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
+        except FileNotFoundError as e:
+            pass
+        tdf = pd.DataFrame()
+        try:
+            tdf = tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
+        except FileNotFoundError as e:
+            pass
+        return pd.concat([
+            tdf,
+            wdf
         ], axis=1)
-        return df
     else:
         return pd.concat([
             tidy_bpftool(bench_run_path, values, yaml, burst_pos),
@@ -227,8 +237,8 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
     df["bpftool_jited_insncnt_total"] = [len(jited[0]["insns"])]
     return df
 
-def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
-    avail = exitcode == "0"
+def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
+    avail = values["workload_exitcode"] == "0"
     df = pd.DataFrame({ "observation": ["workload_run" if avail else "bench_run"] })
     if not avail:
         return df
@@ -255,6 +265,10 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, exitcode):
 
 # Sums up info accross all loaded BPF programs.
 def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
+    avail = values["workload_exitcode"] == "0" # TODO and values["tracer_exitcode"] == "0"
+    if not avail:
+        return pd.DataFrame({ "observation": ["workload_run" if avail else "bench_run"] })
+
     init_progs = json.load(bench_run_path.joinpath("workload/%d.init.bpftool_prog_show.json" % burst_pos).open())
     progs = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
 
@@ -290,6 +304,8 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
         prog_id = str(prog["id"])
         insncnt_df = tidy_bpftool_jited_into_df(bench_run_path, prog_id, pd.DataFrame())
         insncnt_dfs.append(insncnt_df)
+    if d["bpftool_prog_show_cnt"][0] == 0:
+        return pd.DataFrame(d, index=[0])
     insncnts_df = pd.concat(insncnt_dfs, axis=0)
     insncnts_df = insncnts_df.agg(['sum']).reset_index(drop=True)
     print(insncnts_df)

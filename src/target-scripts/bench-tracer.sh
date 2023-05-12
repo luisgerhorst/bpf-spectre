@@ -30,6 +30,20 @@ export RANDOM_PORT="$(random_port)"
 
 ./bench-runtime-begin.sh $@
 
+# Kill tracers from previous runs that did not properly terminate.
+set +x
+IFS=$'\n'
+for	pid in $(sudo bpftool prog show | grep pids | cut -d " " -f 2 | cut -d '(' -f 2 | cut -d ')' -f 1)
+do
+	if [ $pid != 1 ] # skip systemd
+	then
+		echo "sudo kill -SIGKILL $pid" 1>&2
+		sudo kill -SIGKILL $pid || true
+	fi
+done
+unset IFS
+set -x
+
 bash -c "export RANDOM_PORT='$RANDOM_PORT'; ${WORKLOAD_PREPARE}"
 
 sync
@@ -39,10 +53,10 @@ for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
 	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.init.bpftool_prog_show.json 2>&1
 
-	set -m # allow sigint to background processes
-	bash -c "$TRACER" > $dst/workload/${burst_pos}.trace 2>&1 &
+	set +m # allow sigint to background process
+	$TRACER > $dst/workload/${burst_pos}.trace 2>&1 &
 	tracer_pid=$!
-	set +m
+	set -m
 
 	set +e
 	env -i sudo --preserve-env perf stat \

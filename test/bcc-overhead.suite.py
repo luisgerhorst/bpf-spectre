@@ -48,7 +48,8 @@ def append_T(suite, T):
                 "funclatency do_sys_open",
                 "funclatency -m do_nanosleep",
                 "funclatency -u vfs_read",
-                "gethostlatency", "hardirqs", "klockstat",
+                "gethostlatency", "hardirqs",
+                "klockstat",
 	            "ksnoop info ip_send_skb",
                 "llcstat",
                 #
@@ -63,7 +64,9 @@ def append_T(suite, T):
                 "softirqs", "solisten",
                 "statsnoop", "syscount", "tcptracer", "tcpconnect", "tcpconnlat",
                 "tcplife",
-                "tcprtt", "tcpstates", "tcpsynbl", "tcptop", "vfsstat", "wakeuptime"]
+                "tcprtt", "tcpstates", "tcpsynbl", "tcptop", "vfsstat",
+                "wakeuptime"]
+    bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
 
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.
@@ -89,11 +92,14 @@ def append_T(suite, T):
         # mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary"
         #
         # pts uses --hide-histogram --protocol=memcache_text --pipeline=16 --threads=$(nproc) --clients=1 --test-time=60.
-        mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
+        # mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
+        #
+        # Mix of pts and default:
+        mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary --threads=$(nproc)"
 
         for ba in bcc_apps:
             suite.append({
-                "bench_script": "workload-bpf-tracer",
+                "bench_script": "tracer",
                 "boot": {
                     "LINUX_GIT_CHECKOUT": b,
                 },

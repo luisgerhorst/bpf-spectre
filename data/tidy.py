@@ -99,8 +99,7 @@ def dict_into_df(df, prefix, value):
 def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
-    elif yaml["bench_script"] == "workload-bpf-tracer":
-        # TODO
+    elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "workload-bpf-tracer":
         wdf = pd.DataFrame({ "observation": ["bench_run"] })
         try:
             wdf = tidy_workload_perf(bench_run_path, burst_pos, yaml, values)

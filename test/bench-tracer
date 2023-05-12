@@ -25,7 +25,7 @@ make -j $(nproc) target
 set +x
 ./scripts/target-scpsh -o ${dst}/.tmp -C ./target-scripts "
 ${env_exports}
-./bench-workload-bpf-tracer.sh ../result_dir ${burst_len}
+./bench-tracer.sh ../result_dir ${burst_len}
 "
 set -x
 

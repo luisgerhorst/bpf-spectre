@@ -5,16 +5,15 @@ source("plotlib.R")
 summary(DATA)
 
 DATA <- DATA %>%
-  filter(burst_pos > 0, bpftool_prog_show_run_time_ns > 1*1000*1000) %>%
+  filter(bpftool_prog_show_run_time_ns > 1*1000*1000) %>%
   mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
   group_by(uname_a, WORKLOAD, TRACER) %>%
   mutate(across(where(is.numeric), ~ .x / mean(.x, na.rm = TRUE), .names = "norm_{.col}"),
          across(where(is.numeric), ~ max(.x, na.rm = TRUE), .names = "max_{.col}")) %>%
-  ungroup() %>%
-  filter(max_bpftool_jited_insncnt_lfence > 0)
+  ungroup()
 
 cns <- colnames(DATA)
-perf_metrics <- cns[startsWith(cns, "norm_perf_") & ! startsWith(cns, "norm_perf_counter_run_time_")
+perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")
                     | startsWith(cns, "norm_bpftool_prog_show_")
                     | startsWith(cns, "bpftool_prog_show_")
                     | startsWith(cns, "bpftool_jited_insncnt_addq")
@@ -24,7 +23,16 @@ for (m in perf_metrics) {
   print(m)
   ggplot(DATA, aes(y=paste(TRACER, WORKLOAD), x=get(m), colour=SYSCTL)) +
     geom_smooth(linetype = "dashed", method = "lm") +
-    geom_jitter() +
+    geom_boxplot() +
+    scale_y_discrete(labels = function(y) str_wrap(y, width = 80)) +
+    facet_grid(rows=vars(hostname_short, workload_exitcode),
+               cols=vars(uname_a, CPUFREQ, bench_script),
+               labeller=label_both, scales="free")
+  eval_save(paste0(m, "-point"))
+
+  ggplot(DATA, aes(y=get(m), x=burst_pos, colour=SYSCTL)) +
+    geom_smooth(linetype = "dashed", method = "lm") +
+    geom_point() +
     scale_y_discrete(labels = function(y) str_wrap(y, width = 80)) +
     facet_grid(rows=vars(hostname_short, workload_exitcode),
                cols=vars(uname_a, CPUFREQ, bench_script),

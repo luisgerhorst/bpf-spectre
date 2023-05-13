@@ -95,8 +95,8 @@ ALL_DATA <- read_tsv(
   )
 )
 
-cols = c(bpftool_jited_insncnt_lfence = NA_integer_,
-         bpftool_jited_insncnt_total = NA_integer_)
+cols = c(bpftool_jited_insncnt_lfence = NA_real_,
+         bpftool_jited_insncnt_total = NA_real_)
 
 DATA <- ALL_DATA %>%
   tibble::add_column(!!!cols[!names(cols) %in% names(.)]) %>%

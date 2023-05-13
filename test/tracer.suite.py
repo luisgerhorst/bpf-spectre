@@ -94,8 +94,8 @@ def append_T(suite, T):
         # pts uses --hide-histogram --protocol=memcache_text --pipeline=16 --threads=$(nproc) --clients=1 --test-time=60.
         # mb = "/usr/bin/memtier_benchmark --hide-histogram --protocol=memcache_text --port=$RANDOM_PORT --pipeline=16 --threads=$(nproc) --clients=1 --requests=5000000 --ratio=1:5"
         #
-        # Mix of pts and default:
-        mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary --threads=$(nproc)"
+        # Mix of pts and default, nproc/2 to reduce jitter:
+        mb = "/usr/bin/memtier_benchmark --port=$RANDOM_PORT --protocol=memcache_binary --threads=$(expr $(nproc) '/' 2)"
 
         for ba in bcc_apps:
             suite.append({
@@ -110,7 +110,7 @@ def append_T(suite, T):
                     "CAPSH_ARGS": "NA",
                     "MERGE_CONFIGS": "",
                     # pts uses --conn-limit=4096 --threads=$(nproc)
-                    "WORKLOAD_PREPARE": "memcached --port=$RANDOM_PORT --conn-limit=4096 --threads=$(nproc) & echo $! > memcached_pid",
+                    "WORKLOAD_PREPARE": "memcached --port=$RANDOM_PORT --conn-limit=4096 --threads=$(expr $(nproc) '/' 2) & echo $! > memcached_pid",
                     "TRACER": "sudo " + ba,
                     "WORKLOAD": mb,
                     "WORKLOAD_CLEANUP": "kill $(cat memcached_pid)",

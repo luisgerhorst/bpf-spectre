@@ -69,6 +69,20 @@
     sudo stow --override '.*' --stow $r
     popd
 
+    r=parca-agent-v0.19.0
+    if ! test -d $stow/$r
+    then
+            tmp=$(mktemp -d)
+            pushd $tmp
+            curl -sL https://github.com/parca-dev/parca-agent/releases/download/v0.19.0/parca-agent_0.19.0_`uname -s`_`uname -m`.tar.gz | tar xvfz -
+            popd
+            sudo mkdir -p $stow/$r/bin
+            sudo mv $tmp/parca-agent $stow/$r/bin/parca-agent
+    fi
+    pushd $stow
+    sudo stow --override '.*' --stow $r
+    popd
+
     # TODO: The assumes the following tools are not modified. If they work,
     # reinstall is skipped. If we modify the tools in the linux tree, we should
     # use install-prefix + stow.

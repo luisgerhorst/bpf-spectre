@@ -2,8 +2,6 @@
 
 source("plotlib.R")
 
-summary(DATA)
-
 cns <- colnames(DATA)
 perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")]
 for (m in perf_metrics) {

@@ -2,40 +2,74 @@
 
 source("plotlib.R")
 
-summary(DATA)
-
 DATA <- DATA %>%
-  filter(bpftool_prog_show_run_time_ns > 1*1000*1000) %>%
-  mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
+  ## mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
   group_by(uname_a, WORKLOAD, TRACER) %>%
-  mutate(across(where(is.numeric), ~ .x / mean(.x, na.rm = TRUE), .names = "norm_{.col}"),
+  mutate(across(where(is.numeric), ~ .x / min(.x, na.rm = TRUE), .names = "norm_{.col}"),
+         across(where(is.numeric), ~ min(.x, na.rm = TRUE), .names = "min_{.col}"),
          across(where(is.numeric), ~ max(.x, na.rm = TRUE), .names = "max_{.col}")) %>%
-  ungroup()
+  ungroup() %>%
+  group_by(uname_a, WORKLOAD, TRACER, SYSCTL) %>%
+  mutate(across(where(is.numeric), ~ mean(.x, na.rm = TRUE), .names = "mean_{.col}")) %>%
+  ungroup() %>%
+  filter(max_bpftool_jited_insncnt_lfence > 0,
+         min_bpftool_prog_show_run_cnt > 1*1000)
 
 cns <- colnames(DATA)
-perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")
-                    | startsWith(cns, "norm_bpftool_prog_show_")
-                    | startsWith(cns, "bpftool_prog_show_")
-                    | startsWith(cns, "bpftool_jited_insncnt_addq")
-                    | startsWith(cns, "bpftool_jited_insncnt_total")
-                    | startsWith(cns, "bpftool_jited_insncnt_lfence")]
+perf_metrics <- cns[startsWith(cns, "norm_bpftool_prog_show_bytes_")
+                    | startsWith(cns, "norm_bpftool_jited_insncnt_lfence")
+                    | startsWith(cns, "norm_bpftool_jited_insncnt_total")]
 for (m in perf_metrics) {
-  print(m)
-  ggplot(DATA, aes(y=paste(TRACER, WORKLOAD), x=get(m), colour=SYSCTL)) +
-    geom_smooth(linetype = "dashed", method = "lm") +
-    geom_boxplot() +
-    scale_y_discrete(labels = function(y) str_wrap(y, width = 80)) +
+  ggplot(DATA, aes(y=get(m),
+                   colour=paste(SYSCTL))) +
+    stat_ecdf() +
     facet_grid(rows=vars(hostname_short, workload_exitcode),
                cols=vars(uname_a, CPUFREQ, bench_script),
                labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
+  eval_save(paste0("ecdf-", m))
+}
 
-  ggplot(DATA, aes(y=get(m), x=burst_pos, colour=SYSCTL)) +
-    geom_smooth(linetype = "dashed", method = "lm") +
-    geom_point() +
-    scale_y_discrete(labels = function(y) str_wrap(y, width = 80)) +
+cns <- colnames(DATA)
+perf_metrics <- cns[startsWith(cns, "norm_perf_cycles")
+                    | startsWith(cns, "perf_cycles")
+                    | startsWith(cns, "norm_bpftool_prog_show_run_time_")
+                    | startsWith(cns, "bpftool_prog_show_run_time_")]
+
+for (m in perf_metrics) {
+  ggplot(DATA, aes(y=get(m),
+                   colour=paste(SYSCTL))) +
+    stat_ecdf() +
+    xlim(0.00, 0.99) +
     facet_grid(rows=vars(hostname_short, workload_exitcode),
                cols=vars(uname_a, CPUFREQ, bench_script),
                labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
+  eval_save(paste0("ecdf-", m))
+}
+
+## for (m in perf_metrics) {
+##   ggplot(DATA, aes(y=get(m), colour=paste(TRACER, WORKLOAD, SYSCTL),
+##                    fill=max_bpftool_jited_insncnt_lfence)) +
+##     geom_boxplot() +
+##     scale_y_discrete(labels = function(y) str_wrap(y, width = 80)) +
+##     facet_grid(rows=vars(hostname_short, workload_exitcode),
+##                cols=vars(uname_a, CPUFREQ, bench_script),
+##                labeller=label_both, scales="free")
+##   eval_save(paste0(m))
+## }
+
+for (m in perf_metrics) {
+  for (t in unique(DATA$TRACER)) {
+    ## x/y lfence/norm runtime
+    d <- DATA %>%
+      filter(TRACER == t)
+    ggplot(d, aes(y=get(m),
+                  colour=bpftool_jited_insncnt_lfence,
+                  linetype=paste(SYSCTL))) +
+      stat_ecdf() +
+      xlim(0.01, 0.99) +
+      facet_grid(rows=vars(hostname_short, workload_exitcode),
+                 cols=vars(uname_a, CPUFREQ, bench_script),
+                 labeller=label_both, scales="free")
+    eval_save(paste(t, m, sep="-"))
+  }
 }

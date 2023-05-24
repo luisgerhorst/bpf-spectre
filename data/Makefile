@@ -23,7 +23,7 @@ d-%: .tidy/%.tsv.gz
 	$(MAKE) -f data.mk D=$*
 
 # Hack: Use flock to limit concurrency.
-.tidy/%.tsv.gz: tidy.py $(TESTRUN_DATA)/%/suite-run.log $(ALL_MAKEFILES) | .tidy
+.tidy/%.tsv.gz: $(TESTRUN_DATA)/%/suite-run.log | .tidy
 	nice flock .tidy/$<.lock ./tidy.py --data $* 2>&1 | tee $@.log
 
 define cat_tsv_targets # args: D

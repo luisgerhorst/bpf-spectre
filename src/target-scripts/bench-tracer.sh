@@ -44,6 +44,8 @@ done
 unset IFS
 set -x
 
+sudo pkill memcached || true
+
 bash -c "export RANDOM_PORT='$RANDOM_PORT'; ${WORKLOAD_PREPARE}"
 
 sync
@@ -86,32 +88,35 @@ do
 			echo "prog=$prog" 1>&2
 
 			set +e
-			sudo bpftool prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog
-			ec=$?
-			set -e
-			if [ $ec != 0 ]
-			then
-				echo "Warning: Parsed invalid id from JSON." 1>&2
-				continue
-			fi
-
+			sudo bpftool prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog &
+			p0=$!
 			sudo bpftool prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog &
 			p1=$!
 			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog.json &
 			p2=$!
 			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog.json &
 			p3=$!
+			wait $p0
+			e0=$?
 			wait $p1
+			e1=$?
 			wait $p2
+			e2=$?
 			wait $p3
+			e3=$?
+			set -e
 
-			echo -n " $prog" >> ${dst}/values/bpftool_progs
+			if [ $e0 = 0 ] && [ $e1 = 0 ] && [ $e2 = 0 ] && [ $e3 = 0 ]
+			then
+				echo -n " $prog" >> ${dst}/values/bpftool_progs
+			fi
 		fi
 	done
 	unset IFS
 	set -x
 
 	sudo kill -SIGINT $tracer_pid || true # might have terminated already
+	sleep 5 && sudo kill -SIGKILL $tracer_pid || true
 
 	set +e
 	wait $tracer_pid

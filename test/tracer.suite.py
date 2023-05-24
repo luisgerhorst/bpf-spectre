@@ -29,6 +29,7 @@ def append_T(suite, T):
                 #
                 # BUG: prog does not load
                 # "biosnoop",
+                #
                 "biostacks", "biotop", "bitesize",
                 "cachestat", "capable", "cpudist",
                 #
@@ -64,9 +65,10 @@ def append_T(suite, T):
                 "softirqs", "solisten",
                 "statsnoop", "syscount", "tcptracer", "tcpconnect", "tcpconnlat",
                 "tcplife",
-                "tcprtt", "tcpstates", "tcpsynbl", "tcptop", "vfsstat",
+                "tcprtt", "tcpstates", "tcpsynbl", "tcptop",
+                # "vfsstat",
                 "wakeuptime"]
-    bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
+    # bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
 
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.

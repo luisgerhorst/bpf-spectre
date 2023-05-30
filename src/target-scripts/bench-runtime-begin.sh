@@ -41,6 +41,10 @@ then
 		elif lscpu | grep 'CPU @ 2.80GHz' > /dev/null
 		then
 			cpufreq_khz=2800000
+		elif cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies > /dev/null
+		then
+			# Do not choose top freq (-f 1) which may induce boost on AMD Zen 2.
+			cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | cut -d ' ' -f 2)
 		else
 			exit 1
 		fi

@@ -24,7 +24,7 @@ d-%: .tidy/%.tsv.gz
 
 # Hack: Use flock to limit concurrency.
 .tidy/%.tsv.gz: $(TESTRUN_DATA)/%/suite-run.log | .tidy
-	nice flock .tidy/$<.lock ./tidy.py --data $* 2>&1 | tee $@.log
+	nice flock .tidy/all_cores.lock ./tidy.py --data $* 2>&1 | tee $@.log
 
 define cat_tsv_targets # args: D
 

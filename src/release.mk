@@ -26,6 +26,7 @@ all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
 
 .PHONY: target
 target: $(TARGET)
+	ln -sfT $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state .run
 
 #
 # Prepare

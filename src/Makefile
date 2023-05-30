@@ -21,6 +21,7 @@ configure: | .build .build/deps
 	./scripts/configure.sh
 	$(MAKE) -C linux-main headers_install
 
+.PHONY: linux-%/.config
 linux-%/.config: configure
 
 .PHONY: linux-%config

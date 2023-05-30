@@ -68,7 +68,11 @@ def append_T(suite, T):
                 "tcprtt", "tcpstates", "tcpsynbl", "tcptop",
                 # "vfsstat",
                 "wakeuptime"]
-    # bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
+    bcc_apps = [
+        # Significant impact on memached runtime:
+        "klockstat", "syscount", "softirqs", "slabratetop",
+        # Significant bpf run time:
+        "wakeuptime", "tcprtt", "offcputime"]
 
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.

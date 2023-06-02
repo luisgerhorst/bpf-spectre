@@ -95,7 +95,7 @@ def run_suite(suite_dir, suite_run_path, suite, reps, burst_len, retry_max):
                 except subprocess.CalledProcessError as e:
                     if retry == retry_max-1:
                         raise e
-                    time.sleep(retry*60)
+                    time.sleep(retry*6*60)
             os.rename(tmp, suite_run_path.joinpath("%s.bench-run" % (name)))
             i += 1
 

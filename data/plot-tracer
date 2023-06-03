@@ -12,9 +12,9 @@ DATA <- DATA %>%
   ungroup() %>%
   group_by(uname_a, WORKLOAD, TRACER, SYSCTL) %>%
   mutate(across(where(is.numeric), ~ mean(.x, na.rm = TRUE), .names = "mean_{.col}")) %>%
-  ungroup() %>%
-  filter(max_bpftool_jited_insncnt_lfence > 0,
-         min_bpftool_prog_show_run_cnt > 1*1000)
+  ungroup() ## %>%
+  ## filter(max_bpftool_jited_insncnt_lfence > 0,
+  ##        min_bpftool_prog_show_run_cnt > 1*1000)
 
 cns <- colnames(DATA)
 perf_metrics <- cns[startsWith(cns, "norm_bpftool_prog_show_bytes_")

@@ -63,6 +63,7 @@ do
 	set +e
 	env -i sudo --preserve-env perf stat \
 		--output ${dst}/workload/${burst_pos}.perf -x , \
+		--all-cpus \
 		-e duration_time \
 		-e task-clock \
 		-e raw_syscalls:sys_enter \

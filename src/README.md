@@ -11,6 +11,13 @@ Requires sudo without a password (on the target only), for I4 lab add the follow
 
 Without FAI, add it to `/etc/sudoers` on the target.
 
+### Local Scratch Dir
+
+```sh
+system-under-test$ sudo mkdir -p /srv/scratch/$CONTROL_SYSTEM_USER
+system-under-test$ sudo chown $USER /srv/scratch/$CONTROL_SYSTEM_USER
+```
+
 ### Wake-on-LAN
 
 SSH config must auto-wake the target SuT using WoL if it is suspended, for I4 lab add the following to `.ssh/config`:

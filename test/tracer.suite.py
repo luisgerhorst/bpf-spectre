@@ -68,13 +68,15 @@ def append_T(suite, T):
                 "tcprtt", "tcpstates", "tcpsynbl", "tcptop",
                 # "vfsstat",
                 "wakeuptime"]
-    # bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
-    #
-    # parca-agent with 999Hz < x <= 1999Hz blocks debian (easy7 with Ryzen 3800X)
-    bcc_apps = ["true",
-                "parca-agent --profiling-cpu-sampling-frequency=19",
-                "parca-agent --profiling-cpu-sampling-frequency=499",
-                "parca-agent --profiling-cpu-sampling-frequency=999"]
+    # parca-agent with 19Hz <= x <= 1999Hz blocks debian (easy7 with Ryzen 3800X)
+    bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
+    bcc_apps += [
+        "true",
+        "parca-agent",
+        "parca-agent --profiling-cpu-sampling-frequency=499",
+        "parca-agent --profiling-cpu-sampling-frequency=999",
+        "parca-agent --profiling-cpu-sampling-frequency=1999"
+    ]
     # bcc_apps = ["parca-agent --profiling-cpu-sampling-frequency=9999"]
 
     # Skip priv_spec_mit with unpriv user because it will be the same as

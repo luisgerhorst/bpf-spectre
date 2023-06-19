@@ -10,8 +10,7 @@ BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 
 # Should be in a directory that disappears on reboot to invalidate state of VMM
 # virtual machines.
-TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
-TARGET := $(TS)/kernel $(TS)/linux-tools
+export TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
 
 # Parallel make is OK.
 # MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
@@ -25,8 +24,9 @@ all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
 	.build/$(VM).qcow2
 
 .PHONY: target
-target: $(TARGET)
-	ln -sfT $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state .run
+target:
+	ln -sfT $(dir $(TS)) .run
+	MAKE='$(MAKE)' ./scripts/make-target.sh $(TS)/linux-tools
 
 #
 # Prepare
@@ -107,15 +107,6 @@ $(BZIMAGE): $(LINUX_TREE)
 #
 # Target SuT State
 #
-
-.PHONY: $(TS)/kernel
-$(TS)/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
-	./scripts/target-linux-deb-boot $< && touch $@
-
-# BUG
-#
-# .build/target-state/qemu-debian/kernel: .build/debian.ssh_port
-# 	touch $@
 
 $(TS)/linux-src: .build/linux-src/d.tar.gz $(TS)/kernel
 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'

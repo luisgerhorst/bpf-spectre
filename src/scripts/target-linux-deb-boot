@@ -13,9 +13,14 @@ booted_cmdline=$(./scripts/target-scpsh 'cat /proc/cmdline')
 booted_release=$(./scripts/target-scpsh 'uname -r')
 if [ "${booted_release}" = "${kernel_release}" ] && [[ "${booted_cmdline}" = *${cmdline}* ]]
 then
+    if ! test -e ${TS}/kernel
+    then
+        touch ${TS}/kernel
+    fi
     exit 0
 fi
 echo "Booting ${kernel_release} from ${booted_release}" >&2
+touch ${TS}/kernel
 
 ./scripts/target-scpsh "echo '
 Please do not use this system!

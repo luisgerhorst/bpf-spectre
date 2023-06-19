@@ -17,7 +17,7 @@
         libfl-dev libzip-dev linux-libc-dev llvm-dev libluajit-5.1-dev \
         luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
         libz-dev libbpf-dev libtraceevent-dev curl \
-        python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev
+        python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev        
 
     # HACK to build bcc libbpf-tools javagc on Debian
     # https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory

@@ -5,14 +5,15 @@
     release="$1"
     cmdline="$2"
 
+    sudo mv -n /etc/default/grub.d /etc/default/grub.d.$USER-backup || true
     sudo mv -n /etc/default/grub /etc/default/grub.$USER-backup || true
 
-    echo "# Generated on $(hostname) in $(pwd) by $0, previous contents have been moved to ./grub.$USER-backup
+    echo "# Generated on $(hostname) in $(pwd) by $0, previous contents have been moved to ./grub[.d].$USER-backup
 GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR='Debian'
-GRUB_CMDLINE_LINUX_DEFAULT='panic=30 crashkernel=256M nmi_watchdog=panic'
-GRUB_CMDLINE_LINUX='${cmdline} panic=30 crashkernel=256M nmi_watchdog=panic'" \
+GRUB_CMDLINE_LINUX_DEFAULT=''
+GRUB_CMDLINE_LINUX='panic=30 crashkernel=256M nmi_watchdog=panic ${cmdline}'" \
     | sudo tee /etc/default/grub
     sudo update-grub
 

@@ -36,6 +36,8 @@ SSH config must auto-wake the target SuT using WoL if it is suspended, for I4 la
     	Hostname %h.cs.fau.de
     	Port 22
     	ProxyJump i4lab1
+        
+If Wake-on-LAN is not available, [disable autosuspend and hibernation](https://wiki.debian.org/Suspend).
 
 ### Evaluation Mode
 

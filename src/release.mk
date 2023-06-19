@@ -108,6 +108,7 @@ $(BZIMAGE): $(LINUX_TREE)
 # Target SuT State
 #
 
+.PHONY: $(TS)/kernel
 $(TS)/kernel: .build/linux-pkg $(wildcard .build/linux-pkg/*)
 	./scripts/target-linux-deb-boot $< && touch $@
 

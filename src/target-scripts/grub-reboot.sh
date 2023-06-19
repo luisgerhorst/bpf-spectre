@@ -11,8 +11,8 @@
 GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR='Debian'
-GRUB_CMDLINE_LINUX_DEFAULT='panic=30'
-GRUB_CMDLINE_LINUX='${cmdline} panic=30'" \
+GRUB_CMDLINE_LINUX_DEFAULT='panic=30 crashkernel=256M nmi_watchdog=panic'
+GRUB_CMDLINE_LINUX='${cmdline} panic=30 crashkernel=256M nmi_watchdog=panic'" \
     | sudo tee /etc/default/grub
     sudo update-grub
 

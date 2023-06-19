@@ -4,9 +4,18 @@ set -x
 
 linux_pkg=$1
 
-kernel_release=$(cat $linux_pkg/kernel.release)
-
 . ./env.sh
+
+kernel_release=$(cat $linux_pkg/kernel.release)
+cmdline=${GRUB_CMDLINE_LINUX:-}
+
+booted_cmdline=$(./scripts/target-scpsh 'cat /proc/cmdline')
+booted_release=$(./scripts/target-scpsh 'uname -r')
+if [ "${booted_release}" = "${kernel_release}" ] && [[ "${booted_cmdline}" = *${cmdline}* ]]
+then
+    exit 0
+fi
+echo "Booting ${kernel_release} from ${booted_release}" >&2
 
 ./scripts/target-scpsh "echo '
 Please do not use this system!

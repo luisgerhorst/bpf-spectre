@@ -34,14 +34,6 @@
 	}
 	TARGET_EXEC=./scripts/target-scpsh
 
-	booted_cmdline=$(tssh cat /proc/cmdline)
-	booted_release=$(tssh uname -r)
-	if [ "${booted_release}" = "${release}" ] && [[ "${booted_cmdline}" = *${cmdline}* ]]
-	then
-		exit 0
-	fi
-	echo "Booting ${release} from ${booted_release}" >&2
-
 	./scripts/target-scpsh -C target-scripts "./grub-reboot.sh $release '$cmdline'"
 	${TARGET_EXEC} 'sudo reboot' || true
 

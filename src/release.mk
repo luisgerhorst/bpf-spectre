@@ -24,20 +24,12 @@ all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
 	.build/$(VM).qcow2
 
 .PHONY: target
-target:
+target: .build/linux-pkg
 	ln -sfT $(dir $(TS)) .run
 	MAKE='$(MAKE)' ./scripts/make-target.sh $(TS)/linux-tools
 
-#
-# Prepare
-#
-
 LINUX_SRC := .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE := $(LINUX)/.config $(LINUX_SRC)
-
-$(LINUX)/.config: .build/env/CONFIG $(CONFIG) .build/env/MERGE_CONFIGS $(MERGE_CONFIGS) .build/env/LINUX_GIT_CHECKOUT .build/$(LINUX).git_rev .build/$(LINUX).git_status
-	KCONFIG_CONFIG=$(LINUX)/.config ./$(LINUX)/scripts/kconfig/merge_config.sh -m $(CONFIG) $(MERGE_CONFIGS)
-	$(MAKE) -C $(LINUX) olddefconfig prepare savedefconfig
 
 KERNEL_RELEASE := $(shell ./scripts/linux-release.sh $(LINUX))
 BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)

@@ -21,13 +21,12 @@ configure: | .build .build/deps
 	./scripts/configure.sh
 	$(MAKE) -C linux-main headers_install
 
-# TODO: buggy?
 .PHONY: linux-%/.config
 linux-%/.config: configure
 
-.PHONY: linux-%config
-linux-%config: configure
-	$(MAKE) -C $(LINUX_MAIN) $*config
+.PHONY: linux-menuconfig
+linux-menuconfig: configure
+	$(MAKE) -C $(LINUX_MAIN) menuconfig
 	$(MAKE) -C $(LINUX_MAIN) savedefconfig
 	cp $(LINUX_MAIN)/defconfig $(CONFIG)
 	cp $(LINUX_MAIN)/.config $(CONFIG).config

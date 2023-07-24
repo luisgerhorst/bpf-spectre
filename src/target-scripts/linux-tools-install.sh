@@ -70,12 +70,13 @@
     sudo stow --override '.*' --stow $r
     popd
 
-    r=parca-agent-v0.19.0
+    parca_version=0.23.1
+    r=parca-agent-v$parca_version
     if ! test -d $stow/$r
     then
             tmp=$(mktemp -d)
             pushd $tmp
-            curl -sL https://github.com/parca-dev/parca-agent/releases/download/v0.19.0/parca-agent_0.19.0_`uname -s`_`uname -m`.tar.gz | tar xvfz -
+            curl -sL https://github.com/parca-dev/parca-agent/releases/download/v$parca_version/parca-agent_${parca_version}_`uname -s`_`uname -m`.tar.gz | tar xvfz -
             popd
             sudo mkdir -p $stow/$r/bin
             sudo mv $tmp/parca-agent $stow/$r/bin/parca-agent

@@ -9,7 +9,7 @@
 
     # Determine the kernel release our package will have.
     env - PATH=${PATH} KDEB_COMPRESS=xz LOCALVERSION=$(./scripts/linux-localversion.sh $LINUX) \
-        ${MAKE} -C ${LINUX} include/config/kernel.release > /dev/null
+        ${MAKE} -C ${LINUX} include/config/kernel.release 1>&2
 
     cat ${LINUX}/include/config/kernel.release
     exit

@@ -51,7 +51,7 @@ Reserve the target for exclusive access and disable automatic (re-)configuration
     sudo systemctl disable run-fai.service
     sudo systemctl disable run-fai.timer
     
-    # Undo:
+    # Undo, run by ./scripts/release-target.sh:
     set-system-mode normal
     sudo systemctl enable run-fai.timer
     sudo systemctl enable fai-boot.service

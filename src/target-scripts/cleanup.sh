@@ -14,7 +14,8 @@ then
     sudo mv -f /etc/default/grub.d.$USER-backup /etc/default/grub.d
 fi
 
-sudo apt remove clang-15 clangd-15 libclang-15-dev clang-tools-15 clang-tidy-15
+LLVM_VERSION=16
+sudo apt remove clang-${LLVM_VERSION} clangd-${LLVM_VERSION} libclang-${LLVM_VERSION}-dev clang-tools-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
 sudo apt --fix-broken install
 
 set +e

@@ -17,6 +17,11 @@ export TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
 
 export LD_LIBRARY_PATH := /usr/local/lib
 
+LLVM_BIN = /usr/lib/llvm-15/bin
+ifneq ($(wildcard $(LLVM_BIN)/*),)
+	export PATH := $(LLVM_BIN):$(PATH)
+endif
+
 _dummy := $(shell mkdir -p .build .build/bpf-samples $(TS))
 
 .PHONY: all
@@ -38,8 +43,13 @@ BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)
 # Linux Files
 #
 
-$(BZIMAGE): $(LINUX_TREE)
-	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage vmlinux
+# Building the selftests here assumes your glibc is <= the target glibc.
+$(BZIMAGE): $(LINUX_TREE) release.mk
+	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage vmlinux headers
+	flock .build/linux.lock env -i PWD=$(PWD) PATH=$(PATH) $(MAKE) -C $(LINUX)/tools/testing/selftests/bpf # make sure its not skipped
+	flock .build/linux.lock $(MAKE) \
+		SKIP_TARGETS="arm64 ia64 powerpc sparc64 riscv64 x86 drivers/s390x/uvdevice sgx memfd mqueue capabilities hid alsa" \
+	 	-C $(LINUX)/tools/testing/selftests gen_tar
 	touch $@
 
 #
@@ -55,7 +65,7 @@ $(BZIMAGE): $(LINUX_TREE)
 	touch $@
 
 # TODO: use git	worktree add/archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
-.build/linux-src.d: $(LINUX_TREE) $(BZIMAGE)
+.build/linux-src.d: $(LINUX_TREE) $(BZIMAGE) release.mk
 	rm -rfd $@ && mkdir -p $(dir $@)
 	flock .build/linux.lock bash -c ' \
 		pushd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
@@ -110,7 +120,9 @@ $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 	touch $@
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
+KSD=../target_prefix/kselftest
 $(TS)/linux-tools: $(TS)/bcc $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh
+	./scripts/target-scpsh -C $(LINUX)/tools/testing/selftests/kselftest_install/kselftest-packages "rm -rfd $(KSD) && mkdir -p $(KSD) && tar xf kselftest.tar.gz --directory=$(KSD)"
 	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
 	touch $@
 

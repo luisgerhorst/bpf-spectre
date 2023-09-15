@@ -17,7 +17,8 @@
         libfl-dev libzip-dev linux-libc-dev llvm-dev libluajit-5.1-dev \
         luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
         libz-dev libbpf-dev libtraceevent-dev curl \
-        python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev        
+        python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev \
+        python3-docutils
 
     # HACK to build bcc libbpf-tools javagc on Debian
     # https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory
@@ -26,13 +27,15 @@
 
     sudo systemctl disable memcached
 
-    if ! test -d /usr/lib/llvm-15/bin
+    LLVM_VERSION=16
+    if ! test -d /usr/lib/llvm-$LLVM_VERSION/bin
     then
             wget https://apt.llvm.org/llvm.sh
             chmod +x llvm.sh
-            sudo ./llvm.sh 15 all
+            sudo ./llvm.sh $LLVM_VERSION all
     fi
-    export PATH=/usr/lib/llvm-15/bin:$PATH # required for bcc/libbpf-tools
+    export PATH=/usr/lib/llvm-$LLVM_VERSION/bin:$PATH # required for bcc/libbpf-tools
+    SUDO="sudo --preserve-env=PATH"
 
     prefix=/usr/local
     stow=$prefix/stow
@@ -44,7 +47,7 @@
         then
                 # Don't know why they put the prefix after the DESTDIR...
                 tmp=$(mktemp -d)
-                sudo make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
+                $SUDO make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
                 sudo mv $tmp$prefix $stow/$r
                 sudo rm -rfd $tmp
         fi
@@ -58,10 +61,10 @@
     then
             tmp=$(mktemp -d)
             pushd ../target_prefix/bcc/libbpf-tools
-            sudo make USE_BLAZESYM=0 -j $(nproc) clean
+            $SUDO make USE_BLAZESYM=0 -j $(nproc) clean
             sudo chown -R $USER .
             make USE_BLAZESYM=0 -j $(nproc) -k all || true
-            sudo make USE_BLAZESYM=0 DESTDIR=$tmp prefix=$prefix -k install || true
+            $SUDO make USE_BLAZESYM=0 DESTDIR=$tmp prefix=$prefix -k install || true
             popd
             sudo mv $tmp$prefix $stow/$r
             sudo rm -rfd $tmp
@@ -116,7 +119,7 @@
                 then
                         # Don't know why they put the prefix after the DESTDIR...
                         tmp=$(mktemp -d)
-                        sudo make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
+                        $SUDO make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
                         sudo mv $tmp$prefix $stow/$r
                         sudo rm -rfd $tmp
                 fi
@@ -126,14 +129,18 @@
             done
     fi
 
-    # if ! ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
-    # then
-    #         make -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig prepare
-    #         make SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
-    #             -j $(getconf _NPROCESSORS_ONLN) -k -C ../target_prefix/linux-src/tools/testing/selftests \
-    #             install || true
-    #         ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
-    # fi
+    if ! ../target_prefix/kselftest/bpf/bench --help
+    then
+            false # should not be needed
+
+            # bpf requires all.
+            make -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src oldconfig prepare headers all
+            make SKIP_TARGETS="alsa memfd net netfilter vm x86" FORCE_TARGETS=1 TEST_GEN_PROGS= \
+                -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools/testing/selftests \
+                install || true
+            ../target_prefix/linux-src/tools/testing/selftests/bpf/bench --help
+            ../target_prefix/kselftest/bpf/test_progs --help # test
+    fi
 
     exit
 }

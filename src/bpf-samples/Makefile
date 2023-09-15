@@ -31,7 +31,7 @@ LINUX=../linux-main
 #  $(KATRAN)
 PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
 
-LLVM_BIN = /usr/lib/llvm-15/bin
+LLVM_BIN = /usr/lib/llvm-16/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
 	export PATH := $(LLVM_BIN):$(PATH)
 endif

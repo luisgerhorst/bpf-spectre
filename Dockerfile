@@ -72,7 +72,10 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
     python3-docutils \
     kmod \
     zsh \
-    pigz
+    pigz \
+    sudo \
+    iputils-ping \
+    debhelper
 
 RUN echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main' > /etc/apt/sources.list.d/llvm.list
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
@@ -96,6 +99,8 @@ RUN apt-get install --yes autossh dwarves golang gcc-multilib
 
 # Add the keys and set permissions
 # RUN chmod 600 /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa.pub
+
+RUN echo "$USER *=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN useradd -rm -d /home/$USER -s /usr/bin/zsh -g root -G sudo -u $UID $USER
 USER $USER

@@ -5,4 +5,5 @@ shopt -s nullglob
 set -x
 
 docker run --tty --interactive --volume $HOME:$HOME \
+    --network=host \
     $(basename $(pwd)) /usr/bin/zsh

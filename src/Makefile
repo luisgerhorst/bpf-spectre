@@ -46,6 +46,7 @@ clean:
 .PHONY: install-deps
 install-deps: | .build/deps
 
+# Deprecated, use Dockerfile to build distro for dev.
 # gcc-multilib: https://github.com/xdp-project/xdp-tutorial/issues/44
 .build/deps: | .build
 	sudo apt install autossh dwarves golang gcc-multilib

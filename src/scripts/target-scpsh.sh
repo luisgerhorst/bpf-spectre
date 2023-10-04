@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 bash -n "$(command -v "$0")"
 

@@ -10,6 +10,7 @@ BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 
 # Should be in a directory that disappears on reboot to invalidate state of VMM
 # virtual machines.
+export XDG_RUNTIME_DIR ?= /tmp/user/$(shell id -u $(USER))
 export TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
 
 # Parallel make is OK.

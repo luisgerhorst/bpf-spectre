@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 {
     set -euo pipefail
+    set -x
 
     release="$1"
     cmdline="$2"
@@ -19,18 +20,21 @@ GRUB_CMDLINE_LINUX='panic=30 crashkernel=256M nmi_watchdog=panic ${cmdline}'" \
 
     # I don´t know where to get this value or why grub-reboot needs this in the first place.
     distro="Debian GNU/Linux"
-    if ! grep "$distro" /boot/grub/grub.cfg
+    if ! grep "$distro" /boot/grub/grub.cfg > /dev/null
     then
        distro="GNU/Linux" # maybe thats on Debian 11
     fi
-    if ! grep "$distro" /boot/grub/grub.cfg
+    if ! grep "$distro" /boot/grub/grub.cfg > /dev/null
     then
        distro="Ubuntu"
     fi
 
     # Sanity check, does the fallback boot entry exist?
-    sudo grep "Advanced options for ${distro}" /boot/grub/grub.cfg
-    sudo grep "${distro}, with Linux $(uname -r)" /boot/grub/grub.cfg
+    grep "Advanced options for ${distro}" /boot/grub/grub.cfg
+    grep "${distro}, with Linux $(uname -r)" /boot/grub/grub.cfg
+
+    menutitle="${distro}, with Linux ${release}"
+    grep "${menutitle}" /boot/grub/grub.cfg
 
     # Set the fallback kernel in case the new custom kernel panics. That's also why
     # we set panic=30 and GRUB_DEFAULT=saved in grub config above.
@@ -38,7 +42,7 @@ GRUB_CMDLINE_LINUX='panic=30 crashkernel=256M nmi_watchdog=panic ${cmdline}'" \
 
     # Set the new kernel, effective only for the next reboot. Otherwise it falls
     # back to the default kernel.
-    sudo grub-reboot "Advanced options for ${distro}>${distro}, with Linux ${release}"
+    sudo grub-reboot "Advanced options for ${distro}>${menutitle}"
 
     # sudo reboot will boot the new kernel, but any subsequent reboot will again
     # boot the kernel we are currently running. This also includes reboots due to

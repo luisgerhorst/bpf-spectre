@@ -18,12 +18,12 @@ export TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
 
 export LD_LIBRARY_PATH := /usr/local/lib
 
-LLVM_BIN = /usr/lib/llvm-15/bin
+LLVM_BIN = /usr/lib/llvm-16/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
 	export PATH := $(LLVM_BIN):$(PATH)
 endif
 
-_dummy := $(shell mkdir -p .build .build/bpf-samples $(TS))
+_dummy := $(shell mkdir -p .build .build/bpf-samples $(dir $(TS)) && ln -sfT $(dir $(TS)) .run)
 
 .PHONY: all
 all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
@@ -31,8 +31,7 @@ all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
 
 .PHONY: target
 target: .build/linux-pkg
-	ln -sfT $(dir $(TS)) .run
-	MAKE='$(MAKE)' ./scripts/make-target.sh $(TS)/linux-tools
+	MAKE='$(MAKE) -j $(shell nproc)' ./scripts/make-target.sh $(TS)/linux-tools
 
 LINUX_SRC := .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE := $(LINUX)/.config $(LINUX_SRC)
@@ -46,11 +45,12 @@ BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)
 
 # Building the selftests here assumes your glibc is <= the target glibc.
 $(BZIMAGE): $(LINUX_TREE) release.mk
-	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage vmlinux headers
+	flock .build/linux.lock $(MAKE) -C $(LINUX) vmlinux headers
 	flock .build/linux.lock env -i PWD=$(PWD) PATH=$(PATH) $(MAKE) -C $(LINUX)/tools/testing/selftests/bpf # make sure its not skipped
 	flock .build/linux.lock $(MAKE) \
 		SKIP_TARGETS="arm64 ia64 powerpc sparc64 riscv64 x86 drivers/s390x/uvdevice sgx memfd mqueue capabilities hid alsa" \
 	 	-C $(LINUX)/tools/testing/selftests gen_tar
+	flock .build/linux.lock $(MAKE) -C $(LINUX) bzImage
 	touch $@
 
 #
@@ -114,18 +114,18 @@ $(BZIMAGE): $(LINUX_TREE) release.mk
 $(TS)/linux-src: .build/linux-src/d.tar.gz $(TS)/kernel
 	./scripts/target-scpsh 'sudo --non-interactive rm -rfd ../target_prefix/linux-src && mkdir -p ../target_prefix/linux-src'
 	./scripts/target-scpsh -C $(dir $<) 'tar xf d.tar.gz --directory=../target_prefix/linux-src'
-	touch $@
+	mkdir -p $(dir $@) && touch $@
 
 $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 	./scripts/target-scpsh -C bpf-samples/external/bcc "sudo cp --force --recursive . ../target_prefix/bcc"
-	touch $@
+	mkdir -p $(dir $@) && touch $@
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 KSD=../target_prefix/kselftest
 $(TS)/linux-tools: $(TS)/bcc $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh
 	./scripts/target-scpsh -C $(LINUX)/tools/testing/selftests/kselftest_install/kselftest-packages "rm -rfd $(KSD) && mkdir -p $(KSD) && tar xf kselftest.tar.gz --directory=$(KSD)"
 	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
-	touch $@
+	mkdir -p $(dir $@) && touch $@
 
 #
 # Linux Phony

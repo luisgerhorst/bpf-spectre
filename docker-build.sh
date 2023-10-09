@@ -5,4 +5,6 @@ shopt -s nullglob
 set -x
 
 docker build -t $(basename $(pwd)) \
-    --build-arg USER=$USER --build-arg UID=$(id -u $USER) .
+    --build-arg USER=$USER --build-arg UID=$(id -u $USER) \
+    --build-arg HOME=$HOME \
+    .

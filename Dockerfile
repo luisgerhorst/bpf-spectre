@@ -6,6 +6,7 @@ FROM debian:bullseye
 
 ARG USER
 ARG UID
+ARG HOME
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Base packages to retrieve the other repositories/packages
@@ -75,13 +76,28 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
     pigz \
     sudo \
     iputils-ping \
-    debhelper
+    debhelper \
+	ccache
 
-RUN echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main' > /etc/apt/sources.list.d/llvm.list
+RUN echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye-16 main' > /etc/apt/sources.list.d/llvm.list
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
 
 RUN apt update
-RUN apt-get install --yes clang llvm
+
+# LLVM
+RUN apt-get install --yes libllvm-16-ocaml-dev libllvm16 llvm-16 llvm-16-dev llvm-16-doc llvm-16-examples llvm-16-runtime
+# Clang and co
+RUN apt-get install --yes clang-16 clang-tools-16 clang-16-doc libclang-common-16-dev libclang-16-dev libclang1-16 clang-format-16 python3-clang-16 clangd-16 clang-tidy-16
+# compiler-rt
+RUN apt-get install --yes libclang-rt-16-dev
+# polly
+RUN apt-get install --yes libpolly-16-dev
+# libfuzzer
+RUN apt-get install --yes libfuzzer-16-dev
+# lldb
+RUN apt-get install --yes lldb-16
+# lld (linker)
+RUN apt-get install --yes lld-16
 
 # Ick. BPF requires pahole "supernew" to work
 RUN cd $(mktemp -d) && git clone https://git.kernel.org/pub/scm/devel/pahole/pahole.git && \
@@ -102,9 +118,9 @@ RUN apt-get install --yes autossh dwarves golang gcc-multilib
 
 RUN echo "$USER *=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-RUN useradd -rm -d /home/$USER -s /usr/bin/zsh -g root -G sudo -u $UID $USER
+RUN useradd -rm -d $HOME -s /usr/bin/zsh -g root -G sudo -u $UID $USER
 USER $USER
-WORKDIR /home/$USER
+WORKDIR $HOME
 
 # The workspace volume is for bind-mounted source trees.
 # VOLUME /

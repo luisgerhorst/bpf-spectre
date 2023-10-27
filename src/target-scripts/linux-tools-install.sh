@@ -2,6 +2,7 @@
 {
     set -euo pipefail
     shopt -s nullglob
+    bash -n "$(command -v "$0")"
     set -x
 
     sudo --non-interactive apt-get -y --fix-broken install # install deps
@@ -87,6 +88,41 @@
     pushd $stow
     sudo stow --override '.*' --stow $r
     popd
+
+    test="sudo docker run hello-world"
+    if ! $test
+    then
+            # Add Docker's official GPG key:
+            sudo apt-get update
+            sudo apt-get --non-interactive --assume-yes install ca-certificates curl gnupg
+            sudo install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+            # Add the repository to Apt sources:
+            echo \
+                "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+                "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+
+            # Install the Docker packages.
+            sudo apt-get --non-interactive --assume-yes install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+            # Verify that the installation is successful by running the hello-world image:
+            $test
+    fi
+
+    loxilib_version=0.8.8
+    url=ghcr.io/loxilb-io/loxilb:v$loxilib_version
+    t="docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -it $url loxilib --version"
+    if ! $test
+    then
+            # https://loxilb-io.github.io/loxilbdocs/simple_topo/
+            sudo docker pull $url
+
+            $test
+    fi
 
     # TODO: The assumes the following tools are not modified. If they work,
     # reinstall is skipped. If we modify the tools in the linux tree, we should

@@ -42,6 +42,8 @@ In another terminal on the control system (connects to the SuTs, can be the same
 
     ./test/run --suite idle
 
+Can be run for any `$name.suite.{py,yaml}`. By default, the results go into `$TESTRUN_DATA`. See `--help`. Compiles parts of `../src`. Connects to remote SuTs.
+
 The latter also installs and sets up all benchmark dependencies (e.g., boot the kernel) on the target SuT.
 
 Plot and open the results on the development system:

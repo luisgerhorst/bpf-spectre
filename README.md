@@ -19,11 +19,17 @@ Clone with `--recursive`. Install [Git LFS](https://git-lfs.com/) for raw data a
     there's a network problem. If you ever have to, you can even run the suite
     on your laptop, suspend it, and continue running the suite when you want to
     continue.
+    
+## Code Conventions
+
+By convention, scripts without `.sh` or similar are made to be run by the user. `Makefiles` are also made for direct invocation, by `.mk` files are not.
 
 ## Quick Start
 
-Install all dependencies, see `make install-deps` in the subdirectories.
+Start the docker container with all required dependencies:
 
+    ./docker-run
+    
 Boot the VM (system under test):
 
     make -C src release-qemu
@@ -34,7 +40,7 @@ non-demo benchmark suites.
 
 In another terminal on the control system (connects to the SuTs, can be the same as the development system):
 
-    ./test/run.sh --suite idle
+    ./test/run --suite idle
 
 The latter also installs and sets up all benchmark dependencies (e.g., boot the kernel) on the target SuT.
 
@@ -49,7 +55,7 @@ To set up the physical SuTs, see `src`.
 
     src/{linux, *}
       -- make -C src --> System under Test (Target)
-      -- ./test/run.sh --> data/.raw/*/
+      -- ./test/run --> data/.raw/*/
       -- ./data/tidy.py --> data/.tidy/*.tsv.gz
       -- ./data/plot-*  --> data/plots/*.pdf
 

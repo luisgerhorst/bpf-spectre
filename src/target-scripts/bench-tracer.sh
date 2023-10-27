@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s nullglob
 bash -n "$(command -v "$0")"
 # On the SuT: Benchmarks workload performance.
 

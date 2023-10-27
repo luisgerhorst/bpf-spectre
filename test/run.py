@@ -23,7 +23,7 @@ def main():
     args, suite_path, suite_run_path = parse_args()
     suite_dir = Path(os.path.dirname(suite_path))
 
-    subprocess.run(["make", suite_path], check=True, env=os.environ.copy())
+    subprocess.run(["make", "-f", "run.mk", suite_path], check=True, env=os.environ.copy())
     suite = None
     with open(suite_path) as suite_yaml:
         suite = yaml.safe_load(suite_yaml)
@@ -108,7 +108,7 @@ def run_bench(suite_dir, bench_run_data, bench, burst_len, retry):
             subproc_env[name] = value
         # Sets up the target system for evaluation and runs the benchmark.
         subprocess.run(
-            [os.getcwd() / Path("bench-" + bench["bench_script"]),
+            [os.getcwd() / Path(bench["bench_script"] + ".bench.sh"),
              bench_run_data, str(burst_len)],
             env=subproc_env,
             stdout=bench_log_tee.stdin, stderr=bench_log_tee.stdin,

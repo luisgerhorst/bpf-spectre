@@ -74,7 +74,7 @@
     # sudo stow --override '.*' --stow $r
     # popd
 
-    parca_version=0.23.3
+    parca_version=0.26.0
     r=parca-agent-v$parca_version
     if ! test -d $stow/$r
     then
@@ -115,7 +115,7 @@
 
     loxilib_version=0.8.8
     url=ghcr.io/loxilb-io/loxilb:v$loxilib_version
-    t="docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -it $url loxilib --version"
+    test="sudo docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $url loxilib --version"
     if ! $test
     then
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/

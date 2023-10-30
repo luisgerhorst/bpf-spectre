@@ -51,7 +51,7 @@ def append_T(suite, T):
                 "funclatency -u vfs_read",
                 "gethostlatency", "hardirqs",
                 "klockstat",
-	            "ksnoop info ip_send_skb",
+                "ksnoop info ip_send_skb",
                 "llcstat",
                 #
                 # TODO: for this, enable more perf cpu events?
@@ -68,21 +68,21 @@ def append_T(suite, T):
                 "tcprtt", "tcpstates", "tcpsynbl", "tcptop",
                 # "vfsstat",
                 "wakeuptime"]
+
     # parca-agent with 19Hz <= x <= 1999Hz blocks debian (easy7 with Ryzen 3800X)
-    bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
-    bcc_apps = [
-        # "true",
+    # bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
+    bcc_apps += [
         "parca-agent",
-        # "parca-agent --profiling-cpu-sampling-frequency=499",
-        # "parca-agent --profiling-cpu-sampling-frequency=999",
-        # "parca-agent --profiling-cpu-sampling-frequency=1999"
+        #     "parca-agent --profiling-cpu-sampling-frequency=499",
+        #     "parca-agent --profiling-cpu-sampling-frequency=999",
+        #     "parca-agent --profiling-cpu-sampling-frequency=1999"
     ]
     # bcc_apps += ["parca-agent --profiling-cpu-sampling-frequency=9999"]
 
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.
     sc_d = "kernel.bpf_stats_enabled=1"
-    for (ca, sc, b) in [
+    for (_ca, sc, b) in [
             # (unpr, "net.core.bpf_jit_harden=0", "master"),
             # (priv, "net.core.bpf_jit_harden=0", "master"),
             # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "bpf-spectre"),

@@ -13,9 +13,6 @@ BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 export XDG_RUNTIME_DIR ?= /tmp/user/$(shell id -u $(USER))
 export TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
 
-# Parallel make is OK.
-# MAKE += -j $(shell getconf _NPROCESSORS_ONLN)
-
 export LD_LIBRARY_PATH := /usr/local/lib
 
 LLVM_BIN = /usr/lib/llvm-16/bin
@@ -31,7 +28,7 @@ all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \
 
 .PHONY: target
 target: .build/linux-pkg
-	MAKE='$(MAKE) -j $(shell nproc)' ./scripts/make-target.sh $(TS)/linux-tools
+	MAKE='$(MAKE)' ./scripts/make-target.sh $(TS)/linux-tools
 
 LINUX_SRC := .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE := $(LINUX)/.config $(LINUX_SRC)
@@ -62,7 +59,7 @@ $(BZIMAGE): $(LINUX_TREE) release.mk
 #
 
 .build/linux-pkg: $(LINUX_TREE)
-	MAKE='$(MAKE) -j $(shell nproc)' flock .build/linux.lock ./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/
+	MAKE='$(MAKE)' flock .build/linux.lock ./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/
 	touch $@
 
 # TODO: use git	worktree add/archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719

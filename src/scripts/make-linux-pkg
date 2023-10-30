@@ -45,7 +45,9 @@
 
     # Compress with xz even on Ubuntu to avoid
     # https://github.com/yktoo/indicator-sound-switcher/issues/113
-    env - PATH=${PATH} KDEB_COMPRESS=xz \
+    #
+    # Pass through MAKEFLAGS, to use the make jobserver.
+    env - PATH=${PATH} KDEB_COMPRESS=xz MAKEFLAGS="$MAKEFLAGS" \
         ${MAKE} -C ${LINUX} ${TARGET}
     ccache -s
 

@@ -5,8 +5,9 @@ set -x
 
 dst=$1
 
-# Environment from suite definition:
-export CPUFREQ=${CPUFREQ:-max}
+# Environment from suite definition, without OSE_ (OS Eval) prefix for backwards-compatibility:
+export OSE_CPUFREQ=${OSE_CPUFREQ:-${CPUFREQ:-max}}
+export OSE_SYSCTL=${OSE_SYSCTL:-${SYSCTL}}
 
 mkdir -p $dst/workload $dst/values
 
@@ -21,13 +22,13 @@ if ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null
 then
 	cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor > cpufreq-governor
 
-	if [[ "${CPUFREQ}" == 'max' ]]
+	if [[ "${OSE_CPUFREQ}" == 'max' ]]
 	then
 		cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq)
-	elif [[ "${CPUFREQ}" == 'min' ]]
+	elif [[ "${OSE_CPUFREQ}" == 'min' ]]
 	then
 		cpufreq_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq)
-	elif [[ "${CPUFREQ}" == 'base' ]]
+	elif [[ "${OSE_CPUFREQ}" == 'base' ]]
 	then
 		if cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency > /dev/null
 		then
@@ -62,7 +63,7 @@ sudo sysctl --system 2>&1 > /dev/null
 sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 || true # not supported on mainline
 sudo sysctl --write net.core.bpf_jit_harden=0
 sudo sysctl --all > $dst/sysctl.d/default
-sudo sysctl --write kernel.panic=30 $SYSCTL # Dummy kernel.panic parameter required.
+sudo sysctl --write kernel.panic=30 $OSE_SYSCTL # Dummy kernel.panic parameter required.
 
 wait
 

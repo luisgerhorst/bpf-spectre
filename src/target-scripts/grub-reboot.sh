@@ -44,6 +44,7 @@ GRUB_CMDLINE_LINUX='panic=30 crashkernel=256M nmi_watchdog=panic ${cmdline}'" \
     # back to the default kernel.
     sudo grub-reboot "Advanced options for ${distro}>${menutitle}"
 
+    cat /boot/grub/grubenv
     # sudo reboot will boot the new kernel, but any subsequent reboot will again
     # boot the kernel we are currently running. This also includes reboots due to
     # panics in the new kernel.

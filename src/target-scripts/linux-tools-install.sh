@@ -113,13 +113,12 @@
             $test
     fi
 
-    loxilib_version=0.8.8
-    url=ghcr.io/loxilb-io/loxilb:v$loxilib_version
-    test="sudo docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $url loxilib --version"
+    . ./common.sh
+    test="sudo docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilib_url loxilib --version"
     if ! $test
     then
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/
-            sudo docker pull $url
+            sudo docker pull $loxilib_url
 
             $test
     fi

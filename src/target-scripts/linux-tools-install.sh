@@ -94,9 +94,10 @@
     then
             # Add Docker's official GPG key:
             sudo apt-get update
-            sudo apt-get --non-interactive --assume-yes install ca-certificates curl gnupg
+            sudo apt-get install --assume-yes ca-certificates curl gnupg
+            sudo rm -f /etc/apt/keyrings/docker.gpg
             sudo install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --batch --dearmor -o /etc/apt/keyrings/docker.gpg
             sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
             # Add the repository to Apt sources:
@@ -107,7 +108,7 @@
             sudo apt-get update
 
             # Install the Docker packages.
-            sudo apt-get --non-interactive --assume-yes install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            sudo apt-get install --assume-yes docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
             # Verify that the installation is successful by running the hello-world image:
             $test

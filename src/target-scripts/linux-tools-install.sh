@@ -19,7 +19,8 @@
         luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
         libz-dev libbpf-dev libtraceevent-dev curl \
         python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev \
-        python3-docutils
+        python3-docutils \
+        net-tools
 
     # HACK to build bcc libbpf-tools javagc on Debian
     # https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory

@@ -43,7 +43,6 @@ BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)
 # Building the selftests here assumes your glibc is <= the target glibc.
 $(BZIMAGE): $(LINUX_TREE) release.mk
 	flock .build/linux.lock $(MAKE) -C $(LINUX) vmlinux headers
-	flock .build/linux.lock env -i PWD=$(PWD) PATH=$(PATH) $(MAKE) -C $(LINUX)/tools/testing/selftests/bpf # make sure its not skipped
 	flock .build/linux.lock $(MAKE) \
 		SKIP_TARGETS="arm64 ia64 powerpc sparc64 riscv64 x86 drivers/s390x/uvdevice sgx memfd mqueue capabilities hid alsa" \
 	 	-C $(LINUX)/tools/testing/selftests gen_tar

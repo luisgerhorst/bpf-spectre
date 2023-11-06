@@ -11,13 +11,26 @@ mkdir -p $dst/values
 
 ./bench-runtime-begin.sh $@
 
+DOCKER="sudo docker "
+
 # Kill processes from previous runs that did not properly terminate.
-# TODO
+cleanup() {
+	set +e
+	$DOCKER stop loxilb
+	$DOCKER rm loxilb
+
+	sudo ip netns delete dummy
+	sudo ip netns delete loxilb
+	sudo ip netns delete ep1
+	sudo ip netns delete ep2
+	sudo ip netns delete ep3
+	sudo ip netns delete h1
+	set -e
+}
+cleanup
 
 #
 # Loxilib setup
-#
-DOCKER="sudo docker "
 #
 . ./common.sh
 $DOCKER run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilib_url loxilib --version
@@ -32,8 +45,11 @@ id=$($DOCKER ps -f name=loxilb | cut  -d " "  -f 1 | grep -iv  "CONTAINER")
 echo $id
 pid=$($DOCKER inspect -f '{{.State.Pid}}' $id)
 if [ ! -f /var/run/netns/loxilb ]; then
-  sudo touch /var/run/netns/loxilb
-  sudo mount -o bind /proc/$pid/ns/net /var/run/netns/loxilb
+	sudo ip netns add dummy || true # create netns directory
+
+	# TODO: use sudo ip netns attach loxilb $pid instead?
+	sudo touch /var/run/netns/loxilb
+	sudo mount -o bind /proc/$pid/ns/net /var/run/netns/loxilb
 fi
 #
 $HADD ep1
@@ -95,5 +111,7 @@ do
 done
 
 ./bench-runtime-end.sh $@
+
+cleanup
 
 echo -n $exitcode > ${dst}/values/workload_exitcode

@@ -7,7 +7,7 @@ dst=$1
 
 # Environment from suite definition, without OSE_ (OS Eval) prefix for backwards-compatibility:
 export OSE_CPUFREQ=${OSE_CPUFREQ:-${CPUFREQ:-max}}
-export OSE_SYSCTL=${OSE_SYSCTL:-${SYSCTL}}
+export OSE_SYSCTL=${OSE_SYSCTL:-${SYSCTL:-"net.core.bpf_jit_harden=0"}}
 
 mkdir -p $dst/workload $dst/values
 

@@ -77,7 +77,8 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
     sudo \
     iputils-ping \
     debhelper \
-	ccache
+	ccache \
+    trash-cli
 
 RUN echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye-16 main' > /etc/apt/sources.list.d/llvm.list
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc

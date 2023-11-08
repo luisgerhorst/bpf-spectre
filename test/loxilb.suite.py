@@ -14,7 +14,7 @@ def main():
     for T in ["faui49easy4"]:
         for i in range(0, 1):
             suite.append({
-                "bench_script": "loxilib",
+                "bench_script": "loxilb",
                 "boot": {},
                 "run": {
                     "T": T,

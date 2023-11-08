@@ -23,7 +23,7 @@ make -j "$(nproc)" target
 set +x
 ./scripts/target-scpsh -o ${dst}/.tmp -C ./target-scripts "
 ${env_exports}
-./bench-loxilib.sh ../result_dir ${burst_len}
+./bench-loxilb.sh ../result_dir ${burst_len}
 "
 set -x
 

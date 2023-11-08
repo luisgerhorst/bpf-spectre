@@ -100,7 +100,7 @@ sleep 1
 for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
 	set +e
-	true # TODO
+	docker exec -it loxilb loxicmd create lb 20.20.20.1 --tcp=2020:5001 --endpoints=31.31.31.1:1,32.32.32.1:1,33.33.33.1:1
 	exitcode=$?
 	set -e
 

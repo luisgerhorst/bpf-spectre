@@ -35,11 +35,11 @@ then
 fi
 ln --no-target-directory -sf $l $LINUX
 
-for b in bcc
+for b in bcc loxilb
 do
     ./scripts/update-git-rev bpf-samples/external/$b .build/$b.git_rev
     ./scripts/update-git-status bpf-samples/external/$b .build/$b.git_status
-    echo $USER+$(cat .build/$b.git_rev | cut --characters=1-6)+$(cat .build/$b.git_status | cut --characters=1-6) > .build/$b.localversion
+    echo "$USER+$(cat .build/$b.git_rev | cut --characters=1-6)+$(cat .build/$b.git_status | cut --characters=1-6)" > .build/$b.localversion
 done
 
 for linux in ${LINUX} ${LINUX_MAIN}

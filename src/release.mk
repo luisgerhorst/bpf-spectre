@@ -116,9 +116,13 @@ $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 	./scripts/target-scpsh -C bpf-samples/external/bcc "sudo cp --force --recursive . ../target_prefix/bcc"
 	mkdir -p $(dir $@) && touch $@
 
+$(TS)/loxilb: .build/loxilb.git_rev .build/loxilb.git_status $(TS)/kernel
+	./scripts/target-scpsh -C bpf-samples/external/loxilb "sudo cp --force --recursive . ../target_prefix/loxilb"
+	mkdir -p $(dir $@) && touch $@
+
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 KSD=../target_prefix/kselftest
-$(TS)/linux-tools: $(TS)/bcc $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh
+$(TS)/linux-tools: $(TS)/bcc $(TS)/loxilb $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh
 	./scripts/target-scpsh -C $(LINUX)/tools/testing/selftests/kselftest_install/kselftest-packages "rm -rfd $(KSD) && mkdir -p $(KSD) && tar xf kselftest.tar.gz --directory=$(KSD)"
 	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
 	mkdir -p $(dir $@) && touch $@

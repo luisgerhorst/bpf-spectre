@@ -35,3 +35,6 @@
 	path = src/bpf-samples/external/xdp-tools
 	url = git@github.com:xdp-project/xdp-tools.git
 	branch = master
+[submodule "src/bpf-samples/loxilb"]
+	path = src/bpf-samples/external/loxilb
+	url = git@github.com:luisgerhorst/loxilb.git

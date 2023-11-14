@@ -19,8 +19,7 @@
         luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
         libz-dev libbpf-dev libtraceevent-dev curl \
         python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev \
-        python3-docutils \
-        net-tools
+        python3-docutils
 
     # HACK to build bcc libbpf-tools javagc on Debian
     # https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory
@@ -90,7 +89,22 @@
     sudo stow --override '.*' --stow $r
     popd
 
-    test="sudo docker run hello-world"
+    act_version=0.26.0
+    r=act-v$act_version
+    if ! test -d $stow/$r
+    then
+            tmp=$(mktemp -d)
+            pushd $tmp
+            curl -L https://github.com/nektos/act/releases/download/v0.2.54/act_Linux_x86_64.tar.gz | tar xvfz -
+            popd
+            sudo mkdir -p $stow/$r/bin
+            sudo mv $tmp/act $stow/$r/bin/act
+    fi
+    pushd $stow
+    sudo stow --override '.*' --stow $r
+    popd
+
+    test="docker run hello-world"
     if ! $test
     then
             # Add Docker's official GPG key:
@@ -111,16 +125,29 @@
             # Install the Docker packages.
             sudo apt-get install --assume-yes docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+            # https://askubuntu.com/questions/1389483/how-do-i-set-permissions-to-use-docker-with-my-normal-user
+            sudo usermod -a -G docker $USER
+
             # Verify that the installation is successful by running the hello-world image:
-            $test
+            sudo $test
+            echo 'docker without sudo should work after ssh reconnect, not testing' >&2
     fi
 
     . ./common.sh
-    test="sudo docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilib_url loxilib --version"
+    test="sudo docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version"
     if ! $test
     then
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/
-            sudo docker pull $loxilib_url
+            sudo docker pull $loxilb_url
+
+            $test
+    fi
+
+    test="command -v iperf3"
+    if ! $test
+    then
+            # https://github.com/loxilb-io/loxilb/blob/00b96ad49a89c8c8da7fe4b173bd5fcb353ec1e0/.github/workflows/perf.yml#L37C14-L37C211
+            sudo apt-get -y install llvm libelf-dev gcc-multilib libpcap-dev elfutils dwarves git libbsd-dev bridge-utils unzip build-essential bison flex iperf iproute2 nodejs socat iperf3
 
             $test
     fi

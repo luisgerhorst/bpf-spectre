@@ -12,23 +12,6 @@ mkdir -p $dst/values $dst/log
 ./bench-runtime-begin.sh $@
 
 . ./common.sh
-loxilb_workflow=tcplb # tcpsctpperf
-
-# Kill processes from previous runs that did not properly terminate.
-rmconfig() {
-	set +e
-	env -C $loxilb_src/cicd/$loxilb_workflow ./rmconfig.sh
-	set -e
-}
-
-rmconfig
-
-docker ps
-
-#
-# Loxilb setup, extracted from https://github.com/loxilb-io/loxilb/blob/00b96ad49a89c8c8da7fe4b173bd5fcb353ec1e0/.github/workflows/perf.yml
-#
-env -C $loxilb_src/cicd/$loxilb_workflow ./config.sh
 
 sync
 echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
@@ -36,7 +19,7 @@ sleep 1
 for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
 	set +e
-	env -C $loxilb_src/cicd/$loxilb_workflow ./validation.sh 1 10
+	env -C $loxilb_src act -j build -W .github/workflows/perf.yml --privileged
 	exitcode=$?
 	set -e
 
@@ -46,10 +29,6 @@ do
 	fi
 done
 
-docker exec -i llb1 bash -c 'cat /var/log/loxilb*.log' > $dst/log/llb1-loxilb.log
-
 ./bench-runtime-end.sh $@
-
-rmconfig
 
 echo -n $exitcode > ${dst}/values/workload_exitcode

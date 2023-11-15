@@ -116,8 +116,9 @@ $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 	./scripts/target-scpsh -C bpf-samples/external/bcc "sudo cp --force --recursive . ../target_prefix/bcc"
 	mkdir -p $(dir $@) && touch $@
 
-$(TS)/loxilb: .build/loxilb.git_rev .build/loxilb.git_status $(TS)/kernel
-	./scripts/target-scpsh -C bpf-samples/external/loxilb "sudo cp --force --recursive . ../target_prefix/loxilb"
+LOXILB_D=../target_prefix/loxilb
+$(TS)/loxilb: .build/loxilb.git_rev .build/loxilb.git_status $(TS)/kernel release.mk
+	./scripts/target-scpsh -C bpf-samples/external/loxilb "rm -rfd $(LOXILB_D) && sudo cp --force --recursive . $(LOXILB_D) && cd $(LOXILB_D) && sudo chown -R $$USER . && rm -rfd .git && git init . && git add . && git commit -m 'dummy commit for act' && git remote add origin git@github.com:luisgerhorst/loxilb.git"
 	mkdir -p $(dir $@) && touch $@
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.

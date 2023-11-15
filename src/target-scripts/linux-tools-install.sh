@@ -89,13 +89,13 @@
     sudo stow --override '.*' --stow $r
     popd
 
-    act_version=0.26.0
+    act_version=0.2.54
     r=act-v$act_version
     if ! test -d $stow/$r
     then
             tmp=$(mktemp -d)
             pushd $tmp
-            curl -L https://github.com/nektos/act/releases/download/v0.2.54/act_Linux_x86_64.tar.gz | tar xvfz -
+            curl -L https://github.com/nektos/act/releases/download/v$act_version/act_Linux_x86_64.tar.gz | tar xvfz -
             popd
             sudo mkdir -p $stow/$r/bin
             sudo mv $tmp/act $stow/$r/bin/act

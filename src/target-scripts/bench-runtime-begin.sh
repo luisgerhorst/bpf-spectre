@@ -80,6 +80,8 @@ sudo cpupower frequency-info > ${dst}/cpupower-frequency-info &
 lscpu > ${dst}/lscpu &
 grep . /sys/devices/system/cpu/vulnerabilities/* > ${dst}/cpu-vulnerabilities &
 
+lsb_release --description | cut -f2 > ${dst}/values/lsb_release_description &
+lsb_release --codename | cut -f2 > ${dst}/values/lsb_release_codename &
 uname -a > ${dst}/values/uname_a &
 hostname --short > ${dst}/values/hostname_short &
 

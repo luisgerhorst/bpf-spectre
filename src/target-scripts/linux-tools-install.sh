@@ -5,10 +5,13 @@
     bash -n "$(command -v "$0")"
     set -x
 
-    sudo --non-interactive apt-get -y --fix-broken install # install deps
+    SUDO="sudo --non-interactive --preserve-env=PATH"
+    APT="apt-get --assume-yes"
+
+    $SUDO $APT --fix-broken install # install deps
 
     # Ubuntu and Debian:
-    sudo --non-interactive apt-get --assume-yes install \
+    $SUDO $APT install \
         libcap-ng-dev libfuse-dev libpci-dev libcap-dev make gcc binutils-dev libreadline-dev libbison-dev flex libelf-dev \
         dwarves gettext stow \
         memcached libevent-openssl-2.1-7 \
@@ -18,29 +21,33 @@
         libfl-dev libzip-dev linux-libc-dev llvm-dev libluajit-5.1-dev \
         luajit python3-netaddr python3-pyroute2 python3-setuptools python3 \
         libz-dev libbpf-dev libtraceevent-dev curl \
-        python3-dev libdwarf-dev libdw-dev libssl-dev libunwind-dev libssl-dev \
-        python3-docutils
+        python3-dev libdwarf-dev libdw-dev libunwind-dev \
+        python3-docutils \
+        net-tools nodejs
+
+    $SUDO $APT install \
+            libssl-dev \
+            || [[ "$(lsb_release --codename | cut -f2)" == "jammy" ]]
 
     # HACK to build bcc libbpf-tools javagc on Debian
     # https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory
     test -e /usr/include/asm \
-        || sudo ln -s /usr/include/asm-generic /usr/include/asm
+        || $SUDO ln -s /usr/include/asm-generic /usr/include/asm
 
-    sudo systemctl disable memcached
+    $SUDO systemctl disable memcached
 
     LLVM_VERSION=16
     if ! test -d /usr/lib/llvm-$LLVM_VERSION/bin
     then
             wget https://apt.llvm.org/llvm.sh
             chmod +x llvm.sh
-            sudo ./llvm.sh $LLVM_VERSION all
+            $SUDO ./llvm.sh $LLVM_VERSION all
     fi
     export PATH=/usr/lib/llvm-$LLVM_VERSION/bin:$PATH # required for bcc/libbpf-tools
-    SUDO="sudo --preserve-env=PATH"
 
     prefix=/usr/local
     stow=$prefix/stow
-    sudo mkdir -p $stow
+    $SUDO mkdir -p $stow
     for t in bpf perf
     do
         r=linux-tools-$t-$(uname -r)
@@ -49,11 +56,11 @@
                 # Don't know why they put the prefix after the DESTDIR...
                 tmp=$(mktemp -d)
                 $SUDO make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
-                sudo mv $tmp$prefix $stow/$r
-                sudo rm -rfd $tmp
+                $SUDO mv $tmp$prefix $stow/$r
+                $SUDO rm -rfd $tmp
         fi
         pushd $stow
-        sudo stow --override '.*' --stow $r
+        $SUDO stow --override '.*' --stow $r
         popd
     done
 
@@ -82,11 +89,11 @@
             pushd $tmp
             curl -L https://github.com/parca-dev/parca-agent/releases/download/v$parca_version/parca-agent_${parca_version}_`uname -s`_`uname -m`.tar.gz | tar xvfz -
             popd
-            sudo mkdir -p $stow/$r/bin
-            sudo mv $tmp/parca-agent $stow/$r/bin/parca-agent
+            $SUDO mkdir -p $stow/$r/bin
+            $SUDO mv $tmp/parca-agent $stow/$r/bin/parca-agent
     fi
     pushd $stow
-    sudo stow --override '.*' --stow $r
+    $SUDO stow --override '.*' --stow $r
     popd
 
     act_version=0.2.54
@@ -97,48 +104,55 @@
             pushd $tmp
             curl -L https://github.com/nektos/act/releases/download/v$act_version/act_Linux_x86_64.tar.gz | tar xvfz -
             popd
-            sudo mkdir -p $stow/$r/bin
-            sudo mv $tmp/act $stow/$r/bin/act
+            $SUDO mkdir -p $stow/$r/bin
+            $SUDO mv $tmp/act $stow/$r/bin/act
     fi
     pushd $stow
-    sudo stow --override '.*' --stow $r
+    $SUDO stow --override '.*' --stow $r
     popd
 
     test="docker run hello-world"
     if ! $test
     then
             # Add Docker's official GPG key:
-            sudo apt-get update
-            sudo apt-get install --assume-yes ca-certificates curl gnupg
-            sudo rm -f /etc/apt/keyrings/docker.gpg
-            sudo install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --batch --dearmor -o /etc/apt/keyrings/docker.gpg
-            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+            $SUDO $APT update
+            $SUDO $APT install --assume-yes ca-certificates curl gnupg
+            $SUDO rm -f /etc/apt/keyrings/docker.gpg
+            $SUDO install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg | $SUDO gpg --batch --dearmor -o /etc/apt/keyrings/docker.gpg
+            $SUDO chmod a+r /etc/apt/keyrings/docker.gpg
 
             # Add the repository to Apt sources:
             echo \
                 "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
                 "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-            sudo apt-get update
+                $SUDO tee /etc/apt/sources.list.d/docker.list > /dev/null
+            $SUDO $APT update
 
             # Install the Docker packages.
-            sudo apt-get install --assume-yes docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            $SUDO $APT install --assume-yes docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
             # https://askubuntu.com/questions/1389483/how-do-i-set-permissions-to-use-docker-with-my-normal-user
-            sudo usermod -a -G docker $USER
+            $SUDO usermod -a -G docker $USER
 
             # Verify that the installation is successful by running the hello-world image:
-            sudo $test
+            $SUDO $test
             echo 'docker without sudo should work after ssh reconnect, not testing' >&2
     fi
 
     . ./common.sh
-    test="sudo docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version"
-    if ! $test
+    test="$SUDO docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version"
+    if $test && false
     then
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/
-            sudo docker pull $loxilb_url
+            $SUDO docker pull $loxilb_url
+
+            # Tag $loxilb_version at lastest for use by CI scripts.
+            docker run -u root --cap-add SYS_ADMIN --restart unless-stopped \
+                --privileged -dit -v /dev/log:/dev/log --name loxilb $loxilb_url
+            id=`docker ps -f name=loxilb | cut  -d " "  -f 1 | grep -iv  "CONTAINER"`
+            docker commit $id ghcr.io/loxilb-io/loxilb:latest
+            docker stop loxilb && docker rm loxilb
 
             $test
     fi
@@ -147,7 +161,7 @@
     if ! $test
     then
             # https://github.com/loxilb-io/loxilb/blob/00b96ad49a89c8c8da7fe4b173bd5fcb353ec1e0/.github/workflows/perf.yml#L37C14-L37C211
-            sudo apt-get -y install llvm libelf-dev gcc-multilib libpcap-dev elfutils dwarves git libbsd-dev bridge-utils unzip build-essential bison flex iperf iproute2 nodejs socat iperf3
+            $SUDO $APT install llvm libelf-dev gcc-multilib libpcap-dev elfutils dwarves git libbsd-dev bridge-utils unzip build-essential bison flex iperf iproute2 nodejs socat iperf3
 
             $test
     fi
@@ -156,26 +170,38 @@
     # reinstall is skipped. If we modify the tools in the linux tree, we should
     # use install-prefix + stow.
 
-    if ! memtier_benchmark --version
+    if ! memtier_benchmark --version && [[ "$(lsb_release --codename | cut -f2)" == "bullseye" ]]
     then
             tmp=$(mktemp -d)
             deb=memtier-benchmark_1.4.0.bullseye_amd64.deb
             pushd $tmp
             wget https://github.com/RedisLabs/memtier_benchmark/releases/download/1.4.0/$deb
-            sudo --non-interactive dpkg -i $deb                                      # announce deps
-            sudo --non-interactive apt-get -y --fix-broken install # install deps
-            sudo --non-interactive dpkg -i $deb # install
+            $SUDO dpkg -i $deb                                      # announce deps
+            $SUDO $APT --fix-broken install # install deps
+            $SUDO dpkg -i $deb # install
             memtier_benchmark --version
             popd
             rm -rfd $tmp
     fi
 
     # Debian has these installed by default.
-    if ! sudo --non-interactive cpupower frequency-info
+    if ! $SUDO cpupower frequency-info
     then
+            if [[ "$(lsb_release --codename | cut -f2)" == "jammy" ]]
+            then
+                    # Would conflict with stow.
+                    $SUDO $APT remove linux-tools-generic linux-tools-common || true
+                    pushd $stow/..
+                    $SUDO rm -rfd bin/cpufreq-bench_plot.sh man/man1/cpupower* \
+                        sbin/cpufreq-bench share/bash-completion/completions/cpupower \
+                        share/doc/packages/cpupower share/locale/*/LC_MESSAGES/cpupower.mo
+                    popd
+            fi
+
+            # /usr because prefix=/usr/local is not respected by make cpupower_install.
             prefix=/usr
             stow=$prefix/stow
-            sudo mkdir -p $stow
+            $SUDO mkdir -p $stow
             for t in cpupower
             do
                 r=linux-tools-$t-$(uname -r)
@@ -184,11 +210,11 @@
                         # Don't know why they put the prefix after the DESTDIR...
                         tmp=$(mktemp -d)
                         $SUDO make DESTDIR=$tmp prefix=$prefix STATIC=true -j $(getconf _NPROCESSORS_ONLN) -C ../target_prefix/linux-src/tools ${t}_install
-                        sudo mv $tmp$prefix $stow/$r
-                        sudo rm -rfd $tmp
+                        $SUDO mv $tmp$prefix $stow/$r
+                        $SUDO rm -rfd $tmp
                 fi
                 pushd $stow
-                sudo stow --override '.*' --stow $r
+                $SUDO stow --override '.*' --stow $r
                 popd
             done
     fi

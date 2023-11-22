@@ -59,7 +59,7 @@ $(BZIMAGE): $(LINUX_TREE) release.mk
 
 .build/linux-pkg: $(LINUX_TREE)
 	MAKE='$(MAKE)' flock .build/linux.lock ./scripts/make-linux-pkg $(LINUX) bindeb-pkg $@/
-	touch $@
+	touch $@ $@/*
 
 # TODO: use git	worktree add/archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
 .build/linux-src.d: $(LINUX_TREE) $(BZIMAGE) release.mk
@@ -118,7 +118,7 @@ $(TS)/bcc: .build/bcc.git_rev .build/bcc.git_status $(TS)/kernel
 
 LOXILB_D=../target_prefix/loxilb
 $(TS)/loxilb: .build/loxilb.git_rev .build/loxilb.git_status $(TS)/kernel release.mk
-	./scripts/target-scpsh -C bpf-samples/external/loxilb "rm -rfd $(LOXILB_D) && sudo cp --force --recursive . $(LOXILB_D) && cd $(LOXILB_D) && sudo chown -R $$USER . && rm -rfd .git && git init . && git add . && git commit -m 'dummy commit for act' && git remote add origin git@github.com:luisgerhorst/loxilb.git"
+	./scripts/target-scpsh -C bpf-samples/external/loxilb "rm -rfd $(LOXILB_D) && sudo cp --force --recursive . $(LOXILB_D) && cd $(LOXILB_D) && sudo chown -R $$USER . && rm -rfd .git && git init . && git add . > /dev/null && git commit -m 'dummy commit for act' > /dev/null && git remote add origin git@github.com:luisgerhorst/loxilb.git"
 	mkdir -p $(dir $@) && touch $@
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.

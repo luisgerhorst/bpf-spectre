@@ -4,9 +4,8 @@ bash -n "$(command -v "$0")"
 shopt -s nullglob
 set -x
 
-./docker-build.sh
-
-name=$(basename $(pwd))
+export name=$(basename $(pwd))-$$
+./docker-build.sh $name
 
 docker run --tty --interactive \
 	--volume $HOME:$HOME \

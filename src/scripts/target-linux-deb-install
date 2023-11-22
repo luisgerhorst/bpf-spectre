@@ -7,7 +7,7 @@ LINUX_DEB_DIR=$1
 
 kernel_release=$(cat $LINUX_DEB_DIR/kernel.release)
 
-if ./scripts/target-scpsh "dpkg -l | grep '$kernel_release'"
+if ./scripts/target-scpsh "dpkg -l | grep '$kernel_release'" && ./scripts/target-scpsh "grep '$kernel_release' /boot/grub/grub.cfg"
 then
    exit 0
 fi

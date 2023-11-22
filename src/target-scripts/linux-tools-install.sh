@@ -141,9 +141,11 @@
     fi
 
     . ./common.sh
-    test="$SUDO docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version"
-    if $test && false
+    set +e
+    test="$SUDO docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version | grep $loxilb_version"
+    if $test
     then
+            set -e
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/
             $SUDO docker pull $loxilb_url
 
@@ -154,7 +156,9 @@
             docker commit $id ghcr.io/loxilb-io/loxilb:latest
             docker stop loxilb && docker rm loxilb
 
+            set +e
             $test
+            set -e
     fi
 
     test="command -v iperf3"

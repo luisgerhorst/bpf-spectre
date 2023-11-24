@@ -107,11 +107,16 @@ DATA <- ALL_DATA %>%
     bpftool_loadall_error_reason_msg = ifelse("bpftool_loadall_error_reason_msg" %in% names(ALL_DATA), bpftool_loadall_error_reason_msg, NA),
     verification_error = ifelse("verification_error" %in% names(ALL_DATA), verification_error, NA),
     verification_error_msg = ifelse("verification_error_msg" %in% names(ALL_DATA), verification_error_msg, NA),
+    CAPSH_ARGS = ifelse("CAPSH_ARGS" %in% names(ALL_DATA), CAPSH_ARGS, NA),
+    # bpftool_prog_show_run_time_ns = ifelse("bpftool_prog_show_run_time_ns" %in% names(ALL_DATA), bpftool_prog_show_run_time_ns, NA),
 
     ## CPU = factor(case_when(
     ##   boot_T == "easy16" ~ "AMD 3950X",
     ##   boot_T == "nuc" ~ "Intel i5-6260U",
     ##   ), levels = c("AMD 3950X", "Intel i5-6260U")),
+    bpftool_prog_show_run_time_s = bpftool_prog_show_run_time_ns / (1000*1000*1000),
+    perf_task_clock_s = perf_task_clock_msec / 1000,
+    perf_duration_time_s = perf_duration_time_ns  / (1000*1000*1000),
     Caches = factor(case_when(
       burst_pos == 0 ~ "Cold Caches",
       burst_pos == max(burst_pos) ~ "Hot Caches",
@@ -122,10 +127,10 @@ DATA <- ALL_DATA %>%
       CAPSH_ARGS == "--drop=cap_sys_admin --drop=cap_perfmon" ~ "Unprivileged",
       ), levels = c("Privileged", "Unprivileged")),
     `BPF Loadable` = bpftool_loadall_exitcode == 0,
-    SYSCTL = case_when(
-      is.na(SYSCTL) ~ "Default (bpf_*=0)",
-      SYSCTL == "net.core.bpf_jit_harden=0" ~ "Default (bpf_*=0)",
-      TRUE ~ SYSCTL
+    OSE_SYSCTL = case_when(
+      is.na(OSE_SYSCTL) ~ "Default (bpf_*=0)",
+      OSE_SYSCTL == "net.core.bpf_jit_harden=0" ~ "Default (bpf_*=0)",
+      TRUE ~ OSE_SYSCTL
     ),
     Project = case_when(
       str_detect(BPF_OBJ, "^lbe_") ~ "libbpf/examples",

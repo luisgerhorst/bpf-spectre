@@ -1,0 +1,51 @@
+#!/usr/bin/Rscript
+
+source("plotlib.R")
+
+DATA <- DATA %>%
+  ## mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
+  filter(workload_exitcode == "0") %>%
+  group_by(uname_a, T, OSE_SYSCTL) %>%
+  mutate(across(where(is.numeric), ~ .x / min(.x, na.rm = TRUE), .names = "norm_{.col}"),
+         across(where(is.numeric), ~ min(.x, na.rm = TRUE), .names = "min_{.col}"),
+         across(where(is.numeric), ~ max(.x, na.rm = TRUE), .names = "max_{.col}")) %>%
+  ungroup() %>%
+  group_by(uname_a, T, OSE_SYSCTL) %>%
+  mutate(across(where(is.numeric), ~ mean(.x, na.rm = TRUE), .names = "mean_{.col}")) %>%
+  ungroup() ## %>%
+  ## filter(max_bpftool_jited_insncnt_lfence > 0,
+  ##        min_bpftool_prog_show_run_cnt > 1*1000)
+
+cns <- colnames(DATA)
+perf_metrics <- cns[startsWith(cns, "bpftool_prog_show_bytes_")
+                    | startsWith(cns, "bpftool_jited_insncnt_lfence")
+                    | startsWith(cns, "bpftool_jited_insncnt_total")]
+for (m in perf_metrics) {
+  ggplot(DATA, aes(x=get(m),
+                   y=burst_pos,
+                   colour=paste(OSE_SYSCTL))) +
+    geom_point() +
+    facet_grid(rows=vars(hostname_short, workload_exitcode),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
+               labeller=label_both, scales="free")
+  eval_save(paste0("ecdf-", m))
+}
+
+cns <- colnames(DATA)
+perf_metrics <- cns[
+  startsWith(cns, "perf_cycles")
+  | startsWith(cns, "perf_task_clock")
+  | startsWith(cns, "perf_duration")
+  | startsWith(cns, "bpftool_prog_show_run_time_")
+]
+
+for (m in perf_metrics) {
+  ggplot(DATA, aes(x=get(m),
+                   y=burst_pos,
+                   colour=paste(OSE_SYSCTL))) +
+    geom_point() +
+    facet_grid(rows=vars(hostname_short, workload_exitcode),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
+               labeller=label_both, scales="free")
+  eval_save(paste0("ecdf-", m))
+}

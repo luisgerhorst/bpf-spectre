@@ -110,7 +110,7 @@ def dict_into_df(df, prefix, value):
 def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
-    elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "workload-bpf-tracer":
+    elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
         wdf = tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
         tdf = tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
         return pd_concat_cols([
@@ -257,7 +257,7 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
     if not avail:
         return df
 
-    if "/tools/testing/selftests/bpf/bench" in yaml["WORKLOAD"]:
+    if "/tools/testing/selftests/bpf/bench" in yaml.get("WORKLOAD", ""):
         df = tidy_kselftest_bpf_bench(bench_run_path, burst_pos)
 
     perf = None
@@ -285,7 +285,7 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
 
 # Sums up info accross all loaded BPF programs.
 def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
-    avail = values["workload_exitcode"] == "0" and values["tracer_exitcode"] == "0"
+    avail = values["workload_exitcode"] == "0" and values.get("tracer_exitcode", "0") == "0"
     if not avail:
         return pd.DataFrame()
 
@@ -309,7 +309,7 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
                 break
         if is_init:
             try:
-                assert prog["pids"][0]["comm"] == "systemd"
+                assert prog["pids"][0]["comm"] in ["systemd", "loxilb"]
             except KeyError as e:
                 pass
             continue

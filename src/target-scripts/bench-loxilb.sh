@@ -6,9 +6,10 @@ set -x
 
 dst=$1
 burst_len=$2
+perf_events=${OSE_PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
 
 bpftool_dst=${dst}/bpftool
-mkdir -p $dst/values $dst/log $dst/workload $bpftool_dst
+mkdir -p $dst/values $dst/workload $bpftool_dst
 
 . ./common.sh
 loxilb_workflow=tcpsctpperf # tcplb #
@@ -24,9 +25,8 @@ rmconfig() {
 
 rmconfig
 uname -a
-docker ps --all
+docker ps
 ip netns list
-env -C $loxilb_src/cicd/$loxilb_workflow ./config.sh
 
 ./bench-runtime-begin.sh $@
 
@@ -35,16 +35,43 @@ echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 sleep 1
 for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
-	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.init.bpftool_prog_show.json 2>&1
+	# Save bpf programs loaded by system to filter them out in analysis.
+	save_bpf_progs() {
+		flags="$1"
+		first_suffix="$2"
+
+		last_suffix=""
+		if [[ "$flags" == "--json" ]]
+		then
+			flags="--json --pretty"
+			last_suffix=".json"
+		fi
+	
+		sudo bpftool prog show $flags > $dst/workload/${burst_pos}${first_suffix}.bpftool_prog_show${last_suffix} 2>&1
+	}
+
+	save_bpf_progs --json .init
+
+	env -C $loxilb_src/cicd/$loxilb_workflow ./config.sh
 
 	set +e
-	$loxilb_src/cicd/$loxilb_workflow/validation-iperf $(nproc) 10 $dst/workload/$burst_pos.iperf- \
-		&& $loxilb_src/cicd/$loxilb_workflow/validation-iperf3 $(nproc) 10 $dst/workload/$burst_pos.iperf3-
+	env -i sudo --preserve-env perf stat \
+		--output ${dst}/workload/${burst_pos}.perf -x , \
+		--all-cpus \
+		-e duration_time \
+		-e task-clock \
+		-e raw_syscalls:sys_enter \
+		${perf_events} \
+		bash -c "$loxilb_src/cicd/$loxilb_workflow/validation-iperf $(nproc) 10 $dst/workload/$burst_pos.iperf- \
+&& sleep 2 \
+&& $loxilb_src/cicd/$loxilb_workflow/validation-iperf3 $(nproc) 10 $dst/workload/$burst_pos.iperf3-" \
+		> ${dst}/workload/${burst_pos}.stdout \
+		2> ${dst}/workload/${burst_pos}.stderr
 	exitcode=$?
 	set -e
 
-	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.bpftool_prog_show.json 2>&1
-	sudo bpftool prog show > $dst/workload/${burst_pos}.bpftool_prog_show 2>&1
+	save_bpf_progs --json ""
+	save_bpf_progs "" ""
 
 	echo -n "" > ${dst}/values/bpftool_progs
 	set +x
@@ -85,16 +112,16 @@ do
 	unset IFS
 	set -x
 
+	docker exec -i llb1 bash -c 'cat /var/log/loxilb*.log' > $dst/workload/${burst_pos}.llb1-loxilb.log
+
+	env -C $loxilb_src/cicd/$loxilb_workflow ./rmconfig.sh
+
 	if [ $exitcode != 0 ]
 	then
 		break
 	fi
 done
 
-docker exec -i llb1 bash -c 'cat /var/log/loxilb*.log' > $dst/log/llb1-loxilb.log
-
 ./bench-runtime-end.sh $@
-
-rmconfig
 
 echo -n $exitcode > ${dst}/values/workload_exitcode

@@ -73,6 +73,52 @@ def bench_run_df(bench_run_path):
         tidy_dfs.append(df)
     return pd_concat_rows(tidy_dfs)
 
+def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
+    if yaml["bench_script"] == "workload-perf":
+        return tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
+    elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
+        dfs = [
+            tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
+            tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
+        ]
+        dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
+        # dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos)
+        return pd_concat_cols(dfs)
+    else:
+        return pd_concat_cols([
+            tidy_bpftool(bench_run_path, values, yaml, burst_pos),
+            tidy_bpftool_loadall_log(bench_run_path, values)
+        ])
+
+def tidy_loxilb_iperf(brp, burst_pos):
+    try:
+        iperf = pd.read_csv(
+            brp.joinpath("workload/%d.iperf-client.csv" % burst_pos),
+            sep=",",
+            names=[
+                # yay, docs https://serverfault.com/questions/566737/iperf-csv-output-format
+                "timestamp",
+                "source_address",
+                "source_port",
+                "destination_address",
+                "destination_port",
+                "interval",
+                "transferred_bytes",
+                "bits_per_second"
+            ],
+        )
+        iperf = iperf.drop(
+            axis='columns',
+            labels=[
+                'timestamp', 'source_address', 'source_port',
+                'destination_address', 'destination_port', 'interval'
+            ]
+        ).agg(['sum']).reset_index(drop=True).add_prefix('iperf_')
+        return [iperf]
+    except FileNotFoundError as e:
+        print(e, file=sys.stderr)
+        return []
+
 def load_values(bench_run_path):
     d = {}
     for key_path in bench_run_path.joinpath("values").glob("*"):
@@ -106,22 +152,6 @@ def dict_into_df(df, prefix, value):
         df = df.copy()
         df[prefix] = value
     return df
-
-def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
-    if yaml["bench_script"] == "workload-perf":
-        return tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
-    elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
-        wdf = tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
-        tdf = tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
-        return pd_concat_cols([
-            tdf,
-            wdf
-        ])
-    else:
-        return pd_concat_cols([
-            tidy_bpftool(bench_run_path, values, yaml, burst_pos),
-            tidy_bpftool_loadall_log(bench_run_path, values)
-        ])
 
 def tidy_bpftool_loadall_log(brp, values):
     d = pd.DataFrame({ "verification_time_usec": ["NA"] })
@@ -265,7 +295,7 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
         perf = pd.read_csv(
             bench_run_path.joinpath("workload/%d.perf" % burst_pos), sep=",", comment="#",
             names = ["counter_value", "counter_unit", "counter_name", "counter_run_time", "counter_run_time_perc",
-                     "metric_value", "metric_unit"]
+                     "metric_value", "metric_unit"],
         )
     except FileNotFoundError as e:
         print(e, file=sys.stderr)

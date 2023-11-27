@@ -38,6 +38,7 @@ perf_metrics <- cns[
   | startsWith(cns, "perf_duration")
   | startsWith(cns, "bpftool_prog_show_run_time_")
   | startsWith(cns, "iperf_")
+  | startsWith(cns, "iperf3_")
 ]
 
 for (m in perf_metrics) {

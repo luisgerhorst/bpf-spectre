@@ -82,7 +82,7 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
             tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
         ]
         dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
-        # dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos)
+        dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos)
         return pd_concat_cols(dfs)
     else:
         return pd_concat_cols([
@@ -117,7 +117,21 @@ def tidy_loxilb_iperf(brp, burst_pos):
         return [iperf]
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
-        return []
+        return [pd.DataFrame({ "iperf_bits_per_second": ["NA"] })]
+
+def tidy_loxilb_iperf3(brp, burst_pos):
+    try:
+        iperf3 = json.load(brp.joinpath(f'workload/{burst_pos}.iperf3-client.json').open())
+        return [
+            dict_into_df(pd.DataFrame({ "iperf3_json": ["true"] }), "iperf3_end_sum_received", iperf3["end"]["sum_received"]),
+            dict_into_df(pd.DataFrame({ "iperf3_json_cup": ["true"] }), "iperf3_end_cpu_utilization_percent", iperf3["end"]["cpu_utilization_percent"])
+        ]
+    except FileNotFoundError as e:
+        print(e, file=sys.stderr)
+        return [pd.DataFrame({ "iperf3_json": ["NA"] })]
+    except KeyError as e:
+        print(e, file=sys.stderr)
+        return [pd.DataFrame({ "iperf3_end_sum_received_bits_per_second": ["NA"] })]
 
 def load_values(bench_run_path):
     d = {}

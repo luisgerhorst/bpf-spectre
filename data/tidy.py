@@ -82,7 +82,8 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
             tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
         ]
         dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
-        dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos)
+        dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="tcp")
+        dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="sctp")
         return pd_concat_cols(dfs)
     else:
         return pd_concat_cols([
@@ -119,19 +120,30 @@ def tidy_loxilb_iperf(brp, burst_pos):
         print(e, file=sys.stderr)
         return [pd.DataFrame({ "iperf_bits_per_second": ["NA"] })]
 
-def tidy_loxilb_iperf3(brp, burst_pos):
+def tidy_loxilb_iperf3(brp, burst_pos, suffix="sctp"):
     try:
-        iperf3 = json.load(brp.joinpath(f'workload/{burst_pos}.iperf3-client.json').open())
-        return [
-            dict_into_df(pd.DataFrame({ "iperf3_json": ["true"] }), "iperf3_end_sum_received", iperf3["end"]["sum_received"]),
-            dict_into_df(pd.DataFrame({ "iperf3_json_cup": ["true"] }), "iperf3_end_cpu_utilization_percent", iperf3["end"]["cpu_utilization_percent"])
-        ]
+        iperf3 = json.load(brp.joinpath(f'workload/{burst_pos}.iperf3-{suffix}-client.json').open())
+        return tidy_iperf3_json(iperf3, "")
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
-        return [pd.DataFrame({ "iperf3_json": ["NA"] })]
+        return []
     except KeyError as e:
         print(e, file=sys.stderr)
-        return [pd.DataFrame({ "iperf3_end_sum_received_bits_per_second": ["NA"] })]
+        return []
+
+def tidy_iperf3_json(iperf3, suffix):
+    return [
+        dict_into_df(pd.DataFrame({"iperf3_json": ["true"]}),
+                     f'iperf3_{suffix}_start_test_start',
+                     iperf3["start"]["test_start"]),
+        dict_into_df(pd.DataFrame({"iperf3_json_1": ["true"]}),
+                     f'iperf3_{suffix}_end_sum_received',
+                     iperf3["end"]["sum_received"]),
+        dict_into_df(pd.DataFrame({"iperf3_json_2": ["true"]}),
+                     f'iperf3_{suffix}_end_cpu_utilization_percent',
+                     iperf3["end"]["cpu_utilization_percent"])
+    ]
+
 
 def load_values(bench_run_path):
     d = {}
@@ -297,7 +309,7 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
 
 def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
     avail = values["workload_exitcode"] == "0" and values.get("tracer_exitcode", "0") == "0"
-    df = pd.DataFrame({ "observation": ["workload_run" if avail else "bench_run"] })
+    df = pd.DataFrame({ "observation": ["bench_run.workload_run" if avail else "bench_run"] })
     if not avail:
         return df
 

@@ -6,7 +6,7 @@
     bash -n "$(command -v "$0")"
 
     # Avoid concurrent apt install commands on target.
-    flock .build/$(basename $0) $0.sh "$@"
+    flock --nonblock .build/$(basename $0).flock $0.sh "$@"
 
     exit
 }

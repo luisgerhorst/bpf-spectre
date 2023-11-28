@@ -12,7 +12,8 @@ bpftool_dst=${dst}/bpftool
 mkdir -p $dst/values $dst/workload $bpftool_dst
 
 . ./common.sh
-loxilb_workflow=tcpsctpperf # tcplb #
+loxilb_workflow=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
+loxilb_validation=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
 
 # Kill processes from previous runs that did not properly terminate.
 rmconfig() {
@@ -62,9 +63,7 @@ do
 		-e task-clock \
 		-e raw_syscalls:sys_enter \
 		${perf_events} \
-		bash -c "$loxilb_src/cicd/$loxilb_workflow/validation-iperf $(nproc) 10 $dst/workload/$burst_pos.iperf- \
-&& sleep 2 \
-&& $loxilb_src/cicd/$loxilb_workflow/validation-iperf3 $(nproc) 10 $dst/workload/$burst_pos.iperf3-" \
+		bash -c "$loxilb_src/cicd/$loxilb_workflow/validation-${loxilb_validation} $(nproc) 10 $dst/workload/$burst_pos.${loxilb_validation}-" \
 		> ${dst}/workload/${burst_pos}.stdout \
 		2> ${dst}/workload/${burst_pos}.stderr
 	exitcode=$?

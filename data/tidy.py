@@ -103,6 +103,7 @@ def tidy_loxilb_iperf(brp, burst_pos):
                 "source_port",
                 "destination_address",
                 "destination_port",
+                "id",
                 "interval",
                 "transferred_bytes",
                 "bits_per_second"

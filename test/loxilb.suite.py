@@ -22,7 +22,14 @@ def main():
     ]
 
     for T in ["faui49easy4"]:
-        for v in ["iperf", "iperf3-tcp", "iperf3-sctp"]:
+        for (v, p) in [
+                ("iperf", '1'),
+                ("iperf", '6'),
+                ("iperf3-tcp", 1),
+                ("iperf3-tcp", 6),
+                ("iperf3-sctp", 1),
+                ("iperf3-sctp", 6)
+        ]:
             for (_ca, sc, b) in configs:
                 suite.append({
                     "bench_script": "loxilb",
@@ -34,6 +41,7 @@ def main():
                         "OSE_CPUFREQ": "base",
                         "OSE_SYSCTL": sc,
                         "OSE_LOXILB_VALIDATION": v,
+                        "OSE_LOXILB_PARALLEL": str(p)
                     },
                 })
 

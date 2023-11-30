@@ -22,8 +22,9 @@ perf_metrics <- cns[
   | startsWith(cns, "perf_task_clock")
   | startsWith(cns, "perf_duration")
   | startsWith(cns, "bpftool_prog_show_run_time_")
-  | startsWith(cns, "iperf_")
-  | startsWith(cns, "iperf3_")
+  | cns == "iperf_bits_per_second"
+  | cns == "iperf3__end_sum_received_bits_per_second"
+  | startsWith(cns, "netperf_")
   | startsWith(cns, "bpftool_prog_show_bytes_")
   | startsWith(cns, "bpftool_jited_insncnt_lfence")
   | startsWith(cns, "bpftool_jited_insncnt_total")
@@ -34,8 +35,8 @@ for (m in perf_metrics) {
                    x=burst_pos,
                    colour=paste(OSE_SYSCTL))) +
     geom_point() +
-    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_LOXILB_PARALLEL),
-               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
-               labeller=label_both, scales="free")
+    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LOXILB_PARALLEL),
+               labeller=label_value, scales="free")
   eval_save(paste0("ecdf-", m))
 }

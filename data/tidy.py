@@ -81,15 +81,36 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
             tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values)
         ]
-        dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
-        dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="tcp")
-        dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="sctp")
+        if yaml["bench_script"] == "loxilb":
+            if yaml["OSE_LOXILB_VALIDATION"] == "netperf":
+                dfs += tidy_netperf(bench_run_path, burst_pos, int(yaml["OSE_LOXILB_PARALLEL"]))
+            else:
+                dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
+                dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="tcp")
+                dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="sctp")
         return pd_concat_cols(dfs)
     else:
         return pd_concat_cols([
             tidy_bpftool(bench_run_path, values, yaml, burst_pos),
             tidy_bpftool_loadall_log(bench_run_path, values)
         ])
+
+def tidy_netperf(brp, burst_pos, nr_clients):
+    dfs = []
+    for i in range(0, nr_clients):
+        client_obs = pd.read_csv(
+            brp.joinpath(f'workload/{burst_pos}.netperf-client.{i}.log'),
+            sep='\s+',
+            skiprows=[0, 1, 3, 4],
+            header=0,
+            usecols=["Elapsed", "Trans."],
+            engine='python',
+            skipfooter=1,
+            on_bad_lines='skip',
+        ).add_prefix("netperf_")
+        dfs.append(client_obs)
+    workload_observation = pd_concat_rows(dfs).agg(['sum']).reset_index(drop=True)
+    return [workload_observation]
 
 def tidy_loxilb_iperf(brp, burst_pos):
     try:
@@ -118,7 +139,6 @@ def tidy_loxilb_iperf(brp, burst_pos):
         ).agg(['sum']).reset_index(drop=True).add_prefix('iperf_')
         return [iperf]
     except FileNotFoundError as e:
-        print(e, file=sys.stderr)
         return [pd.DataFrame({ "iperf_bits_per_second": ["NA"] })]
 
 def tidy_loxilb_iperf3(brp, burst_pos, suffix="sctp"):
@@ -126,7 +146,6 @@ def tidy_loxilb_iperf3(brp, burst_pos, suffix="sctp"):
         iperf3 = json.load(brp.joinpath(f'workload/{burst_pos}.iperf3-{suffix}-client.json').open())
         return tidy_iperf3_json(iperf3, "")
     except FileNotFoundError as e:
-        print(e, file=sys.stderr)
         return []
     except KeyError as e:
         print(e, file=sys.stderr)

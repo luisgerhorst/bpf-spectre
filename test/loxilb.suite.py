@@ -20,16 +20,23 @@ def main():
         # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
         # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
+    workloads = [
+        ("netperf", 1),
+        ("netperf", 6),
+        ("netperf", 60),
+        ("iperf", 1),
+        ("iperf", 6),
+        ("iperf", 60),
+        ("iperf3-tcp", 1),
+        ("iperf3-tcp", 6),
+        ("iperf3-tcp", 60),
+        ("iperf3-sctp", 1),
+        ("iperf3-sctp", 6),
+        ("iperf3-sctp", 60),
+    ]
 
     for T in ["faui49easy4"]:
-        for (v, p) in [
-                ("iperf", '1'),
-                ("iperf", '6'),
-                ("iperf3-tcp", 1),
-                ("iperf3-tcp", 6),
-                ("iperf3-sctp", 1),
-                ("iperf3-sctp", 6)
-        ]:
+        for (v, p) in workloads:
             for (_ca, sc, b) in configs:
                 suite.append({
                     "bench_script": "loxilb",

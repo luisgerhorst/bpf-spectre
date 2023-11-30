@@ -23,7 +23,8 @@
         libz-dev libbpf-dev libtraceevent-dev curl \
         python3-dev libdwarf-dev libdw-dev libunwind-dev \
         python3-docutils \
-        net-tools nodejs
+        net-tools nodejs \
+        netperf
 
     $SUDO $APT install \
             libssl-dev \

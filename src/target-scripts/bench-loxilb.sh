@@ -12,14 +12,14 @@ bpftool_dst=${dst}/bpftool
 mkdir -p $dst/values $dst/workload $bpftool_dst
 
 . ./common.sh
-loxilb_workflow=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
-loxilb_validation=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
-loxilb_parallel=${OSE_LOXILB_PARALLEL:-$(nproc)}
+OSE_LOXILB_WORKFLOW=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
+OSE_LOXILB_VALIDATION=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
+OSE_LOXILB_PARALLEL=${OSE_LOXILB_PARALLEL:-$(nproc)}
 
 # Kill processes from previous runs that did not properly terminate.
 rmconfig() {
 	set +e
-	env -C $loxilb_src/cicd/$loxilb_workflow ./rmconfig.sh
+	env -C $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW ./rmconfig.sh
 	sudo pkill iperf
 	sudo pkill iperf3
 	set -e
@@ -54,7 +54,7 @@ do
 
 	save_bpf_progs --json .init
 
-	env -C $loxilb_src/cicd/$loxilb_workflow ./config.sh
+	env -C $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW ./config.sh
 
 	set +e
 	env -i sudo --preserve-env perf stat \
@@ -64,14 +64,14 @@ do
 		-e task-clock \
 		-e raw_syscalls:sys_enter \
 		${perf_events} \
-		bash -c "$loxilb_src/cicd/$loxilb_workflow/validation-${loxilb_validation} ${loxilb_parallel} 10 $dst/workload/$burst_pos.${loxilb_validation}-" \
+		$loxilb_src/cicd/$OSE_LOXILB_WORKFLOW/validation-${OSE_LOXILB_VALIDATION} \
+		${OSE_LOXILB_PARALLEL} 10 $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}- \
 		> ${dst}/workload/${burst_pos}.stdout \
 		2> ${dst}/workload/${burst_pos}.stderr
 	exitcode=$?
 	set -e
 
 	save_bpf_progs --json ""
-	save_bpf_progs "" ""
 
 	echo -n "" > ${dst}/values/bpftool_progs
 	set +x
@@ -114,7 +114,7 @@ do
 
 	docker exec -i llb1 bash -c 'cat /var/log/loxilb*.log' > $dst/workload/${burst_pos}.llb1-loxilb.log
 
-	env -C $loxilb_src/cicd/$loxilb_workflow ./rmconfig.sh
+	env -C $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW ./rmconfig.sh
 
 	if [ $exitcode != 0 ]
 	then

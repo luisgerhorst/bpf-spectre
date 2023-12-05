@@ -5,9 +5,7 @@
     set -euo pipefail
     bash -n "$(command -v "$0")"
 
-    # Avoid concurrent apt install commands on target.
-    flock --nonblock .build/$(basename $0).flock $0.sh "$@" \
-        || echo "You may have to run the following: rm $(pwd)/.build/$(basename $0).flock" 1>&2
+    "$0.sh" "$@"
 
     exit
 }

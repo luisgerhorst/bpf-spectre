@@ -24,7 +24,8 @@
         python3-dev libdwarf-dev libdw-dev libunwind-dev \
         python3-docutils \
         net-tools nodejs \
-        netperf
+        netperf \
+        nginx
 
     $SUDO $APT install \
             libssl-dev \
@@ -107,6 +108,24 @@
             popd
             $SUDO mkdir -p $stow/$r/bin
             $SUDO mv $tmp/act $stow/$r/bin/act
+    fi
+    pushd $stow
+    $SUDO stow --override '.*' --stow $r
+    popd
+
+    wrk_version=920ce1ea198b218d85577f6c0f49fa8ca85eedc3
+    r=wrk2-rrva-$wrk_version
+    if ! test -d $stow/$r
+    then
+            tmp=$(mktemp -d)
+            git clone https://github.com/rrva/wrk2.git $tmp
+            pushd $tmp
+            git checkout $wrk_version
+            make -j $(nproc)
+            popd
+            $SUDO mkdir -p $stow/$r/bin
+            $SUDO mv $tmp/wrk $stow/$r/bin/wrk
+            rm -rfd $tmp
     fi
     pushd $stow
     $SUDO stow --override '.*' --stow $r

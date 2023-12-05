@@ -57,7 +57,7 @@ do
 	env -C $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW ./config.sh
 
 	set +e
-	env -i sudo --preserve-env perf stat \
+	sudo --preserve-env perf stat \
 		--output ${dst}/workload/${burst_pos}.perf -x , \
 		--all-cpus \
 		-e duration_time \
@@ -65,9 +65,7 @@ do
 		-e raw_syscalls:sys_enter \
 		${perf_events} \
 		$loxilb_src/cicd/$OSE_LOXILB_WORKFLOW/validation-${OSE_LOXILB_VALIDATION} \
-		${OSE_LOXILB_PARALLEL} 10 $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}- \
-		> ${dst}/workload/${burst_pos}.stdout \
-		2> ${dst}/workload/${burst_pos}.stderr
+		${OSE_LOXILB_PARALLEL} 10 $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}-
 	exitcode=$?
 	set -e
 
@@ -85,25 +83,17 @@ do
 			echo "prog=$prog" 1>&2
 
 			set +e
-			sudo bpftool prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog &
-			p0=$!
-			sudo bpftool prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog &
-			p1=$!
 			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog.json &
 			p2=$!
 			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog.json &
 			p3=$!
-			wait $p0
-			e0=$?
-			wait $p1
-			e1=$?
 			wait $p2
 			e2=$?
 			wait $p3
 			e3=$?
 			set -e
 
-			if [ $e0 = 0 ] && [ $e1 = 0 ] && [ $e2 = 0 ] && [ $e3 = 0 ]
+			if [ $e2 = 0 ] && [ $e3 = 0 ]
 			then
 				echo -n " $prog" >> ${dst}/values/bpftool_progs
 			fi
@@ -125,3 +115,6 @@ done
 ./bench-runtime-end.sh $@
 
 echo -n $exitcode > ${dst}/values/workload_exitcode
+
+jobs -l
+wait

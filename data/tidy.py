@@ -84,6 +84,8 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
         if yaml["bench_script"] == "loxilb":
             if yaml["OSE_LOXILB_VALIDATION"] == "netperf":
                 dfs += tidy_netperf(bench_run_path, burst_pos, int(yaml["OSE_LOXILB_PARALLEL"]))
+            elif yaml["OSE_LOXILB_VALIDATION"] == "wrk":
+                dfs += tidy_wrk_latency(bench_run_path, burst_pos)
             else:
                 dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
                 dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="tcp")
@@ -150,6 +152,25 @@ def tidy_loxilb_iperf3(brp, burst_pos, suffix="sctp"):
     except KeyError as e:
         print(e, file=sys.stderr)
         return []
+
+def tidy_wrk_latency(brp, burst_pos):
+    wrk_log = brp.joinpath(f'workload/{burst_pos}.wrk-latency.log').read_text().splitlines()
+    df = pd.DataFrame({"wrk_latency": ["true"]})
+    latency = False
+    for line in wrk_log:
+        tokens = list(filter(lambda x: x != '', re.split(r"\s+", line)))
+        if len(tokens) > 0 and tokens[0] == "Latency":
+            latency = True
+        elif len(tokens) > 0 and tokens[0] == "Detailed":
+            latency = False
+        elif latency and len(tokens) == 2:
+            latency_ms = float(re.split(r"[a-z]+", tokens[1])[0])
+            if "us" in tokens[1]:
+                latency_ms /= 1000
+            df["wrk_latency_" + tokens[0] + "_ms"] = [latency_ms]
+        else:
+            logging.debug(line)
+    return [df]
 
 def tidy_iperf3_json(iperf3, suffix):
     return [
@@ -260,7 +281,7 @@ def tidy_bpftool_loadall_log(brp, values):
 def tidy_bpftool(bench_run_path, values, yaml, burst_pos, bpftool_run=True):
     if values["bpftool_loadall_exitcode"] != "0" or "bpftool_progs" not in values:
         # bpftool only exports data for the last repetition (burst_pos == repeat argument).
-        return pd.DataFrame({ "observation": ["bench_run"] })
+        return pd.DataFrame({ "observation": ["bench"] })
 
     dfs = []
     for prog in values["bpftool_progs"].split():
@@ -329,7 +350,7 @@ def tidy_bpftool_jited_into_df(brp, prog, df):
 
 def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
     avail = values["workload_exitcode"] == "0" and values.get("tracer_exitcode", "0") == "0"
-    df = pd.DataFrame({ "observation": ["bench_run.workload_run" if avail else "bench_run"] })
+    df = pd.DataFrame({ "observation": ["bench.burst" if avail else "bench"] })
     if not avail:
         return df
 

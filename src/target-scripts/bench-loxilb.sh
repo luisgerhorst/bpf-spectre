@@ -16,6 +16,11 @@ OSE_LOXILB_WORKFLOW=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
 OSE_LOXILB_VALIDATION=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
 OSE_LOXILB_PARALLEL=${OSE_LOXILB_PARALLEL:-$(nproc)}
 
+# It's important to note that wrk2 extends the initial calibration period to 10
+# seconds (from wrk's 0.5 second), so runs shorter than 10-20 seconds may not
+# present useful information.
+OSE_LOXILB_TIME=${OSE_LOXILB_TIME:-30}
+
 # Kill processes from previous runs that did not properly terminate.
 rmconfig() {
 	set +e
@@ -65,7 +70,7 @@ do
 		-e raw_syscalls:sys_enter \
 		${perf_events} \
 		$loxilb_src/cicd/$OSE_LOXILB_WORKFLOW/validation-${OSE_LOXILB_VALIDATION} \
-		${OSE_LOXILB_PARALLEL} 10 $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}-
+		${OSE_LOXILB_PARALLEL} ${OSE_LOXILB_TIME} $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}-
 	exitcode=$?
 	set -e
 

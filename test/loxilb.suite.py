@@ -65,16 +65,16 @@ def main():
 
     workloads = [
         ("wrk", 1),
-        ("wrk", 3),
+        ("wrk", 4),
     ]
     for T in ["faui49easy4"]:
         for v, p in workloads:
-            for rf in [1000, 5000, 10000]:
+            for rf in [14000, 15000, 16000, 17000, 18000]:
                 r = p * rf
                 # https://nginx.org/en/docs/ngx_core_module.html#worker_connections
                 for cf in [256]:
                     c = p * cf
-                    for payload in [8, 1024, 64*1024]:
+                    for payload in [1024]:
                         for (_ca, sc, b) in configs:
                             suite.append({
                                 "bench_script": "loxilb",

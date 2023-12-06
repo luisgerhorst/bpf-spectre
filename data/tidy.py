@@ -168,6 +168,8 @@ def tidy_wrk_latency(brp, burst_pos):
             if "us" in tokens[1]:
                 latency_ms /= 1000
             df["wrk_latency_" + tokens[0] + "_ms"] = [latency_ms]
+        elif not latency and len(tokens) == 2 and tokens[0] == "Requests/sec:":
+            df["wrk_requests_per_sec"] = float(tokens[1])
         else:
             logging.debug(line)
     return [df]

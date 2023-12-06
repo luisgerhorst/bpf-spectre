@@ -52,11 +52,12 @@ perf_metrics <- cns[
 
 for (m in perf_metrics) {
   ggplot(DATA, aes(y=get(m),
-                   x=OSE_WRK_RATE,
+                   x=wrk_requests_per_sec,
+                   shape=paste(OSE_WRK_CONNECTIONS, OSE_WRK_RATE, OSE_NGINX_PAYLOAD),
                    colour=paste(OSE_SYSCTL))) +
     geom_point() +
-    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_NGINX_PAYLOAD),
-               cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LOXILB_PARALLEL, OSE_WRK_CONNECTIONS),
+    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
                labeller=label_value, scales="free")
   eval_save(paste0("ecdf-", m))
 }

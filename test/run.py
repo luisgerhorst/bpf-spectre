@@ -73,7 +73,7 @@ def parse_args():
 
 def run_suite(suite_dir, suite_run_path, suite, reps, burst_len, retry_max):
     i = 0
-    bar = ProgressBar(reps * len(suite), max_width=40)
+    bar = ProgressBar(reps * len(suite), max_width=80)
     for rep in range(0, reps):
         random.shuffle(suite)
         # Avoid reboots due to boot param. changes:

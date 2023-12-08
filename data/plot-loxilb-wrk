@@ -1,0 +1,36 @@
+#!/usr/bin/Rscript
+
+source("plotlib.R")
+
+DATA <- DATA %>%
+  ## mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
+  filter(workload_exitcode == "0") %>%
+  group_by(uname_a, T, OSE_SYSCTL) %>%
+  mutate(across(where(is.numeric), ~ .x / min(.x, na.rm = TRUE), .names = "norm_{.col}"),
+         across(where(is.numeric), ~ min(.x, na.rm = TRUE), .names = "min_{.col}"),
+         across(where(is.numeric), ~ max(.x, na.rm = TRUE), .names = "max_{.col}")) %>%
+  ungroup() %>%
+  group_by(uname_a, T, OSE_SYSCTL) %>%
+  mutate(across(where(is.numeric), ~ mean(.x, na.rm = TRUE), .names = "mean_{.col}")) %>%
+  ungroup() ## %>%
+  ## filter(max_bpftool_jited_insncnt_lfence > 0,
+  ##        min_bpftool_prog_show_run_cnt > 1*1000)
+
+cns <- colnames(DATA)
+perf_metrics <- cns[
+  startsWith(cns, "wrk_latency_")
+  | startsWith(cns, "wrk_requests_per_sec")
+  | startsWith(cns, "bpftool_prog_show_run_time_")
+  | startsWith(cns, "perf_cycles")
+]
+for (m in perf_metrics) {
+  ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk"), aes(y=get(m),
+                                                              x=OSE_WRK_RATE,
+                                                              colour=paste(OSE_SYSCTL))) +
+    geom_point() +
+    ## scale_y_continuous(limits=c(quantile(DATA[[m]], probs=c(.0)),quantile(DATA[[m]], probs=c(.95)))) +
+    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS),
+               labeller=label_both, scales="free")
+  eval_save(paste0(m))
+}

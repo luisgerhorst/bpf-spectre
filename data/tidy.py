@@ -83,7 +83,8 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
         ]
         if yaml["bench_script"] == "loxilb":
             if yaml["OSE_LOXILB_VALIDATION"] == "netperf":
-                dfs += tidy_netperf(bench_run_path, burst_pos, int(yaml["OSE_LOXILB_PARALLEL"]))
+                dfs += tidy_netperf(bench_run_path, burst_pos,
+                                    int(yaml["OSE_LOXILB_CLIENTS"]))
             elif yaml["OSE_LOXILB_VALIDATION"] == "wrk":
                 dfs += tidy_wrk_latency(bench_run_path, burst_pos)
             else:

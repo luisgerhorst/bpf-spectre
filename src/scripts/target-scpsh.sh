@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 bash -n "$(command -v "$0")"
-set -x
 
 function usage_error() {
 	echo "Usage: $0 [-C <working_dir>] [-f <file>] [-o <result_dir_dest>] [-p <target_prefix>] <command...>" >&2

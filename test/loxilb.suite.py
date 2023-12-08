@@ -20,22 +20,18 @@ def main():
         # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
         # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
+    nproc = 6
+    nproc_servers = 2 # 1 loxilb, 1 server
+    nproc_clients = nproc - nproc_servers
     workloads = [
         ("netperf", 1, "TCP_RR"),
-        ("netperf", 6, "TCP_RR"),
-        ("netperf", 60, "TCP_RR"),
+        ("netperf", nproc_clients, "TCP_RR"),
         ("netperf", 1, "TCP_CRR"),
-        ("netperf", 6, "TCP_CRR"),
-        ("netperf", 60, "TCP_CRR"),
+        ("netperf", nproc_clients, "TCP_CRR"),
         ("iperf", 1),
-        ("iperf", 6),
-        ("iperf", 60),
+        ("iperf", nproc_clients),
         ("iperf3-tcp", 1),
-        ("iperf3-tcp", 6),
-        ("iperf3-tcp", 60),
         ("iperf3-sctp", 1),
-        ("iperf3-sctp", 6),
-        ("iperf3-sctp", 60),
     ]
 
     for T in ["faui49easy4"]:
@@ -58,40 +54,12 @@ def main():
                         "OSE_CPUFREQ": "base",
                         "OSE_SYSCTL": sc,
                         "OSE_LOXILB_VALIDATION": v,
-                        "OSE_LOXILB_PARALLEL": str(p),
+                        "OSE_LOXILB_CLIENTS": str(p),
+                        "OSE_LOXILB_SERVERS": str(1),
+                        "OSE_LATENCY_PAYLOAD_SIZE": str(1024),
                         "OSE_NETPERF_TEST": t
                     },
                 })
-
-    workloads = [
-        ("wrk", 1),
-        ("wrk", 4),
-    ]
-    for T in ["faui49easy4"]:
-        for v, p in workloads:
-            for rf in [14000, 15000, 16000, 17000, 18000]:
-                r = p * rf
-                # https://nginx.org/en/docs/ngx_core_module.html#worker_connections
-                for cf in [256]:
-                    c = p * cf
-                    for payload in [1024]:
-                        for (_ca, sc, b) in configs:
-                            suite.append({
-                                "bench_script": "loxilb",
-                                "boot": {
-                                    "LINUX_GIT_CHECKOUT": b,
-                                },
-                                "run": {
-                                    "T": T,
-                                    "OSE_CPUFREQ": "base",
-                                    "OSE_SYSCTL": sc,
-                                    "OSE_LOXILB_VALIDATION": v,
-                                    "OSE_LOXILB_PARALLEL": str(p),
-                                    "OSE_NGINX_PAYLOAD": str(payload),
-                                    "OSE_WRK_CONNECTIONS": str(c),
-                                    "OSE_WRK_RATE": str(r),
-                                },
-                            })
 
     yaml.dump(suite, sys.stdout)
 

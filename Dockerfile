@@ -79,7 +79,8 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
     debhelper \
 	ccache \
     trash-cli \
-    zstd
+    zstd \
+    clang-13
 
 RUN echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye-16 main' > /etc/apt/sources.list.d/llvm.list
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc

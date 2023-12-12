@@ -47,7 +47,7 @@ do
     ./scripts/update-git-rev $linux .build/$linux.git_rev
     ./scripts/update-git-status $linux .build/$linux.git_status
     ${MAKE} -f configure.mk LINUX=$linux $linux/.config
-    test "$MERGE_CONFIGS" != "" \
-        || diff $CONFIG $linux/defconfig \
-        || true
+    # test "$MERGE_CONFIGS" != "" \
+    #     || diff $CONFIG $linux/defconfig \
+    #     || true
 done

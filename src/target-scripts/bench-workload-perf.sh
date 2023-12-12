@@ -15,7 +15,7 @@ set -x
 dst=$1
 burst_len=$2
 
-mkdir -p $dst/workload $dst/values
+# TODO: Use OSE_
 
 # Environment from suite definition:
 export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
@@ -25,6 +25,8 @@ export WORKLOAD_CLEANUP="${WORKLOAD_CLEANUP:-true}"
 
 # Available to workload:
 export RANDOM_PORT="$(random_port)"
+
+mkdir -p $dst/workload $dst/values
 
 ./bench-runtime-begin.sh $@
 

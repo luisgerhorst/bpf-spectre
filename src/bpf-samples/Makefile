@@ -26,10 +26,12 @@ CUSTOM = $(patsubst $(PREFIX)/prog/%.bpf.s,%,$(CUSTOM_S))
 
 KATRAN = $(patsubst %,katran_%,balancer_kern healthchecking_ipip healthchecking_kern xdp_pktcntr xdp_root)
 
+LOXILB = llb_ebpf_emain llb_ebpf_main llb_kern_mon llb_xdp_main
+
 LINUX=../linux-main
 
-#  $(KATRAN)
-PROGS = $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
+# $(KATRAN) $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
+PROGS = $(LOXILB)
 
 LLVM_BIN = /usr/lib/llvm-16/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
@@ -40,7 +42,7 @@ endif
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst %,prog-%,$(PROGS)) vbi linux-samples linux-selftests bcc-libbpf-tools
+all: $(patsubst %,prog-%,$(PROGS)) # vbi linux-samples linux-selftests bcc-libbpf-tools
 
 BLT := external/bcc/libbpf-tools
 
@@ -86,12 +88,29 @@ prog/lbe_%.bpf.s: | prog .build
 	ln -fs ../external/libbpf-bootstrap/examples/c/.output/$*.bpf.s $@
 
 #
+# Loxilb
+#
+
+loxilb_version=0.9.0
+loxilb_url=ghcr.io/loxilb-io/loxilb:v$(loxilb_version)
+
+.PHONY: .build/loxilb_%.bpf.o
+.build/llb_%.bpf.o: Makefile | .build
+	ln -fs ../loxilb-v$(loxilb_version)-opt/llb_$*.o $@
+
+loxilb-v$(loxilb_version)-opt: Makefile
+	docker run -u root --cap-add SYS_ADMIN --restart unless-stopped --privileged -dit -v /dev/log:/dev/log --name loxilb $(loxilb_url)
+	docker cp loxilb:/opt/loxilb $@
+	docker kill loxilb
+	docker rm loxilb
+
+#
 # Katran
 #
 
 .PHONY: .build/katran_%.bpf.o
 .build/katran_%.bpf.o: Makefile | .build
-	env -C external/katran ./build.sh --num-jobs $(nproc)
+	env -C external/katran ./build.sh --num-jobs $(shell nproc)
 	ln -fs ../external/katran/_build/deps/bpfprog/bpf/$*.o $@
 
 #

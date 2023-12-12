@@ -20,7 +20,7 @@ def main():
                     "-C", "../src/bpf-samples", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
-    T = os.getenv("T", default="debian.local")
+    T = os.getenv("T", default="faui49easy4")
 
     suite = []
     append_T(suite, T)
@@ -29,29 +29,30 @@ def main():
 def append_T(suite, T):
     priv="--drop="
     unpr="--drop=cap_sys_admin --drop=cap_perfmon"
-    priv_spec_mit="configs/priv-spec-mit.defconfig"
+    configs = [
+        # (priv, "kernel.bpf_stats_enabled=1 net.core.bpf_jit_harden=0", "HEAD-dirty"),
+        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+
+        # TODO: fix loxilb?: ERR:  2023/11/23 17:17:28 ebpf load - 3 error
+        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+        # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+    ]
+
+    # Used to avoid having to find the type by trail/error. Also prevents false guesses.
+    prog_types = {
+        "llb_ebpf_main": "tc",
+        "llb_ebpf_emain": "tc",
+        "llb_kern_mon": "perf_event",
+        "llb_xdp_main": "xdp.frags/devmap",
+    }
 
     # All programs:
-    for prog_path in Path("../src/bpf-samples/.build/").glob("*.bpf.o"):
+    for prog_path in Path("../src/bpf-samples/.build/").glob("llb_ebpf_main.bpf.o"):
         prog = Path(Path(prog_path.name).stem).stem # basename, without .bpf.o
-
-        if "bcc-" not in prog:
-            continue
 
         # Skip priv_spec_mit with unpriv user because it will be the same as
         # regular unpriv.
-        for (ca, sc, b) in [
-                # (unpr, "net.core.bpf_jit_harden=0", "master"),
-                (priv, "net.core.bpf_jit_harden=0", "master"),
-                # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "bpf-spectre"),
-                (priv, "kernel.bpf_spec_v1=2", "bpf-spectre"),
-                # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec~1"),
-                # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
-                # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
-                # (priv, "kernel.bpf_spec_v1=2", "HEAD-dirty"),
-                # (priv, "kernel.bpf_spec_v4=2"),
-                # (priv, "net.core.bpf_jit_harden=2"),
-        ]:
+        for (ca, sc, b) in configs:
             suite.append({
                 "bench_script": "bpftool",
                 "boot": {
@@ -59,11 +60,12 @@ def append_T(suite, T):
                 },
                 "run": {
                     "T": T,
-                    "CPUFREQ": "base",
-                    "CAPSH_ARGS": ca,
-                    "SYSCTL": sc,
-                    "BPF_OBJ": prog + ".bpf.o",
                     "MERGE_CONFIGS": "",
+                    "OSE_CPUFREQ": "base",
+                    "OSE_CAPSH_ARGS": ca,
+                    "OSE_SYSCTL": sc,
+                    "OSE_BPF_OBJ": prog + ".bpf.o",
+                    "OSE_BPFTOOL_TYPE": prog_types.get(prog, ""),
                 },
             })
 

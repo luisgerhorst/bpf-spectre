@@ -80,7 +80,8 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
 	ccache \
     trash-cli \
     zstd \
-    clang-13
+    clang-13 \
+    libcap-dev
 
 RUN echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye-16 main' > /etc/apt/sources.list.d/llvm.list
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
@@ -103,8 +104,10 @@ RUN apt-get install --yes lldb-16
 RUN apt-get install --yes lld-16
 
 # Ick. BPF requires pahole "supernew" to work
+# Use 1.23 to avoid https://devkernel.io/posts/pahole-error/ when compiling linux-v5.18 for libbpf < 1.0 with legacy maps.
 RUN cd $(mktemp -d) && git clone https://git.kernel.org/pub/scm/devel/pahole/pahole.git && \
-    cd pahole && mkdir build && cd build && cmake -D__LIB=lib .. && make install
+    cd pahole && git checkout v1.23 && \
+    mkdir build && cd build && cmake -D__LIB=lib .. && make install
 
 RUN apt-get install --yes autossh dwarves golang gcc-multilib
 

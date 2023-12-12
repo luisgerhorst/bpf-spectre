@@ -10,8 +10,7 @@ BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 
 # Should be in a directory that disappears on reboot to invalidate state of VMM
 # virtual machines.
-export XDG_RUNTIME_DIR ?= /tmp/user/$(shell id -u $(USER))
-export TS := $(XDG_RUNTIME_DIR)/$(PROJ_NAME)-target-state/$(T)
+export TS := .run/$(shell cat /proc/sys/kernel/random/boot_id)
 
 export LD_LIBRARY_PATH := /usr/local/lib
 
@@ -20,7 +19,7 @@ ifneq ($(wildcard $(LLVM_BIN)/*),)
 	export PATH := $(LLVM_BIN):$(PATH)
 endif
 
-_dummy := $(shell mkdir -p .build .build/bpf-samples $(dir $(TS)) && ln -sfT $(dir $(TS)) .run)
+_dummy := $(shell mkdir -p .build .build/bpf-samples $(TS))
 
 .PHONY: all
 all: bzImage .build/linux-src/d.tar.gz .build/linux-pkg \

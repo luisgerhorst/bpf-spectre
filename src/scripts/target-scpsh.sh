@@ -46,11 +46,11 @@ command="${@:$OPTIND+0}"
 ssh="ssh ${SSH_DEST} -p ${SSH_PORT} -o BatchMode=true -o NoHostAuthenticationForLocalhost=true -o ConnectionAttempts=3 -o ConnectTimeout=30"
 scp="scp -P ${SSH_PORT} -B -o NoHostAuthenticationForLocalhost=true -q -o ConnectionAttempts=3 -o ConnectTimeout=30"
 
-guest_temp=$(${ssh} mktemp -d)
+guest_temp=$(${ssh} mktemp -d --suffix -$USER-$(basename $0)-guest-temp)
 
 if [ $working_dir_defined -eq 1 ]
 then
-	tmp=$(mktemp)
+	tmp=$(mktemp --suffix -$USER-$(basename $0)-working_dir.tar.gz)
 	env -C $working_dir tar cf - . | pigz > $tmp
 	${scp} $tmp ${SSH_DEST}:${guest_temp}/working_dir.tar.gz
 	rm -f $tmp
@@ -68,7 +68,7 @@ fi
 ${ssh} "mkdir -p ${TARGET_PREFIX}"
 ${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
 
-command_sh=$(mktemp)
+command_sh=$(mktemp --suffix -$USER-$(basename $0)-command-sh)
 echo "#!/bin/bash
 set -euo pipefail
 ${command}" > "${command_sh}"

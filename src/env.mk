@@ -1,5 +1,5 @@
 # System under Test
-T ?= faui49easy5
+T ?= faui49easy4
 include targets/$(T).mk
 
 # Where to persistenly store data on the target.

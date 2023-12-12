@@ -16,8 +16,7 @@ set -x
 dst=$1
 burst_len=$2
 
-bpftool_dst=${dst}/bpftool
-mkdir -p $dst/workload $dst/values $bpftool_dst
+# TODO: Use OSE_
 
 # Environment from suite definition:
 export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
@@ -28,6 +27,9 @@ export WORKLOAD_CLEANUP="${WORKLOAD_CLEANUP:-true}"
 
 # Available to workload:
 export RANDOM_PORT="$(random_port)"
+
+bpftool_dst=${dst}/bpftool
+mkdir -p $dst/workload $dst/values $bpftool_dst
 
 ./bench-runtime-begin.sh $@
 

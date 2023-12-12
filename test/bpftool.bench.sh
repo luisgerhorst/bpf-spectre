@@ -9,10 +9,7 @@
     dst=$(realpath $1)
     burst_len=$2
 
-    # TODO: Maybe it's not a good idea to send the whole env to the target. Use
-    # make-style var=value args instead.
-    set +x
-    env_exports="$(export -p)"
+    env_exports="$(export -p | grep OSE_)"
 
     pushd ../src
 
@@ -22,16 +19,15 @@
     # Boots target with linux-build ready for target-scpsh.
     make -j $(nproc) target
 
-    cp -f bpf-samples/.build/$BPF_OBJ $dst/$BPF_OBJ
+    cp -f bpf-samples/.build/$OSE_BPF_OBJ $dst/$OSE_BPF_OBJ
 
     tempd=$(mktemp -d)
     cp -r target-scripts $tempd/dir
-    cp bpf-samples/.build/$BPF_OBJ $tempd/dir/$BPF_OBJ
+    cp bpf-samples/.build/$OSE_BPF_OBJ $tempd/dir/$OSE_BPF_OBJ
     ./scripts/target-scpsh -o ${dst}/.tmp-$(basename $0) -C $tempd/dir "
 ${env_exports}
 ./bench-bpftool.sh ../result_dir ${burst_len}
 "
-    set -x
     rm -rfd $tempd
 
     mv --no-clobber --target-directory=${dst} ${dst}/.tmp-$(basename $0)/*

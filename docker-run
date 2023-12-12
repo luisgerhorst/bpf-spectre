@@ -4,7 +4,7 @@ bash -n "$(command -v "$0")"
 shopt -s nullglob
 set -x
 
-export name=$(basename $(pwd))-$$
+export name=$(basename $(pwd))
 ./docker-build.sh $name
 
 docker run --tty --interactive \
@@ -13,4 +13,4 @@ docker run --tty --interactive \
 	--network=host \
 	-h $name.$(hostname) \
 	--env USER=$USER \
-	$name /usr/bin/zsh
+	$name env -C $(pwd) /usr/bin/zsh

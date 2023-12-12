@@ -86,7 +86,6 @@ uname -a > ${dst}/values/uname_a &
 hostname --short > ${dst}/values/hostname_short &
 
 sudo perf --version > ${dst}/values/perf_version &
-sudo bpftool --version > ${dst}/values/bpftool_version &
 sudo cpupower --version > ${dst}/values/cpupower_version &
 
 sudo sysctl --all > $dst/sysctl.d/all &

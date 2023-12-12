@@ -17,8 +17,9 @@ def main():
         (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
 
         # TODO: fix loxilb?: ERR:  2023/11/23 17:17:28 ebpf load - 3 error
-        # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
-        # (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+        # Tell kernel to enable verifier log globally?
+        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
     nproc = 6
     nproc_servers = 3 # 1 loxilb, 2 server
@@ -37,9 +38,9 @@ def main():
             for rpn in [14000]:
                 # https://nginx.org/en/docs/ngx_core_module.html#worker_connections
                 r = p * rpn
-                for cpn in [256]:
+                for cpn in [1, 256, 1024]:
                     c = p * cpn
-                    for payload in [1024]:
+                    for payload in [1, 1024, 64*1024]:
                         for (_ca, sc, b) in configs:
                             suite.append({
                                 "bench_script": "loxilb",

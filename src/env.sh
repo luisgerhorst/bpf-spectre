@@ -1,5 +1,5 @@
 # System under Test
-export T=${T:-faui49easy5}
+export T=${T:-faui49easy4}
 . ./targets/$T.sh
 
 # Where to persistenly store data on the target.

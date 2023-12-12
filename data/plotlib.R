@@ -96,20 +96,22 @@ ALL_DATA <- read_tsv(
 )
 
 cols = c(bpftool_jited_insncnt_lfence = NA_real_,
-         bpftool_jited_insncnt_total = NA_real_)
+         bpftool_jited_insncnt_total = NA_real_,
+         bpftool_prog_show_run_time_ns = NA_real_,
+         perf_task_clock_msec = NA_real_,
+         perf_duration_time_ns = NA_real_,
+         bpftool_run_exitcode = NA_integer_,
+         verification_error = NA,
+         verification_error_msg = NA,
+         bpftool_loadall_error_reason_msg = NA,
+         OSE_CPUFREQ = NA,
+         OSE_SYSCTL = NA,
+         OSE_BPF_OBJ = NA,
+         OSE_CAPSH_ARGS = NA)
 
 DATA <- ALL_DATA %>%
   tibble::add_column(!!!cols[!names(cols) %in% names(.)]) %>%
   mutate(
-    ## TODO: Do these introduce 0s?
-    bpftool_loadall_exitcode = ifelse("bpftool_loadall_exitcode" %in% names(ALL_DATA), bpftool_loadall_exitcode, NA),
-    BPF_OBJ = ifelse("BPF_OBJ" %in% names(ALL_DATA), BPF_OBJ, NA),
-    bpftool_loadall_error_reason_msg = ifelse("bpftool_loadall_error_reason_msg" %in% names(ALL_DATA), bpftool_loadall_error_reason_msg, NA),
-    verification_error = ifelse("verification_error" %in% names(ALL_DATA), verification_error, NA),
-    verification_error_msg = ifelse("verification_error_msg" %in% names(ALL_DATA), verification_error_msg, NA),
-    CAPSH_ARGS = ifelse("CAPSH_ARGS" %in% names(ALL_DATA), CAPSH_ARGS, NA),
-    # bpftool_prog_show_run_time_ns = ifelse("bpftool_prog_show_run_time_ns" %in% names(ALL_DATA), bpftool_prog_show_run_time_ns, NA),
-
     ## CPU = factor(case_when(
     ##   boot_T == "easy16" ~ "AMD 3950X",
     ##   boot_T == "nuc" ~ "Intel i5-6260U",
@@ -123,8 +125,8 @@ DATA <- ALL_DATA %>%
       TRUE ~ "Warm Caches",
       ), levels = c("Cold Caches", "Hot Caches")),
     User = factor(case_when(
-      CAPSH_ARGS == "--drop=" ~ "Privileged",
-      CAPSH_ARGS == "--drop=cap_sys_admin --drop=cap_perfmon" ~ "Unprivileged",
+      OSE_CAPSH_ARGS == "--drop=" ~ "Privileged",
+      OSE_CAPSH_ARGS == "--drop=cap_sys_admin --drop=cap_perfmon" ~ "Unprivileged",
       ), levels = c("Privileged", "Unprivileged")),
     `BPF Loadable` = bpftool_loadall_exitcode == 0,
     OSE_SYSCTL = case_when(
@@ -133,16 +135,17 @@ DATA <- ALL_DATA %>%
       TRUE ~ OSE_SYSCTL
     ),
     Project = case_when(
-      str_detect(BPF_OBJ, "^lbe_") ~ "libbpf/examples",
-      str_detect(BPF_OBJ, "^vbi-") ~ "vbpf-imports",
-      TRUE ~ str_extract(BPF_OBJ, "^[a-z-]+")
+      str_detect(OSE_BPF_OBJ, "^lbe_") ~ "libbpf/examples",
+      str_detect(OSE_BPF_OBJ, "^vbi-") ~ "vbpf-imports",
+      str_detect(OSE_BPF_OBJ, "^vbi-") ~ "vbpf-imports",
+      TRUE ~ str_extract(OSE_BPF_OBJ, "^[a-z-]+")
     ),
     `BPF Program Type` = factor(
       case_when(
-        BPF_OBJ == "linux-selftests_test_l4lb.bpf.o" ~ "Real",
-        BPF_OBJ == "linux-selftests_test_l4lb_noinline.bpf.o" ~ "Real",
-        BPF_OBJ == "linux-selftests_xdp_synproxy_kern.bpf.o" ~ "Real",
-        BPF_OBJ == "linux-selftests_xdp_vlan.bpf.o" ~ "Real",
+        OSE_BPF_OBJ == "linux-selftests_test_l4lb.bpf.o" ~ "Real",
+        OSE_BPF_OBJ == "linux-selftests_test_l4lb_noinline.bpf.o" ~ "Real",
+        OSE_BPF_OBJ == "linux-selftests_xdp_synproxy_kern.bpf.o" ~ "Real",
+        OSE_BPF_OBJ == "linux-selftests_xdp_vlan.bpf.o" ~ "Real",
         Project == "linux-selftests" ~ "Test / Example",
         Project == "linux" ~ "Test", # legacy linux-selftests
         Project == "linux-samples" ~ "Test / Example",

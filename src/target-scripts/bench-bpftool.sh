@@ -62,6 +62,11 @@
 			echo -n loadall_type/$type_path > ${values_dst}/bpftool_loadall_path
 			echo -n $type > ${values_dst}/bpftool_loadall_type
 			break
+		else
+			set +e
+			$cs "$OSE_BPFTOOL prog loadall $obj $path type $type" \
+				2> ${bpftool_dst}/loadall_type/$type_path.no-debug.log
+			set -e
 		fi
 
 		if [ $log_size -ge $largest_log_size ]

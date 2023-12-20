@@ -10,6 +10,9 @@ sudo cat /sys/kernel/debug/tracing/trace > ${dst}/trace &
 set -e
 
 sudo dmesg > ${dst}/dmesg &
+sudo dmesg \
+	| env -C ../target_prefix/linux-src ./scripts/decode_stacktrace.sh ./vmlinux \
+	> ${dst}/dmseg.decoded-stacktrace.log &
 
 sudo sysctl --all > $dst/sysctl.d/final &
 

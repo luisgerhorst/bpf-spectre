@@ -14,11 +14,6 @@ export TS := .run/$(shell cat /proc/sys/kernel/random/boot_id)
 
 export LD_LIBRARY_PATH := /usr/local/lib
 
-LLVM_BIN = /usr/lib/llvm-16/bin
-ifneq ($(wildcard $(LLVM_BIN)/*),)
-	export PATH := $(LLVM_BIN):$(PATH)
-endif
-
 _dummy := $(shell mkdir -p .build .build/bpf-samples $(TS))
 
 .PHONY: all

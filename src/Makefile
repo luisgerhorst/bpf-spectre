@@ -9,7 +9,7 @@ all: release-all
 target: release-target
 
 .PHONY: release-%
-release-%: configure | .build/deps
+release-%: configure
 	$(MAKE) -f release.mk $*
 
 #
@@ -17,7 +17,7 @@ release-%: configure | .build/deps
 #
 
 .PHONY: configure
-configure: | .build .build/deps
+configure: | .build $(CCACHE_DIR)
 	./scripts/configure.sh
 	$(MAKE) -C linux-main headers_install
 
@@ -57,6 +57,9 @@ install-deps: | .build/deps
 	make -C linux-main headers_install # for linux/samples/bpf
 	cd .build && curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb && sudo dpkg -i minikube_latest_amd64.deb
 	touch $@
+
+$(CCACHE_DIR):
+	mkdir -p $@
 
 .build:
 	mkdir -p $@

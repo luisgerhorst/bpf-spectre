@@ -47,7 +47,8 @@
     # https://github.com/yktoo/indicator-sound-switcher/issues/113
     #
     # Pass through MAKEFLAGS, to use the make jobserver.
-    env - PATH=${PATH} KDEB_COMPRESS=xz MAKEFLAGS="$MAKEFLAGS" \
+    env - CCACHE_DIR=${CCACHE_DIR} CCACHE_MAXSIZE=${CCACHE_MAXSIZE} \
+        PATH=${PATH} KDEB_COMPRESS=xz MAKEFLAGS="$MAKEFLAGS" \
         ${MAKE} -C ${LINUX} ${TARGET}
     ccache -s
 

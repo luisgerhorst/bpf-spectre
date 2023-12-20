@@ -17,7 +17,7 @@
     . ./env.sh
 
     # Boots target with linux-build ready for target-scpsh.
-    make -j $(nproc) target
+    make -j $(expr $(nproc) '+' 1) target
 
     cp -f bpf-samples/.build/$OSE_BPF_OBJ $dst/$OSE_BPF_OBJ
 

@@ -4,6 +4,9 @@
     shopt -s nullglob
     set -x
 
+    SUDO="sudo --non-interactive --preserve-env=PATH"
+    APT="apt-get --assume-yes"
+
     set +e
     rs=$(dpkg -l \
         | grep --invert-match -e "$(uname -r)" \
@@ -11,8 +14,7 @@
         | awk '{ print $2 }' \
         | sort --reverse \
         | tail --lines=+4)
-    sudo dpkg --remove $rs
-    sudo dpkg --purge $rs
+    $SUDO $APT remove --purge $rs
     set -e
-    sudo --non-interactive apt-get -y autoremove
+    $SUDO $APT autoremove
 }

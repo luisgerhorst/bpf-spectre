@@ -3,6 +3,7 @@
 import sys
 import logging
 import math
+import os
 
 import yaml # pyyaml
 
@@ -32,7 +33,7 @@ def main():
         ("iperf3-sctp", 1),
     ]
 
-    for T in ["faui49easy4"]:
+    for T in [os.getenv("T", default="debian.local")]:
         for vp in workloads:
             v = "NA"
             p = "NA"

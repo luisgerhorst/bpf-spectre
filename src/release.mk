@@ -117,7 +117,7 @@ $(TS)/loxilb: .build/loxilb.git_rev .build/loxilb.git_status $(TS)/kernel releas
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 KSD=../target_prefix/kselftest
-$(TS)/linux-tools: $(TS)/bcc $(TS)/loxilb $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh
+$(TS)/linux-tools: $(TS)/bcc $(TS)/loxilb $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh $(BZIMAGE)
 	./scripts/target-scpsh -C $(LINUX)/tools/testing/selftests/kselftest_install/kselftest-packages "rm -rfd $(KSD) && mkdir -p $(KSD) && tar xf kselftest.tar.gz --directory=$(KSD)"
 	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
 	mkdir -p $(dir $@) && touch $@

@@ -16,6 +16,5 @@ fi
 
 ./scripts/target-scpsh -C $LINUX_DEB_DIR '
 set -x
-rm -f linux-image-dbg_*.deb
-sudo --non-interactive apt-get -y install ./*.deb
+sudo --non-interactive apt-get -y --allow-downgrades install ./*.deb
 '

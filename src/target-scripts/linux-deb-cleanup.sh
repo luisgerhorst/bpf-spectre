@@ -10,7 +10,7 @@
         | grep -e "linux-.*-$USER+" \
         | awk '{ print $2 }' \
         | sort --reverse \
-        | tail --lines=+5)
+        | tail --lines=+4)
     sudo dpkg --remove $rs
     sudo dpkg --purge $rs
     set -e

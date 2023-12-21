@@ -163,7 +163,7 @@
     . ./common.sh
     set +e
     test="$SUDO docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version | grep $loxilb_version"
-    if $test
+    if ! $test
     then
             set -e
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/

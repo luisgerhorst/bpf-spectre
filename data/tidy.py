@@ -45,7 +45,10 @@ def pd_concat_cols(l):
     return pd.concat(l, axis='columns', verify_integrity=True)
 
 def pd_concat_rows(l):
-    return pd.concat(l, axis='index')
+    try:
+        return pd.concat(l, axis='index')
+    except ValueError as e:
+        return pd.DataFrame()
 
 def bench_run_df(bench_run_path):
     tidy_dfs = []
@@ -99,21 +102,24 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
         ])
 
 def tidy_netperf(brp, burst_pos, nr_clients):
-    dfs = []
-    for i in range(0, nr_clients):
-        client_obs = pd.read_csv(
-            brp.joinpath(f'workload/{burst_pos}.netperf-client.{i}.log'),
-            sep='\s+',
-            skiprows=[0, 1, 3, 4],
-            header=0,
-            usecols=["Elapsed", "Trans."],
-            engine='python',
-            skipfooter=1,
-            on_bad_lines='skip',
-        ).add_prefix("netperf_")
-        dfs.append(client_obs)
-    workload_observation = pd_concat_rows(dfs).agg(['sum']).reset_index(drop=True)
-    return [workload_observation]
+    try:
+        dfs = []
+        for i in range(0, nr_clients):
+            client_obs = pd.read_csv(
+                brp.joinpath(f'workload/{burst_pos}.netperf-client.{i}.log'),
+                sep='\s+',
+                skiprows=[0, 1, 3, 4],
+                header=0,
+                usecols=["Elapsed", "Trans."],
+                engine='python',
+                skipfooter=1,
+                on_bad_lines='skip',
+            ).add_prefix("netperf_")
+            dfs.append(client_obs)
+        workload_observation = pd_concat_rows(dfs).agg(['sum']).reset_index(drop=True)
+        return [workload_observation]
+    except pd.errors.EmptyDataError as _e:
+        return []
 
 def tidy_loxilb_iperf(brp, burst_pos):
     try:

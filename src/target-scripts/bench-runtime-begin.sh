@@ -16,6 +16,12 @@ then
    exit 1
 fi
 
+if sudo systemctl is-enabled run-fai.timer fai-boot.service
+then
+	echo "Do 'systemctl disable run-fai.timer fai-boot.service'!" 1>&2
+	exit 1
+fi
+
 echo 0 > sudo tee /proc/sys/kernel/nmi_watchdog &
 
 if ls /sys/devices/system/cpu/cpu0/cpufreq/ > /dev/null
@@ -58,7 +64,6 @@ then
 fi
 
 mkdir $dst/sysctl.d
-sudo sysctl --version > $dst/sysctl.d/version &
 sudo sysctl --system 2>&1 > /dev/null
 sudo sysctl --write kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=0 || true # not supported on mainline
 sudo sysctl --write net.core.bpf_jit_harden=0
@@ -70,10 +75,6 @@ wait
 #
 # Record system config
 #
-
-set +e
-sudo systemctl status fai-boot.service run-fai.service run-fai.timer > $dst/fai-status &
-set -e
 
 sudo cpupower frequency-info > ${dst}/cpupower-frequency-info &
 
@@ -88,6 +89,7 @@ hostname --short > ${dst}/values/hostname_short &
 sudo perf --version > ${dst}/values/perf_version &
 sudo cpupower --version > ${dst}/values/cpupower_version &
 
+sudo sysctl --version > $dst/sysctl.d/version &
 sudo sysctl --all > $dst/sysctl.d/all &
 
 set +x

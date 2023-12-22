@@ -31,9 +31,9 @@ perf_metrics <- cns[
 
 for (m in perf_metrics) {
   ggplot(DATA, aes(y=get(m),
-                   x=burst_pos,
+                   x=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
                    colour=paste(OSE_SYSCTL))) +
-    geom_point() +
+    geom_jitter() +
     facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION),
                cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LOXILB_CLIENTS),
                labeller=label_value, scales="free")
@@ -53,9 +53,9 @@ perf_metrics <- cns[
 ]
 for (m in perf_metrics) {
   ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "netperf"), aes(y=get(m),
-                   x=burst_pos,
+                   x=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
                    colour=paste(OSE_SYSCTL))) +
-    geom_point() +
+    geom_jitter() +
     facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_NETPERF_TEST),
                cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LOXILB_CLIENTS),
                labeller=label_value, scales="free")

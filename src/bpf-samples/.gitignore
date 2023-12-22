@@ -2,7 +2,6 @@
 .idea
 *.log
 tmp/
-external/loxilb-*-opt/**
 
 prog/*.bpf.s
 !prog/custom_*.bpf.s

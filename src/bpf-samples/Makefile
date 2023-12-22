@@ -98,12 +98,13 @@ loxilb_url=ghcr.io/loxilb-io/loxilb:v$(loxilb_version)
 .build/llb_%.bpf.o: external/loxilb-v$(loxilb_version)-opt | .build
 	ln -fs ../external/loxilb-v$(loxilb_version)-opt/llb_$*.o $@
 
-external/loxilb-v$(loxilb_version)-opt: Makefile
+external/loxilb-v$(loxilb_version)-opt:
 	rm -rfd $@
 	docker run -u root --cap-add SYS_ADMIN --restart unless-stopped --privileged -dit -v /dev/log:/dev/log --name loxilb $(loxilb_url)
 	docker cp loxilb:/opt/loxilb $@
 	docker kill loxilb
 	docker rm loxilb
+	rm -rfd $@/cert
 
 #
 # Katran

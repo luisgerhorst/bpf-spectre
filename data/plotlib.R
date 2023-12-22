@@ -154,6 +154,7 @@ DATA <- ALL_DATA %>%
         Project == "cilium" ~ "Real",
         Project == "vbpf" ~ "Test / Example",
         Project == "libbpf/examples" ~ "Test / Example",
+        Project == "llb" ~ "Real",
         TRUE ~ "Unspecified"
       ),
       levels = c("Real", "Test / Example", "Unspecified")

@@ -4,7 +4,7 @@ source("plotlib.R")
 
 print(DATA)
 
-ggplot(DATA, aes(paste(OSE_SYSCTL, OSE_BPF_OBJ),
+ggplot(DATA, aes(paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4, OSE_BPF_OBJ),
                  colour=paste(`BPF Loadable`, bpftool_loadall_error),
                  fill=paste(bpftool_loadall_type, verification_error))) +
   geom_histogram(stat = "count") +
@@ -23,7 +23,8 @@ expr <- ed %>%
   right_join(expr) %>%
   distinct(OSE_BPF_OBJ, OSE_SYSCTL, OSE_CAPSH_ARGS, .keep_all=TRUE)
 
-ggplot(expr, aes(OSE_SYSCTL, colour=paste(`BPF Loadable`, bpftool_loadall_error, bpftool_loadall_error_reason),
+ggplot(expr, aes(paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
+                 colour=paste(`BPF Loadable`, bpftool_loadall_error),
                  fill=paste(bpftool_loadall_type, verification_error))) +
   geom_histogram(stat = "count") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
@@ -46,7 +47,7 @@ eval_save("x")
 
 e <- DATA %>%
   distinct(uname_a, OSE_BPF_OBJ, User, OSE_SYSCTL, .keep_all=TRUE)
-ggplot(e, aes(paste(LINUX_GIT_CHECKOUT, User, OSE_SYSCTL, sep=", "),
+ggplot(e, aes(paste(LINUX_GIT_CHECKOUT, User, paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4), sep=", "),
               colour=paste(bpftool_loadall_exitcode, bpftool_loadall_error, sep=", "),
               fill=verification_error)) +
   scale_fill_viridis_d() +
@@ -56,7 +57,7 @@ eval_save("errors")
 
 w <- expr %>%
   filter(bpftool_loadall_exitcode > 0, is.na(bpftool_loadall_error))
-ggplot(w, aes(OSE_BPF_OBJ, fill=OSE_SYSCTL)) +
+ggplot(w, aes(OSE_BPF_OBJ, fill=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
   geom_histogram(stat = "count", position="stack") +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("NA-errors")
@@ -81,7 +82,7 @@ cns <- colnames(DATA)
 metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_lfence") |
                startsWith(cns, "bpftool_jited_insncnt_total")]
 for (m in metrics) {
-  ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(OSE_CAPSH_ARGS, OSE_SYSCTL))) +
+  ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(OSE_CAPSH_ARGS, paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4)))) +
     geom_boxplot(position = "dodge") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     facet_grid(rows=vars(T, bpftool_loadall_exitcode),
@@ -94,13 +95,13 @@ for (m in metrics) {
 ## DATA <- DATA %>%
 ##   filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v1 == "0", User == "Privileged")
 
-ggplot(DATA, aes(bpftool_jited_insncnt_total, fill=OSE_SYSCTL)) +
+ggplot(DATA, aes(bpftool_jited_insncnt_total, fill=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
   geom_histogram(position="dodge")
 eval_save("total")
 
 ggplot(DATA, aes(bpftool_jited_insncnt_lfence, fill=bpftool_jited_insncnt_total)) +
   geom_histogram() +
-  facet_grid(rows=vars(OSE_SYSCTL),
+  facet_grid(rows=vars(paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4)),
              labeller=label_both, scales="free")
 eval_save("lfence")
 
@@ -118,7 +119,7 @@ cns <- colnames(DATA)
 metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_lfence") |
                startsWith(cns, "bpftool_jited_insncnt_total")]
 for (m in metrics) {
-  ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(OSE_CAPSH_ARGS, OSE_SYSCTL))) +
+  ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=get(m), colour=paste(OSE_CAPSH_ARGS, paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4)))) +
     geom_boxplot(position = "dodge") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     facet_grid(rows=vars(T, bpftool_loadall_exitcode),
@@ -127,7 +128,7 @@ for (m in metrics) {
   eval_save(paste0(m, "-point"))
 }
 
-ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=bpftool_run_duration_ns, colour=OSE_SYSCTL)) +
+ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=bpftool_run_duration_ns, colour=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
   geom_boxplot() +
   labs(y = "Execution Time [ns]") +
   scale_y_continuous(limits = c(0, NA)) +

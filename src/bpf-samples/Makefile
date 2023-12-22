@@ -30,8 +30,8 @@ LOXILB = llb_ebpf_emain llb_ebpf_main llb_kern_mon llb_xdp_main
 
 LINUX=../linux-main
 
-# $(KATRAN) $(VBPF) $(CILIUM) $(LBE) $(CUSTOM) falco_probe
-PROGS = $(LOXILB)
+# $(KATRAN)
+PROGS = $(LOXILB) $(VBPF) $(CILIUM) $(LBE) falco_probe
 
 LLVM_BIN = /usr/lib/llvm-16/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)

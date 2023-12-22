@@ -14,13 +14,10 @@ def main():
     priv="--drop="
     unpr="--drop=cap_sys_admin --drop=cap_perfmon"
     configs = [
-        (priv, "kernel.bpf_stats_enabled=1 net.core.bpf_jit_harden=0", "HEAD-dirty"),
-        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
-
-        # TODO: fix loxilb?: ERR:  2023/11/23 17:17:28 ebpf load - 3 error
-        # Tell kernel to enable verifier log globally?
-        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
-        (priv, "kernel.bpf_stats_enabled=1 kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+        (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
+        (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+        (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+        (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
     nproc = 6
     nproc_servers = 3 # 1 loxilb, 2 server
@@ -51,7 +48,7 @@ def main():
                                 "run": {
                                     "T": T,
                                     "OSE_CPUFREQ": "base",
-                                    "OSE_SYSCTL": sc,
+                                    "OSE_SYSCTL": "kernel.bpf_stats_enabled=1 kernel.bpf_complexity_limit_jmp_seq=16384 kernel.bpf_spec_v1_complexity_limit_jmp_seq=8192 " + sc,
                                     "OSE_LOXILB_VALIDATION": v,
                                     "OSE_LOXILB_SERVERS": str(p),
                                     "OSE_LOXILB_CLIENTS": str(p),

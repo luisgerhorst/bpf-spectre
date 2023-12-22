@@ -52,7 +52,7 @@ def parse_args():
     parser.add_argument("-s", "--suite")
     parser.add_argument("-n", "--data-name", help="Suffix appended to auto-generated path.")
     parser.add_argument("-p", "--data-path", help="Relative to TESTRUN_DATA. For example, set this to 'scratch' for test-runs.")
-    parser.add_argument("-r", "--reps", default=1, type=int, help="Repeat whole run REP times (to check reproducibility).")
+    parser.add_argument("-r", "--reps", default=2, type=int, help="Repeat whole run REP times (to check reproducibility).")
     parser.add_argument("-b", "--burst-len", default=3, type=int, help="Repeat each test BURST_LEN times (to check hot/cold caches).")
     parser.add_argument("--retry-max", default=10, type=int, help="Max retries for test runs (to mitigate network errors).")
     parser.add_argument("--random-seed", default=0, type=int)

@@ -4,17 +4,18 @@ bash -n "$(command -v "$0")"
 set -x
 
 dst=$1
-
-set +e
-sudo cat /sys/kernel/debug/tracing/trace > ${dst}/trace &
-set -e
+OSE_DEBUG=${OSE_DEBUG:-"0"}
 
 sudo dmesg > ${dst}/dmesg &
-sudo dmesg \
-	| env -C ../target_prefix/linux-src ./scripts/decode_stacktrace.sh ./vmlinux \
-	> ${dst}/dmseg.decoded-stacktrace.log &
 
-sudo sysctl --all > $dst/sysctl.d/final &
+if [[ $OSE_DEBUG == "1" ]]
+then
+	sudo cat /sys/kernel/debug/tracing/trace || true > ${dst}/trace
+	sudo dmesg \
+		| env -C ../target_prefix/linux-src ./scripts/decode_stacktrace.sh ./vmlinux \
+		> ${dst}/dmseg.decoded-stacktrace.log &
+	sudo sysctl --all > $dst/sysctl.d/final &
+fi
 
 wait
 

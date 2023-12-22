@@ -3,10 +3,10 @@
 source("plotlib.R")
 
 d <- DATA %>%
-  filter(Project != "vbi-new-linux", User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*")) %>%
+  filter(Project != "vbi-new-linux", User == "Privileged", !str_detect(OSE_BPF_OBJ, "^*custom_*")) %>%
   filter(bpftool_loadall_exitcode == 0, kernel_bpf_spec_v1 == "0", net_core_bpf_jit_harden == "0")
 s <- d %>%
-  group_by(BPF_OBJ, bpftool_prog, .drop=F) %>%
+  group_by(OSE_BPF_OBJ, bpftool_prog, .drop=F) %>%
   summarize(
     bjit_max = max(bpftool_jited_insncnt_total),
     bjit_min = min(bpftool_jited_insncnt_total),
@@ -17,7 +17,7 @@ s <- d %>%
 d <- d %>%
   left_join(s) %>%
   filter(kernel_bpf_spec_v4 == "2") %>%
-  distinct(BPF_OBJ, bpftool_prog, .keep_all=T)
+  distinct(OSE_BPF_OBJ, bpftool_prog, .keep_all=T)
 p <- ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
   stat_ecdf() +
   labs(y = "eCDF") +
@@ -50,18 +50,18 @@ ggsave(eval_path("c3", 0, ".png"), plot=last_plot(), width = PRES_W, height = PR
 eval_save("d")
 
 ed <- DATA %>%
-  filter(Project != "vbi-new-linux", User == "Privileged", !str_detect(BPF_OBJ, "^*custom_*")) %>%
+  filter(Project != "vbi-new-linux", User == "Privileged", !str_detect(OSE_BPF_OBJ, "^*custom_*")) %>%
   filter(kernel_bpf_spec_v4 == "0", net_core_bpf_jit_harden == "0")
 expr <- ed %>%
-  group_by(BPF_OBJ, .drop=F) %>%
+  group_by(OSE_BPF_OBJ, .drop=F) %>%
   summarize(ble_max = max(bpftool_loadall_exitcode), ble_min = min(bpftool_loadall_exitcode)) %>%
   ungroup()
 expr <- ed %>%
   inner_join(expr) %>%
-  distinct(BPF_OBJ, SYSCTL, .keep_all=TRUE) %>%
+  distinct(OSE_BPF_OBJ, OSE_SYSCTL, .keep_all=TRUE) %>%
   filter(ble_min == 0)
 
-p <- ggplot(expr, aes(SYSCTL, fill=`BPF Load`)) +
+p <- ggplot(expr, aes(OSE_SYSCTL, fill=`BPF Load`)) +
   geom_histogram(stat = "count", position="stack") +
   scale_fill_viridis_d()
   ## facet_grid(cols=vars(`BPF Program Type`), scales="free")

@@ -17,7 +17,7 @@
 	if [ "$OSE_BPFTOOL_TYPE" == "" ]
 	then
 		# Types supported by bpftool v7.0.0, libbpf v1.0
-		OSE_BPFTOOL_TYPE="socket sk_reuseport/migrate sk_reuseport kprobe+ uprobe+ uprobe.s+ kretprobe+ uretprobe+ uretprobe.s+ kprobe.multi+ kretprobe.multi+ ksyscall+ kretsyscall+ usdt+ tc classifier action tracepoint+ tp+ raw_tracepoint+ raw_tp+ raw_tracepoint.w+ raw_tp.w+ tp_btf+ fentry+ fmod_ret+ fexit+ fentry.s+ fmod_ret.s+ fexit.s+ freplace+ lsm+ lsm.s+ lsm_cgroup+ iter+ iter.s+ syscall xdp.frags/devmap xdp/devmap xdp.frags/cpumap xdp/cpumap xdp.frags xdp perf_event lwt_in lwt_out lwt_xmit lwt_seg6local sockops sk_skb/stream_parser sk_skb/stream_verdict sk_skb sk_msg lirc_mode2 flow_dissector cgroup_skb/ingress cgroup_skb/egress cgroup/skb cgroup/sock_create cgroup/sock_release cgroup/sock cgroup/post_bind4 cgroup/post_bind6 cgroup/bind4 cgroup/bind6 cgroup/connect4 cgroup/connect6 cgroup/sendmsg4 cgroup/sendmsg6 cgroup/recvmsg4 cgroup/recvmsg6 cgroup/getpeername4 cgroup/getpeername6 cgroup/getsockname4 cgroup/getsockname6 cgroup/sysctl cgroup/getsockopt cgroup/setsockopt cgroup/dev struct_ops+ sk_lookup"
+		OSE_BPFTOOL_TYPE="INFERRED socket sk_reuseport/migrate sk_reuseport kprobe+ uprobe+ uprobe.s+ kretprobe+ uretprobe+ uretprobe.s+ kprobe.multi+ kretprobe.multi+ ksyscall+ kretsyscall+ usdt+ tc classifier action tracepoint+ tp+ raw_tracepoint+ raw_tp+ raw_tracepoint.w+ raw_tp.w+ tp_btf+ fentry+ fmod_ret+ fexit+ fentry.s+ fmod_ret.s+ fexit.s+ freplace+ lsm+ lsm.s+ lsm_cgroup+ iter+ iter.s+ syscall xdp.frags/devmap xdp/devmap xdp.frags/cpumap xdp/cpumap xdp.frags xdp perf_event lwt_in lwt_out lwt_xmit lwt_seg6local sockops sk_skb/stream_parser sk_skb/stream_verdict sk_skb sk_msg lirc_mode2 flow_dissector cgroup_skb/ingress cgroup_skb/egress cgroup/skb cgroup/sock_create cgroup/sock_release cgroup/sock cgroup/post_bind4 cgroup/post_bind6 cgroup/bind4 cgroup/bind6 cgroup/connect4 cgroup/connect6 cgroup/sendmsg4 cgroup/sendmsg6 cgroup/recvmsg4 cgroup/recvmsg6 cgroup/getpeername4 cgroup/getpeername6 cgroup/getsockname4 cgroup/getsockname6 cgroup/sysctl cgroup/getsockopt cgroup/setsockopt cgroup/dev struct_ops+ sk_lookup"
 	fi
 
 	cs="sudo capsh $capsh_args -- -c"
@@ -44,10 +44,19 @@
 	for type in $OSE_BPFTOOL_TYPE
 	do
 		type_path=$(echo $type | tr '/+.' "___")
+		type_arg=""
+		# type is optional, if not specified program type will be inferred from
+		# section names. This is different from tring every type because the
+		# type is inferred per-program while the type argument applies too all
+		# programs in the object file.
+		if [[ "$type" != "INFERRED" ]]
+		then
+		   type_arg="type $type"
+		fi
 
 		echo -n " $type:" 1>&2
 		set +e
-		$cs "$OSE_BPFTOOL --debug prog loadall $obj $path type $type" \
+		$cs "$OSE_BPFTOOL --debug prog loadall $obj $path $type_arg" \
 			2> ${bpftool_dst}/loadall_type/$type_path.log
 		type_exitcode=$?
 		set -e

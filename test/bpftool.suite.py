@@ -37,12 +37,14 @@ def append_T(suite, T):
         (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
 
-    # Used to avoid having to find the type by trail/error. Also prevents false guesses.
+    # Used to avoid trying to find the type by trail/error when no type will
+    # work. Also prevents false guesses.
     prog_types = {
         "llb_ebpf_main": "tc",
         "llb_ebpf_emain": "tc",
         "llb_kern_mon": "perf_event",
         "llb_xdp_main": "xdp.frags/devmap",
+        "cilium_sock": "INFERRED",
     }
 
     # All programs:

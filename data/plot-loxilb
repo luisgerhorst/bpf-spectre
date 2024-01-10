@@ -22,20 +22,17 @@ perf_metrics <- cns[
   | startsWith(cns, "perf_task_clock")
   | startsWith(cns, "perf_duration")
   | startsWith(cns, "bpftool_prog_show_run_time_")
-  | startsWith(cns, "bpftool_prog_show_bytes_")
-  | startsWith(cns, "bpftool_jited_insncnt_lfence")
-  | startsWith(cns, "bpftool_jited_insncnt_total")
   | cns == "iperf_bits_per_second"
   | cns == "iperf3__end_sum_received_bits_per_second"
 ]
 
 for (m in perf_metrics) {
   ggplot(DATA, aes(y=get(m),
-                   x=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
-                   colour=paste(OSE_SYSCTL))) +
-    geom_jitter() +
-    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION),
-               cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LOXILB_CLIENTS),
+                   linetype=paste0(kernel_bpf_spec_v4),
+                   colour=paste0(kernel_bpf_spec_v1))) +
+    stat_ecdf() +
+    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_LOXILB_CLIENTS),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
                labeller=label_value, scales="free")
   eval_save(paste0("ecdf-", m))
 }
@@ -46,18 +43,16 @@ perf_metrics <- cns[
   | startsWith(cns, "perf_task_clock")
   | startsWith(cns, "perf_duration")
   | startsWith(cns, "bpftool_prog_show_run_time_")
-  | startsWith(cns, "bpftool_prog_show_bytes_")
-  | startsWith(cns, "bpftool_jited_insncnt_lfence")
-  | startsWith(cns, "bpftool_jited_insncnt_total")
   | startsWith(cns, "netperf_")
 ]
 for (m in perf_metrics) {
-  ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "netperf"), aes(y=get(m),
-                   x=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
-                   colour=paste(OSE_SYSCTL))) +
-    geom_jitter() +
-    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_NETPERF_TEST),
-               cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_LOXILB_CLIENTS),
+  ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "netperf"),
+         aes(y=get(m),
+             linetype=paste0(kernel_bpf_spec_v4),
+             colour=paste0(kernel_bpf_spec_v1))) +
+    stat_ecdf() +
+    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_NETPERF_TEST, OSE_LOXILB_CLIENTS),
+               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
                labeller=label_value, scales="free")
   eval_save(paste0("ecdf-", m))
 }

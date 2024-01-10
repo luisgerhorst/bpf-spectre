@@ -25,7 +25,7 @@ expr <- ed %>%
 
 ggplot(expr, aes(paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
                  colour=paste(`BPF Loadable`, bpftool_loadall_error),
-                 fill=paste(bpftool_loadall_type, verification_error))) +
+                 fill=paste(bpftool_loadall_type, verification_error, str_trunc(bpftool_loadall_error_reason, 64)))) +
   geom_histogram(stat = "count") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   scale_fill_viridis_d() +
@@ -40,7 +40,7 @@ ggplot(expr, aes(verification_time_usec, colour=Project)) +
   facet_grid(cols=vars(`BPF Program Type`), scales="free")
 eval_save("x")
 
-ggplot(expr, aes(verification_error)) +
+ggplot(expr, aes(verification_error_msg)) +
   geom_histogram(stat = "count") +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("x")
@@ -62,22 +62,53 @@ ggplot(w, aes(OSE_BPF_OBJ, fill=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) 
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("NA-errors")
 
-DATA <- DATA %>%
-  filter(bpftool_run_exitcode == 0, bpftool_loadall_exitcode == 0)
+d <- DATA %>%
+  filter(bpftool_loadall_exitcode == 0)
+s <- d %>%
+  group_by(OSE_BPF_OBJ, bpftool_prog, .drop=F) %>%
+  summarize(
+    bjit_max = max(bpftool_jited_insncnt_total),
+    bjit_min = min(bpftool_jited_insncnt_total),
+    bjil_max = max(bpftool_jited_insncnt_lfence),
+    bjil_min = min(bpftool_jited_insncnt_lfence)
+  ) %>%
+  ungroup()
+d <- d %>%
+  left_join(s) %>%
+  distinct(uname_a, OSE_BPF_OBJ, User, OSE_SYSCTL, .keep_all=TRUE)
 
+ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+  stat_ecdf() +
+  labs(y = "eCDF") +
+  scale_colour_viridis_d() +
+  facet_grid(rows=vars(kernel_bpf_spec_v1),
+             cols=vars(kernel_bpf_spec_v4),
+             labeller=label_both, scales="free")
+eval_save("lfence-percent-fgbs")
+
+ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=paste0(kernel_bpf_spec_v1), colour=paste0(kernel_bpf_spec_v4))) +
+  stat_ecdf() +
+  labs(y = "eCDF") +
+  scale_colour_viridis_d() +
+  facet_grid(rows=vars(Project),
+             cols=vars(`BPF Program Type`),
+             labeller=label_both, scales="free")
+eval_save("lfence-percent-fgbs")
 
 md <- DATA %>%
+  filter(bpftool_loadall_exitcode == 0) %>%
   ## filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v4 == "0", User == "Privileged") %>%
   group_by(OSE_BPF_OBJ, bpftool_prog, .drop=F) %>%
   summarize(
     bjit_max = max(bpftool_jited_insncnt_total), bjit_min = min(bpftool_jited_insncnt_total),
     bjil_max = max(bpftool_jited_insncnt_lfence), bjil_min = min(bpftool_jited_insncnt_lfence)
   ) %>%
-  ungroup() %>%
-  filter(bjit_max > 1.05 * bjit_min)
+  ungroup() ## %>% filter(bjit_max > 1.05 * bjit_min)
 md <- DATA %>%
+  filter(bpftool_loadall_exitcode == 0) %>%
   filter(net_core_bpf_jit_harden == "0", kernel_bpf_spec_v4 == "0", User == "Privileged") %>%
   inner_join(md)
+print(md)
 cns <- colnames(DATA)
 metrics <- cns[startsWith(cns, "bpftool_jited_insncnt_lfence") |
                startsWith(cns, "bpftool_jited_insncnt_total")]
@@ -86,9 +117,9 @@ for (m in metrics) {
     geom_boxplot(position = "dodge") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     facet_grid(rows=vars(T, bpftool_loadall_exitcode),
-               cols=vars(OSE_OSE_CPUFREQ, bench_script),
+               cols=vars(OSE_CPUFREQ, bench_script),
                labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
+  eval_save(paste0(m, "-dodge1"))
 }
 
 
@@ -126,7 +157,7 @@ for (m in metrics) {
     facet_grid(rows=vars(T, bpftool_loadall_exitcode),
                cols=vars(OSE_CPUFREQ, bench_script),
                labeller=label_both, scales="free")
-  eval_save(paste0(m, "-point"))
+  eval_save(paste0(m, "-boxplot2"))
 }
 
 ggplot(md, aes(x=paste(OSE_BPF_OBJ, " ", bpftool_prog, "()", sep=""), y=bpftool_run_duration_ns, colour=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +

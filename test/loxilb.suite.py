@@ -33,7 +33,7 @@ def main():
         ("iperf3-sctp", 1),
     ]
 
-    for T in [os.getenv("T", default="debian.local")]:
+    for T in [os.getenv("T", default="faui49easy4")]:
         for vp in workloads:
             v = "NA"
             p = "NA"

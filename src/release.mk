@@ -27,7 +27,7 @@ target: .build/linux-pkg
 LINUX_SRC := .build/$(LINUX).git_rev .build/$(LINUX).git_status
 LINUX_TREE := $(LINUX)/.config $(LINUX_SRC)
 
-KERNEL_RELEASE := $(shell ./scripts/linux-release.sh $(LINUX))
+# KERNEL_RELEASE := $(shell ./scripts/linux-release.sh $(LINUX))
 BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)
 
 #

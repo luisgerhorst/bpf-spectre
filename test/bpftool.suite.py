@@ -20,7 +20,7 @@ def main():
                     "-C", "../src/bpf-samples", "all"],
                    check=True, stdout=sys.stderr.buffer)
 
-    T = os.getenv("T", default="faui49easy2")
+    T = os.getenv("T", default="faui49easy1")
 
     suite = []
     append_T(suite, T)

@@ -34,8 +34,10 @@ BCC_LOCALVERSION := $(shell cat .build/bcc.localversion)
 # Linux Files
 #
 
+$(BZIMAGE): .build/linux-bins
+
 # Building the selftests here assumes your glibc is <= the target glibc.
-$(BZIMAGE): $(LINUX_TREE) release.mk
+.build/linux-bins: $(LINUX_TREE) release.mk
 	flock .build/linux.lock $(MAKE) -C $(LINUX) vmlinux headers
 	flock .build/linux.lock $(MAKE) \
 		SKIP_TARGETS="arm64 ia64 powerpc sparc64 riscv64 x86 drivers/s390x/uvdevice sgx memfd mqueue capabilities hid alsa" \
@@ -56,7 +58,7 @@ $(BZIMAGE): $(LINUX_TREE) release.mk
 	touch $@ $@/*
 
 # TODO: use git	worktree add/archive/export-index https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export/160719#160719
-.build/linux-src.d: $(LINUX_TREE) $(BZIMAGE) release.mk
+.build/linux-src.d: .build/linux-bins release.mk
 	rm -rfd $@ && mkdir -p $(dir $@)
 	flock .build/linux.lock bash -c ' \
 		pushd $(LINUX) && git commit --allow-empty -m "Makefile: staged" && git add -u && git commit --allow-empty -m "Makefile: unstaged" \
@@ -117,17 +119,10 @@ $(TS)/loxilb: .build/loxilb.git_rev .build/loxilb.git_status $(TS)/kernel releas
 
 # selftests/bpf/bench requires CONFIG_DEBUG_INFO_BTF=y.
 KSD=../target_prefix/kselftest
-$(TS)/linux-tools: $(TS)/bcc $(TS)/loxilb $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh $(BZIMAGE)
+$(TS)/linux-tools: $(TS)/bcc $(TS)/loxilb $(TS)/linux-src $(TS)/kernel target-scripts/linux-tools-install.sh .build/linux-bins
 	./scripts/target-scpsh -C $(LINUX)/tools/testing/selftests/kselftest_install/kselftest-packages "rm -rfd $(KSD) && mkdir -p $(KSD) && tar xf kselftest.tar.gz --directory=$(KSD)"
 	./scripts/target-scpsh -C target-scripts "BCC_LOCALVERSION=$(BCC_LOCALVERSION) ./linux-tools-install.sh"
 	mkdir -p $(dir $@) && touch $@
-
-#
-# Linux Phony
-#
-
-.PHONY: bzImage
-bzImage: $(BZIMAGE)
 
 #
 # QEMU Debian Phony

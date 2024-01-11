@@ -9,5 +9,5 @@ export LINUX_GIT_CHECKOUT=${LINUX_GIT_CHECKOUT:-HEAD-dirty}
 export MERGE_CONFIGS=${MERGE_CONFIGS:-}
 
 export PATH=/usr/lib/ccache:/usr/lib/llvm-16/bin:$PATH
-export CCACHE_DIR=$(realpath .ccache)
+export CCACHE_DIR=$(realpath $(realpath .)/../../.ccache)
 export CCACHE_MAXSIZE=$(expr $(vmstat -s | grep -i 'K total memory' | sed 's/ *//' | cut --delimiter=' ' -f1) '/' 1024)Mi

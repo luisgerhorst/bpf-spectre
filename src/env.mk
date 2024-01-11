@@ -10,5 +10,5 @@ MERGE_CONFIGS ?=
 
 # Be careful, does not affect the target scripts.
 export PATH := /usr/lib/ccache:/usr/lib/llvm-16/bin:$(PATH)
-export CCACHE_DIR=$(shell realpath .ccache)
+export CCACHE_DIR=$(shell realpath $(shell realpath .)/../../.ccache)
 export CCACHE_MAXSIZE=$(shell expr $(shell vmstat -s | grep -i 'K total memory' | sed 's/ *//' | cut --delimiter=' ' -f1) '/' 1024)Mi

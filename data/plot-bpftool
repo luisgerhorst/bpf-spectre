@@ -4,6 +4,9 @@ source("plotlib.R")
 
 print(DATA)
 
+REAL_DATA <- DATA %>%
+  filter(!str_detect(OSE_BPF_OBJ, "^*custom_*"))
+
 ggplot(DATA, aes(paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4, OSE_BPF_OBJ),
                  fill=paste(`BPF Loadable`, bpftool_loadall_error),
                  colour=paste(bpftool_loadall_type, verification_error))) +
@@ -62,7 +65,7 @@ ggplot(w, aes(OSE_BPF_OBJ, fill=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) 
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 eval_save("NA-errors")
 
-d <- DATA %>%
+d <- REAL_DATA %>%
   filter(bpftool_loadall_exitcode == 0)
 s <- d %>%
   group_by(OSE_BPF_OBJ, bpftool_prog, .drop=F) %>%
@@ -75,23 +78,19 @@ s <- d %>%
   ungroup()
 d <- d %>%
   left_join(s) %>%
-  distinct(uname_a, OSE_BPF_OBJ, User, OSE_SYSCTL, .keep_all=TRUE)
+  distinct(uname_a, OSE_BPF_OBJ, bpftool_prog, User, OSE_SYSCTL, .keep_all=TRUE)
 
-ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=`BPF Program Type`, colour=Project)) +
+ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=paste0(kernel_bpf_spec_v4), colour=paste0(kernel_bpf_spec_v1))) +
   stat_ecdf() +
-  labs(y = "eCDF") +
-  scale_colour_viridis_d() +
-  facet_grid(rows=vars(kernel_bpf_spec_v1),
-             cols=vars(kernel_bpf_spec_v4),
+  facet_grid(rows=vars(Project, `BPF Program Type`),
+             cols=vars(uname_a),
              labeller=label_both, scales="free")
 eval_save("lfence-percent-fgbs")
 
-ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=paste0(kernel_bpf_spec_v1), colour=paste0(kernel_bpf_spec_v4))) +
+ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=paste0(kernel_bpf_spec_v4), colour=paste0(kernel_bpf_spec_v1))) +
   stat_ecdf() +
-  labs(y = "eCDF") +
-  scale_colour_viridis_d() +
-  facet_grid(rows=vars(Project),
-             cols=vars(`BPF Program Type`),
+  facet_grid(rows=vars(T),
+             cols=vars(uname_a),
              labeller=label_both, scales="free")
 eval_save("lfence-percent-fgbs")
 

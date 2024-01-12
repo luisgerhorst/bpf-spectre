@@ -31,7 +31,7 @@ def main():
         # ("wrk", 5),
         # ("wrk", 6),
     ]
-    for T in [os.getenv("T", default="debian.local")]:
+    for T in [os.getenv("T", default="faui49easy2")]:
         for v, p in workloads:
             for rpn in [14000]:
                 # https://nginx.org/en/docs/ngx_core_module.html#worker_connections

@@ -56,8 +56,6 @@ then
 	rm -f $tmp
 	${ssh} mkdir ${guest_temp}/working_dir
 	${ssh} tar xf ${guest_temp}/working_dir.tar.gz --directory=${guest_temp}/working_dir
-else
-	${ssh} "mkdir ${guest_temp}/working_dir"
 fi
 
 if [ $file_defined -eq 1 ]
@@ -65,20 +63,24 @@ then
 	${scp} "${file}" "${SSH_DEST}:${guest_temp}/file"
 fi
 
-${ssh} "mkdir -p ${TARGET_PREFIX}"
-${ssh} "ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix"
-
 command_sh=$(mktemp --suffix -$USER-$(basename $0)-command-sh)
+
 echo "#!/bin/bash
 set -euo pipefail
+
+mkdir -p ${TARGET_PREFIX}
+ln -s ${TARGET_PREFIX} ${guest_temp}/target_prefix
+mkdir ${guest_temp}/result_dir
+mkdir -p ${guest_temp}/working_dir
+cd ${guest_temp}/working_dir
+
 ${command}" > "${command_sh}"
+
 chmod +x "${command_sh}"
 ${scp} ${command_sh} ${SSH_DEST}:${guest_temp}/command.sh
 
-${ssh} "mkdir ${guest_temp}/result_dir"
-
 set +e
-${ssh} env -C "${guest_temp}/working_dir" "../command.sh"
+${ssh} "${guest_temp}/command.sh"
 EXIT_CODE=$?
 set -e
 
@@ -87,7 +89,8 @@ then
 	${scp} -r "${SSH_DEST}:${guest_temp}/result_dir" "${result_dir}"
 fi
 
-${ssh} "rm -rd ${guest_temp}"
-rm ${command_sh}
+${ssh} "rm -rd ${guest_temp}" &
+rm ${command_sh} &
+wait
 
 exit $EXIT_CODE

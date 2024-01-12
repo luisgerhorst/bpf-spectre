@@ -33,12 +33,19 @@ def main():
     ]
     for T in [os.getenv("T", default="faui49easy2")]:
         for v, p in workloads:
+            # Each nginx can handle up to ~16k RPS.
             for rpn in [14000]:
                 # https://nginx.org/en/docs/ngx_core_module.html#worker_connections
                 r = p * rpn
-                for cpn in [1, 256, 1024]:
+                # For connections per server, out of [1, 256, 1024] for 2
+                # clients/servers, 256 lead to the most clear diff. in bpf
+                # runtime. 1 was also fine but did not hit the target rate. (but
+                # with smaller diffs). 1024 hindered reproducibility.
+                for cpn in [256]:
                     c = p * cpn
-                    for payload in [1, 1024, 64*1024]:
+                    # With 64k payload, we can not reach 14k RPS per nginx
+                    # worker.
+                    for payload in [1, 1024, 4096]:
                         for (_ca, sc, b) in configs:
                             suite.append({
                                 "bench_script": "loxilb",

@@ -81,12 +81,14 @@ d <- d %>%
   left_join(s) %>%
   distinct(uname_a, OSE_BPF_OBJ, bpftool_prog, User, OSE_SYSCTL, .keep_all=TRUE)
 
-ggplot(INSN_DATA, aes(bpftool_jited_insncnt_total, fill=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
-  stat_ecdf()
+ggplot(INSN_DATA, aes(bpftool_jited_insncnt_total, colour=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
+  stat_ecdf() +
+  scale_x_log10()
 eval_save("total")
 
-ggplot(INSN_DATA, aes(bpftool_jited_insncnt_lfence, colour=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4)) +
-  stat_ecdf()
+ggplot(INSN_DATA, aes(bpftool_jited_insncnt_lfence, colour=paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
+  stat_ecdf() +
+  scale_x_log10()
 eval_save("lfence")
 
 ggplot(d, aes(`lfence / Total Instructions [%]`, linetype=paste0(kernel_bpf_spec_v4), colour=paste0(kernel_bpf_spec_v1))) +

@@ -113,7 +113,6 @@ def tidy_netperf(brp, burst_pos, nr_clients):
                 usecols=["Elapsed", "Trans."],
                 engine='python',
                 skipfooter=1,
-                on_bad_lines='skip',
             ).add_prefix("netperf_")
             dfs.append(client_obs)
         workload_observation = pd_concat_rows(dfs).agg(['sum']).reset_index(drop=True)

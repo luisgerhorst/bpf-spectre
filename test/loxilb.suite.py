@@ -24,11 +24,11 @@ def main():
     nproc_clients = nproc - nproc_servers
     workloads = [
         ("netperf", 1, "TCP_RR"),
-        ("netperf", nproc_clients, "TCP_RR"),
+        ("netperf", 2, "TCP_RR"),
         ("netperf", 1, "TCP_CRR"),
-        ("netperf", nproc_clients, "TCP_CRR"),
+        ("netperf", 2, "TCP_CRR"),
         ("iperf", 1),
-        ("iperf", nproc_clients),
+        ("iperf", 2),
         ("iperf3-tcp", 1),
         ("iperf3-sctp", 1),
     ]

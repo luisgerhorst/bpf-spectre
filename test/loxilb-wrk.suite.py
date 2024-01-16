@@ -61,7 +61,7 @@ def main():
                                     "OSE_LOXILB_VALIDATION": v,
                                     "OSE_LOXILB_SERVERS": str(p),
                                     "OSE_LOXILB_CLIENTS": str(p),
-                                    "OSE_LOXILB_TIME": str(600),
+                                    "OSE_LOXILB_TIME": str(60),
                                     "OSE_LATENCY_PAYLOAD_SIZE": str(payload),
                                     "OSE_WRK_CONNECTIONS": str(c),
                                     "OSE_WRK_RATE": str(r),

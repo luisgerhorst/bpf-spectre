@@ -2,6 +2,21 @@
 
 source("plotlib.R")
 
+WRK_DATA <- DATA %>%
+  filter(OSE_LOXILB_VALIDATION == "wrk") %>%
+  pivot_longer(c(`wrk_latency_50.000%_ms`,
+                 `wrk_latency_75.000%_ms`,
+                 `wrk_latency_90.000%_ms`,
+                 `wrk_latency_99.000%_ms`,
+                 `wrk_latency_99.900%_ms`,
+                 `wrk_latency_99.990%_ms`,
+                 `wrk_latency_99.999%_ms`,
+                 `wrk_latency_100.000%_ms`),
+               names_to = "wrk_latency_quantile",
+               names_pattern = "wrk_latency_(.+)%_ms",
+               values_to = "wrk_latency_ms") %>%
+  mutate(wrk_latency_quantile = as.numeric(wrk_latency_quantile) / 100)
+
 DATA <- DATA %>%
   ## mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
   filter(workload_exitcode == "0") %>%
@@ -14,7 +29,8 @@ DATA <- DATA %>%
   mutate(across(where(is.numeric), ~ mean(.x, na.rm = TRUE), .names = "mean_{.col}")) %>%
   ungroup() ## %>%
   ## filter(max_bpftool_jited_insncnt_lfence > 0,
-  ##        min_bpftool_prog_show_run_cnt > 1*1000)
+##        min_bpftool_prog_show_run_cnt > 1*1000)
+
 
 cns <- colnames(DATA)
 perf_metrics <- cns[
@@ -31,6 +47,7 @@ for (m in perf_metrics) {
                colour=paste0(kernel_bpf_spec_v1),
                linetype=paste0(kernel_bpf_spec_v4))) +
       stat_ecdf() +
+      scale_colour_viridis_d(begin = 0.2, end = 0.8) +
       scale_x_continuous(limits=c(quantile(DATA[[m]], probs=c(.0)),quantile(DATA[[m]], probs=c(.95)))) +
       facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_WRK_RATE, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS, OSE_WRK_CONNECTIONS),
                  cols=vars(uname_a, OSE_CPUFREQ, bench_script),
@@ -38,3 +55,15 @@ for (m in perf_metrics) {
     eval_save(paste0(m))
   }
 }
+
+ggplot(WRK_DATA,
+       aes(x=wrk_latency_quantile,
+           y=wrk_latency_ms,
+           colour=paste0(kernel_bpf_spec_v1),
+           shape=paste0(kernel_bpf_spec_v4))) +
+  geom_point() +
+  scale_y_log10() +
+  facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_WRK_RATE, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS, OSE_WRK_CONNECTIONS),
+             cols=vars(uname_a, OSE_CPUFREQ, bench_script),
+             labeller=label_both, scales="free")
+eval_save("wrk")

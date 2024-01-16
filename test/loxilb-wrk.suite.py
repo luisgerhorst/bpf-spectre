@@ -44,8 +44,10 @@ def main():
                 for cpn in [256]:
                     c = p * cpn
                     # With 64k payload, we can not reach 14k RPS per nginx
-                    # worker.
-                    for payload in [1, 1024, 4096]:
+                    # worker. With 4k payload, the diff between
+                    # mitigated/unmitigated is even smaller. 1B payload behaves
+                    # alsmost exactly like 1kB payload.
+                    for payload in [1024]:
                         for (_ca, sc, b) in configs:
                             suite.append({
                                 "bench_script": "loxilb",
@@ -59,7 +61,7 @@ def main():
                                     "OSE_LOXILB_VALIDATION": v,
                                     "OSE_LOXILB_SERVERS": str(p),
                                     "OSE_LOXILB_CLIENTS": str(p),
-                                    "OSE_LOXILB_TIME": str(300),
+                                    "OSE_LOXILB_TIME": str(600),
                                     "OSE_LATENCY_PAYLOAD_SIZE": str(payload),
                                     "OSE_WRK_CONNECTIONS": str(c),
                                     "OSE_WRK_RATE": str(r),

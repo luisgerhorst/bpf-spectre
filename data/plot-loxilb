@@ -22,37 +22,27 @@ perf_metrics <- cns[
   | startsWith(cns, "perf_task_clock")
   | startsWith(cns, "perf_duration")
   | startsWith(cns, "bpftool_prog_show_run_time_")
-  | cns == "iperf_bits_per_second"
-  | cns == "iperf3__end_sum_received_bits_per_second"
+  | cns == "throughput"
 ]
 
 for (m in perf_metrics) {
-  ggplot(DATA, aes(y=get(m),
-                   linetype=paste0(kernel_bpf_spec_v4),
-                   colour=paste0(kernel_bpf_spec_v1))) +
-    stat_ecdf() +
-    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_LOXILB_CLIENTS),
-               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
-               labeller=label_value, scales="free")
-  eval_save(paste0("ecdf-", m))
-}
-
-cns <- colnames(DATA)
-perf_metrics <- cns[
-  startsWith(cns, "perf_cycles")
-  | startsWith(cns, "perf_task_clock")
-  | startsWith(cns, "perf_duration")
-  | startsWith(cns, "bpftool_prog_show_run_time_")
-  | startsWith(cns, "netperf_")
-]
-for (m in perf_metrics) {
-  ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "netperf"),
-         aes(y=get(m),
-             linetype=paste0(kernel_bpf_spec_v4),
-             colour=paste0(kernel_bpf_spec_v1))) +
-    stat_ecdf() +
-    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_NETPERF_TEST, OSE_LOXILB_CLIENTS),
-               cols=vars(uname_a, OSE_CPUFREQ, bench_script),
-               labeller=label_value, scales="free")
-  eval_save(paste0("ecdf-", m))
+  for (lv in unique(DATA$OSE_LOXILB_VALIDATION)) {
+    if (startsWith(m, "iperf") && startsWith(lv, "netperf") ||
+        startsWith(m, "iperf_") && startsWith(lv, "iperf3") ||
+        startsWith(m, "iperf3_") && lv == "iperf3" ||
+        startsWith(m, "netperf") && startsWith(lv, "iperf")) {
+      next
+    }
+    print(paste(lv, m))
+    ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == lv),
+           aes(x=get(m),
+               linetype=paste0(kernel_bpf_spec_v4 == 2),
+               colour=paste0(kernel_bpf_spec_v1 == 2))) +
+      stat_ecdf() +
+      scale_colour_viridis_d(begin = 0.2, end = 0.8) +
+      facet_grid(cols=vars(OSE_LOXILB_VALIDATION, OSE_LOXILB_CLIENTS, OSE_NETPERF_TEST),
+                 rows=vars(hostname_short, uname_a),
+                 labeller=label_value, scales="free")
+    eval_save(paste(m, lv))
+  }
 }

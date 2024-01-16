@@ -106,9 +106,16 @@ cols = c(bpftool_jited_insncnt_lfence = NA_real_,
          verification_error_msg = NA,
          bpftool_loadall_exitcode = NA_integer_,
          bpftool_loadall_error_reason_msg = NA,
+         netperf_Elapsed = NA_real_,
+         netperf_Trans. = NA_real_,
+         iperf_bits_per_second = NA_real_,
+         iperf3__end_sum_received_bits_per_second = NA_real_,
          OSE_CPUFREQ = NA,
          OSE_SYSCTL = NA,
          OSE_BPF_OBJ = NA,
+         OSE_NETPERF_TEST = NA,
+         OSE_LOXILB_VALIDATION = NA,
+         OSE_LOXILB_CLIENTS = NA_integer_,
          OSE_CAPSH_ARGS = NA)
 
 DATA <- ALL_DATA %>%
@@ -121,6 +128,13 @@ DATA <- ALL_DATA %>%
     bpftool_prog_show_run_time_s = bpftool_prog_show_run_time_ns / (1000*1000*1000),
     perf_task_clock_s = perf_task_clock_msec / 1000,
     perf_duration_time_s = perf_duration_time_ns  / (1000*1000*1000),
+    throughput = case_when(
+      OSE_LOXILB_VALIDATION == "iperf" ~ iperf_bits_per_second,
+      OSE_LOXILB_VALIDATION == "iperf3-tcp" ~ iperf3__end_sum_received_bits_per_second,
+      OSE_LOXILB_VALIDATION == "iperf3-sctp" ~ iperf3__end_sum_received_bits_per_second,
+      OSE_LOXILB_VALIDATION == "netperf" ~ netperf_Trans.,
+      TRUE ~ NA,
+    ),
     Caches = factor(case_when(
       burst_pos == 0 ~ "Cold Caches",
       burst_pos == max(burst_pos) ~ "Hot Caches",
@@ -134,7 +148,7 @@ DATA <- ALL_DATA %>%
     OSE_SYSCTL = case_when(
       is.na(OSE_SYSCTL) ~ "Default (bpf_*=0)",
       OSE_SYSCTL == "net.core.bpf_jit_harden=0" ~ "Default (bpf_*=0)",
-      TRUE ~ OSE_SYSCTL
+      TRUE ~ str_replace(OSE_SYSCTL, "kernel.bpf_stats_enabled=1 kernel.bpf_complexity_limit_jmp_seq=16384 kernel.bpf_spec_v1_complexity_limit_jmp_seq=8192", "")
     ),
     Project = case_when(
       str_detect(OSE_BPF_OBJ, "^lbe_") ~ "libbpf/examples",

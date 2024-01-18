@@ -17,6 +17,10 @@ OSE_LOXILB_VALIDATION=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
 OSE_LOXILB_CLIENTS=${OSE_LOXILB_CLIENTS:-1}
 export OSE_LOXILB_SERVERS=${OSE_LOXILB_SERVERS:-1}
 
+# If set to a number, increase the rate by this value until the desired rate
+# decreases.
+OSE_WRK_RATE_AUTO_STEP=${OSE_WRK_RATE_AUTO_STEP:-false}
+
 # It's important to note that wrk2 extends the initial calibration period to 10
 # seconds (from wrk's 0.5 second), so runs shorter than 10-20 seconds may not
 # present useful information.
@@ -38,6 +42,7 @@ ip netns list
 
 ./bench-runtime-begin.sh $@
 
+max_rate=0 # wrk_auto_step
 sync
 echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 sleep 1
@@ -150,6 +155,24 @@ do
 	if [ $exitcode != 0 ]
 	then
 		break
+	fi
+
+	if [ $OSE_WRK_RATE_AUTO_STEP != false ] && grep 'Requests/sec' $dst/workload/$burst_pos.wrk-latency.log
+	then
+		rate=$(grep 'Requests/sec' $dst/workload/$burst_pos.wrk-latency.log | cut -d' ' -f3 | cut -d. -f1)
+		if (( rate > max_rate ))
+		then
+			max_rate=$rate
+		fi
+
+		if (( (rate * 100)/OSE_WRK_RATE < 95 ))
+		then
+			export OSE_WRK_RATE_AUTO_STEP=$(( OSE_WRK_RATE_AUTO_STEP/2 ))
+			export OSE_WRK_RATE=$max_rate
+			max_rate=0
+		else
+			export OSE_WRK_RATE=$((OSE_WRK_RATE + OSE_WRK_RATE_AUTO_STEP))
+		fi
 	fi
 done
 

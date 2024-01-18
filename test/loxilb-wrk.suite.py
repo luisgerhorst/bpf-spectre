@@ -65,6 +65,7 @@ def main():
                                     "OSE_LATENCY_PAYLOAD_SIZE": str(payload),
                                     "OSE_WRK_CONNECTIONS": str(c),
                                     "OSE_WRK_RATE": str(r),
+                                    # "OSE_WRK_RATE_AUTO_STEP": str(p * 2000),
                                 },
                             })
 

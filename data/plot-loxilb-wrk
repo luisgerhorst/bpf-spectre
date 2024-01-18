@@ -53,6 +53,17 @@ for (m in perf_metrics) {
                  cols=vars(uname_a, OSE_CPUFREQ, bench_script),
                  labeller=label_both, scales="free")
     eval_save(paste0(m))
+
+    ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk",
+                           OSE_WRK_CONNECTIONS == c),
+           aes(y=get(m),
+               x=wrk_requests_per_sec)) +
+      geom_boxplot(aes(group = cut_width(wrk_requests_per_sec, 200))) +
+      scale_colour_viridis_d(begin = 0.2, end = 0.8) +
+      facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS, OSE_WRK_CONNECTIONS),
+                 cols=vars(uname_a, OSE_CPUFREQ, bench_script, kernel_bpf_spec_v1, kernel_bpf_spec_v4),
+                 labeller=label_both, scales="free")
+    eval_save(paste0("rate-", m))
   }
 }
 

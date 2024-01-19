@@ -24,8 +24,8 @@ def main():
     nproc_clients = nproc - nproc_servers
 
     workloads = [
-        # ("wrk", 1),
-        ("wrk", 2),
+        ("wrk", 1),
+        # ("wrk", 2),
         # ("wrk", 3),
         # ("wrk", 4),
         # ("wrk", 5),
@@ -34,7 +34,7 @@ def main():
     for T in [os.getenv("T", default="faui49easy2")]:
         for v, p in workloads:
             # Each nginx can handle up to ~16k RPS.
-            for rpn in [14000]:
+            for rpn in [12500, 14000, 15500]:
                 # https://nginx.org/en/docs/ngx_core_module.html#worker_connections
                 r = p * rpn
                 # For connections per server, out of [1, 256, 1024] for 2
@@ -50,7 +50,7 @@ def main():
                     for payload in [1024]:
                         for (_ca, sc, b) in configs:
                             suite.append({
-                                "bench_script": "loxilb",
+                                "bench_script": "loxilb-burst",
                                 "boot": {
                                     "LINUX_GIT_CHECKOUT": b,
                                 },
@@ -65,7 +65,10 @@ def main():
                                     "OSE_LATENCY_PAYLOAD_SIZE": str(payload),
                                     "OSE_WRK_CONNECTIONS": str(c),
                                     "OSE_WRK_RATE": str(r),
+                                    "OSE_WRK_EXTRA_FLAGS": "--u_latency",
+                                    "OSE_WRK_RATE_AUTO_STEP": "false",
                                     # "OSE_WRK_RATE_AUTO_STEP": str(p * 2000),
+                                    "OSE_PERF_EVENTS": "-e power/energy-cores/ -e power/energy-pkg/ -e power/energy-ram/",
                                 },
                             })
 

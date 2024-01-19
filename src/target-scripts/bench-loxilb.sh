@@ -6,12 +6,12 @@ set -x
 
 dst=$1
 burst_len=$2
-perf_events=${OSE_PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
 
 bpftool_dst=${dst}/bpftool
 mkdir -p $dst/values $dst/workload $bpftool_dst
 
 . ./common.sh
+OSE_PERF_EVENTS=${OSE_PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
 OSE_LOXILB_WORKFLOW=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
 OSE_LOXILB_VALIDATION=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
 OSE_LOXILB_CLIENTS=${OSE_LOXILB_CLIENTS:-1}
@@ -19,6 +19,7 @@ export OSE_LOXILB_SERVERS=${OSE_LOXILB_SERVERS:-1}
 
 # If set to a number, increase the rate by this value until the desired rate
 # decreases.
+OSE_WRK_RATE=${OSE_WRK_RATE:-1000}
 OSE_WRK_RATE_AUTO_STEP=${OSE_WRK_RATE_AUTO_STEP:-false}
 
 # It's important to note that wrk2 extends the initial calibration period to 10
@@ -36,9 +37,6 @@ rmconfig() {
 }
 
 rmconfig
-uname -a
-docker ps
-ip netns list
 
 ./bench-runtime-begin.sh $@
 
@@ -99,50 +97,33 @@ do
 	}
 
 	list_bpf_progs --json .init
-	# dump_bpf_progs .init
 
 	env -C $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW ./config.sh
 
-	# list_bpf_progs --json .before
-	# dump_bpf_progs .before
-
-	# set +x
-	# new_progs=""
-	# for before_prog in $(cat $dst/values/bpftool_progs.before)
-	# do
-	# 	is_new=true
-	# 	for init_prog in $(cat $dst/values/bpftool_progs.init)
-	# 	do
-	# 		if [[ $init_prog == $before_prog ]]
-	# 		then
-	# 			is_new=false
-	# 			break
-	# 		fi
-	# 	done
-	# 	if [[ $is_new == true ]]
-	# 	then
-	# 		if [[ $new_progs == "" ]]
-	# 		then
-	# 			new_progs=$before_prog
-	# 		else
-	# 			new_progs=$new_progs,$before_prog
-	# 		fi
-	# 	fi
-	# done
-	# set -x
+	echo -n "$OSE_WRK_RATE" > $dst/workload/$burst_pos.OSE_WRK_RATE
 
 	# --pid=$(pidof /root/loxilb-io/loxilb/loxilb)
-	set +e
-	sudo --preserve-env perf stat \
+	export OSE_PERF_STAT=" \
+		sudo --preserve-env perf stat \
 		--output ${dst}/workload/${burst_pos}.perf -x , \
 		--all-cpus \
 		-e duration_time \
 		-e task-clock \
-		-e raw_syscalls:sys_enter \
-		${perf_events} \
+		${OSE_PERF_EVENTS} \
+		"
+	validation=" \
 		$loxilb_src/cicd/$OSE_LOXILB_WORKFLOW/validation-${OSE_LOXILB_VALIDATION} \
-		${OSE_LOXILB_CLIENTS} ${OSE_LOXILB_TIME} $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}-
-	exitcode=$?
+		${OSE_LOXILB_CLIENTS} ${OSE_LOXILB_TIME} $dst/workload/$burst_pos.${OSE_LOXILB_VALIDATION}- \
+		"
+	set +e
+	if [ "${OSE_LOXILB_VALIDATION}" == wrk ]
+	then
+		$validation
+		exitcode=$?
+	else
+		$OSE_PERF_STAT $validation
+		exitcode=$?
+	fi
 	set -e
 
 	list_bpf_progs --json ""

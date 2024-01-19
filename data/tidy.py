@@ -79,6 +79,11 @@ def bench_run_df(bench_run_path):
 def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     if yaml["bench_script"] == "workload-perf":
         return tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
+    elif yaml["bench_script"] == "loxilb-burst":
+        return pd_concat_cols([
+            tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
+            tidy_wrk_latency(bench_run_path, burst_pos)
+        ])
     elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
         dfs = [
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
@@ -89,7 +94,7 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
                 dfs += tidy_netperf(bench_run_path, burst_pos,
                                     int(yaml["OSE_LOXILB_CLIENTS"]))
             elif yaml["OSE_LOXILB_VALIDATION"] == "wrk":
-                dfs += tidy_wrk_latency(bench_run_path, burst_pos)
+                assert False
             else:
                 dfs += tidy_loxilb_iperf(bench_run_path, burst_pos)
                 dfs += tidy_loxilb_iperf3(bench_run_path, burst_pos, suffix="tcp")
@@ -160,8 +165,11 @@ def tidy_loxilb_iperf3(brp, burst_pos, suffix="sctp"):
         return []
 
 def tidy_wrk_latency(brp, burst_pos):
-    wrk_log = brp.joinpath(f'workload/{burst_pos}.wrk-latency.log').read_text().splitlines()
-    df = pd.DataFrame({"wrk_latency": ["true"]})
+    wrk_log = brp.joinpath(f'workload/{burst_pos}.latency.log').read_text().splitlines()
+    df = pd.DataFrame({
+        "wrk_latency": ["true"],
+        "wrk_rate": [brp.joinpath(f'workload/{burst_pos}.OSE_WRK_RATE').read_text()]
+    })
     latency = False
     for line in wrk_log:
         tokens = list(filter(lambda x: x != '', re.split(r"\s+", line)))
@@ -178,7 +186,7 @@ def tidy_wrk_latency(brp, burst_pos):
             df["wrk_requests_per_sec"] = float(tokens[1])
         else:
             logging.debug(line)
-    return [df]
+    return df
 
 def tidy_iperf3_json(iperf3, suffix):
     return [
@@ -394,7 +402,7 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
     if not avail:
         return pd.DataFrame()
 
-    init_progs = json.load(bench_run_path.joinpath("workload/%d.init.bpftool_prog_show.json" % burst_pos).open())
+    init_progs = json.load(bench_run_path.joinpath("workload/0.init.bpftool_prog_show.json" % burst_pos).open())
     progs = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
 
     # Accumulate json items, skip systemd progs.
@@ -405,7 +413,6 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
         d["bpftool_prog_show_" + n] = [0]
     d["bpftool_prog_show_cnt"] = [0]
     for prog in progs:
-
         is_init = False
         for ip in init_progs:
             if ip["id"] == prog["id"]:

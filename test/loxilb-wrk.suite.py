@@ -15,17 +15,14 @@ def main():
     unpr="--drop=cap_sys_admin --drop=cap_perfmon"
     configs = [
         (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
-        (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
-        (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+        # (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+        # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
         (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
-    nproc = 6
-    nproc_servers = 3 # 1 loxilb, 2 server
-    nproc_clients = nproc - nproc_servers
 
     workloads = [
-        ("wrk", 1),
-        # ("wrk", 2),
+        # ("wrk", 1),
+        ("wrk", 2),
         # ("wrk", 3),
         # ("wrk", 4),
         # ("wrk", 5),
@@ -41,8 +38,8 @@ def main():
                 # clients/servers, 256 lead to the most clear diff. in bpf
                 # runtime. 1 was also fine but did not hit the target rate. (but
                 # with smaller diffs). 1024 hindered reproducibility.
-                for cpn in [256]:
-                    c = p * cpn
+                for wef in [""]:
+                    c = p * 256
                     # With 64k payload, we can not reach 14k RPS per nginx
                     # worker. With 4k payload, the diff between
                     # mitigated/unmitigated is even smaller. 1B payload behaves
@@ -65,9 +62,7 @@ def main():
                                     "OSE_LATENCY_PAYLOAD_SIZE": str(payload),
                                     "OSE_WRK_CONNECTIONS": str(c),
                                     "OSE_WRK_RATE": str(r),
-                                    "OSE_WRK_EXTRA_FLAGS": "--u_latency",
-                                    "OSE_WRK_RATE_AUTO_STEP": "false",
-                                    # "OSE_WRK_RATE_AUTO_STEP": str(p * 2000),
+                                    "OSE_WRK_EXTRA_FLAGS": wef,
                                     "OSE_PERF_EVENTS": "-e power/energy-cores/ -e power/energy-pkg/ -e power/energy-ram/",
                                 },
                             })

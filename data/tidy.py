@@ -402,8 +402,8 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
     if not avail:
         return pd.DataFrame()
 
-    init_progs = json.load(bench_run_path.joinpath("workload/0.init.bpftool_prog_show.json" % burst_pos).open())
-    progs = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
+    init_progs = json.load(bench_run_path.joinpath(f"workload/{burst_pos}.init.bpftool_prog_show.json").open())
+    progs = json.load(bench_run_path.joinpath(f"workload/{burst_pos}.bpftool_prog_show.json").open())
 
     # Accumulate json items, skip systemd progs.
     f = ["run_time_ns", "run_cnt", "bytes_jited", "bytes_xlated", "bytes_memlock"]

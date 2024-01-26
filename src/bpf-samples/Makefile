@@ -42,10 +42,9 @@ endif
 .SECONDARY:
 
 .PHONY: all
-all: $(patsubst %,prog-%,$(PROGS)) linux-samples linux-selftests # vbi bcc-libbpf-tools
+all: $(patsubst %,prog-%,$(PROGS)) linux-samples linux-selftests bcc-libbpf-tools # vbi
 
 BLT := external/bcc/libbpf-tools
-
 .PHONY: bcc-libbpf-tools
 bcc-libbpf-tools: | .build
 	$(MAKE) -C $(BLT) all

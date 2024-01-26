@@ -66,22 +66,23 @@
         popd
     done
 
-    # r=bcc-libbpf-tools-${BCC_LOCALVERSION}
-    # if ! test -d $stow/$r
-    # then
-    #         tmp=$(mktemp -d)
-    #         pushd ../target_prefix/bcc/libbpf-tools
-    #         $SUDO make USE_BLAZESYM=0 -j $(nproc) clean
-    #         sudo chown -R $USER .
-    #         make USE_BLAZESYM=0 -j $(nproc) -k all || true
-    #         $SUDO make USE_BLAZESYM=0 DESTDIR=$tmp prefix=$prefix -k install || true
-    #         popd
-    #         sudo mv $tmp$prefix $stow/$r
-    #         sudo rm -rfd $tmp
-    # fi
-    # pushd $stow
-    # sudo stow --override '.*' --stow $r
-    # popd
+    # For tracer benchmark.
+    r=bcc-libbpf-tools-${BCC_LOCALVERSION}
+    if ! test -d $stow/$r
+    then
+            tmp=$(mktemp -d)
+            pushd ../target_prefix/bcc/libbpf-tools
+            $SUDO make USE_BLAZESYM=0 -j $(nproc) clean
+            sudo chown -R $USER .
+            make USE_BLAZESYM=0 -j $(nproc) -k all || true
+            $SUDO make USE_BLAZESYM=0 DESTDIR=$tmp prefix=$prefix -k install || true
+            popd
+            sudo mv $tmp$prefix $stow/$r
+            sudo rm -rfd $tmp
+    fi
+    pushd $stow
+    sudo stow --override '.*' --stow $r
+    popd
 
     parca_version=0.26.0
     r=parca-agent-v$parca_version

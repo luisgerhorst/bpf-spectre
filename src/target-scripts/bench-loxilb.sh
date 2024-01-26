@@ -11,7 +11,6 @@ bpftool_dst=${dst}/bpftool
 mkdir -p $dst/values $dst/workload $bpftool_dst
 
 . ./common.sh
-OSE_PERF_EVENTS=${OSE_PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
 OSE_LOXILB_WORKFLOW=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
 OSE_LOXILB_VALIDATION=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
 OSE_LOXILB_CLIENTS=${OSE_LOXILB_CLIENTS:-1}

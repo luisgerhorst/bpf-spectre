@@ -19,14 +19,13 @@ burst_len=$2
 # TODO: Use OSE_
 
 # Environment from suite definition:
-export PERF_EVENTS=${PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
-export PERF_FLAGS=${PERF_FLAGS:-} # e.g. --all-cpus
-export TRACER="${TRACER:-true}"
-export WORKLOAD_PREPARE="${WORKLOAD_PREPARE:-true}"
-export WORKLOAD_CLEANUP="${WORKLOAD_CLEANUP:-true}"
+. ./common.sh
+export OSE_TRACER="${OSE_TRACER:-true}"
+export OSE_WORKLOAD_PREPARE="${OSE_WORKLOAD_PREPARE:-true}"
+export OSE_WORKLOAD_CLEANUP="${OSE_WORKLOAD_CLEANUP:-true}"
 
 # Available to workload:
-export RANDOM_PORT="$(random_port)"
+export OSE_RANDOM_PORT="$(random_port)"
 
 bpftool_dst=${dst}/bpftool
 mkdir -p $dst/workload $dst/values $bpftool_dst
@@ -49,7 +48,7 @@ set -x
 
 sudo pkill memcached || true
 
-bash -c "export RANDOM_PORT='$RANDOM_PORT'; ${WORKLOAD_PREPARE}"
+bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD_PREPARE}"
 
 sync
 echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
@@ -59,7 +58,7 @@ do
 	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.init.bpftool_prog_show.json 2>&1
 
 	set +m # allow sigint to background process
-	$TRACER > $dst/workload/${burst_pos}.trace 2>&1 &
+	$OSE_TRACER > $dst/workload/${burst_pos}.trace 2>&1 &
 	tracer_pid=$!
 	set -m
 
@@ -70,8 +69,8 @@ do
 		-e duration_time \
 		-e task-clock \
 		-e raw_syscalls:sys_enter \
-		${PERF_EVENTS} \
-		bash -c "export RANDOM_PORT='$RANDOM_PORT'; ${WORKLOAD}" \
+		${OSE_PERF_EVENTS} \
+		bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD}" \
 		> ${dst}/workload/${burst_pos}.stdout \
 		2> ${dst}/workload/${burst_pos}.stderr
 	exitcode=$?
@@ -134,7 +133,7 @@ do
 done
 
 # Must run in same pwd as _PREPARE.
-bash -c "export RANDOM_PORT='$RANDOM_PORT'; ${WORKLOAD_CLEANUP}"
+bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD_CLEANUP}"
 
 ./bench-runtime-end.sh $@
 

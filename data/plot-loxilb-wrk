@@ -54,17 +54,17 @@ for (m in perf_metrics) {
                linetype=paste0(kernel_bpf_spec_v4))) +
       stat_ecdf() +
       scale_colour_viridis_d(begin = 0.2, end = 0.8) +
-      scale_x_continuous(limits=c(quantile(DATA[[m]], probs=c(.0)),quantile(DATA[[m]], probs=c(.95)))) +
+      scale_x_log10(limits=c(quantile(DATA[[m]], probs=c(.0)),quantile(DATA[[m]], probs=c(.95)))) +
       facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_WRK_RATE, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS, OSE_WRK_CONNECTIONS),
                  cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_WRK_EXTRA_FLAGS),
                  labeller=label_both, scales="free")
     eval_save(paste0(m))
 
-    ggplot(CLEAN_WRK_DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk",
-                           OSE_WRK_CONNECTIONS == c),
-           aes(y=get(m),
-               x=wrk_requests_per_sec)) +
-      geom_boxplot(aes(group = cut_width(wrk_requests_per_sec, 500))) +
+    ggplot(CLEAN_WRK_DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk", OSE_WRK_CONNECTIONS == c),
+           aes(y=get(paste0("mean_", m)),
+               x=wrk_rate,
+               colour=paste0(kernel_bpf_spec_v1, kernel_bpf_spec_v4))) +
+      geom_point() +
       scale_colour_viridis_d(begin = 0.2, end = 0.8) +
       facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS, OSE_WRK_CONNECTIONS),
                  cols=vars(uname_a, OSE_CPUFREQ, bench_script, kernel_bpf_spec_v1, kernel_bpf_spec_v4, OSE_WRK_EXTRA_FLAGS),

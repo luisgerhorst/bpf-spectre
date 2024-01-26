@@ -19,19 +19,22 @@ WRK_DATA <- DATA %>%
   mutate(wrk_latency_quantile = as.numeric(wrk_latency_quantile) / 100)
 
 DATA <- DATA %>%
-  ## mutate(bpftool_prog_show_run_time_avg_ns = bpftool_prog_show_run_time_ns / bpftool_prog_show_run_cnt) %>%
-  filter(workload_exitcode == "0") %>%
-  group_by(uname_a, T, OSE_SYSCTL) %>%
+  group_by(uname_a, T, OSE_SYSCTL,
+           OSE_LOXILB_VALIDATION, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS,
+           OSE_WRK_CONNECTIONS, OSE_WRK_RATE, OSE_WRK_EXTRA_FLAGS) %>%
   mutate(across(where(is.numeric), ~ .x / min(.x, na.rm = TRUE), .names = "norm_{.col}"),
          across(where(is.numeric), ~ min(.x, na.rm = TRUE), .names = "min_{.col}"),
          across(where(is.numeric), ~ max(.x, na.rm = TRUE), .names = "max_{.col}")) %>%
   ungroup() %>%
-  group_by(uname_a, T, OSE_SYSCTL) %>%
+  group_by(uname_a, T, OSE_SYSCTL,
+           OSE_LOXILB_VALIDATION, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS,
+           OSE_WRK_CONNECTIONS, OSE_WRK_RATE, OSE_WRK_EXTRA_FLAGS) %>%
   mutate(across(where(is.numeric), ~ mean(.x, na.rm = TRUE), .names = "mean_{.col}")) %>%
-  ungroup() ## %>%
-  ## filter(max_bpftool_jited_insncnt_lfence > 0,
-##        min_bpftool_prog_show_run_cnt > 1*1000)
+  ungroup()
 
+CLEAN_WRK_DATA <- DATA %>%
+  filter(wrk_requests_per_sec > 0.99 * mean_wrk_requests_per_sec,
+         wrk_requests_per_sec < 1.01 * mean_wrk_requests_per_sec)
 
 cns <- colnames(DATA)
 perf_metrics <- cns[
@@ -44,7 +47,7 @@ perf_metrics <- cns[
 ]
 for (m in perf_metrics) {
   for (c in unique(DATA$OSE_WRK_CONNECTIONS)) {
-    ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk",
+    ggplot(CLEAN_WRK_DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk",
                            OSE_WRK_CONNECTIONS == c),
            aes(x=get(m),
                colour=paste0(kernel_bpf_spec_v1),
@@ -57,7 +60,7 @@ for (m in perf_metrics) {
                  labeller=label_both, scales="free")
     eval_save(paste0(m))
 
-    ggplot(DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk",
+    ggplot(CLEAN_WRK_DATA %>% filter(OSE_LOXILB_VALIDATION == "wrk",
                            OSE_WRK_CONNECTIONS == c),
            aes(y=get(m),
                x=wrk_requests_per_sec)) +

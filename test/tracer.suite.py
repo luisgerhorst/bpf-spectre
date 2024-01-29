@@ -73,11 +73,8 @@ def append_T(suite, T):
     # bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
     bcc_apps += [
         "parca-agent",
-        #     "parca-agent --profiling-cpu-sampling-frequency=499",
-        #     "parca-agent --profiling-cpu-sampling-frequency=999",
-        #     "parca-agent --profiling-cpu-sampling-frequency=1999"
+        "parca-agent --profiling-cpu-sampling-frequency=997",
     ]
-    # bcc_apps += ["parca-agent --profiling-cpu-sampling-frequency=9999"]
 
     # Skip priv_spec_mit with unpriv user because it will be the same as
     # regular unpriv.
@@ -91,8 +88,8 @@ def append_T(suite, T):
             # (priv, "kernel.bpf_spec_v1=2", "bpf-spectre-v1-nospec"),
             # (priv, "kernel.bpf_spec_v1=2", "HEAD"),
             (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
-            (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
-            (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
+            # (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+            # (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
             (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
             # (priv, "kernel.bpf_spec_v4=2"),
             # (priv, "net.core.bpf_jit_harden=2"),

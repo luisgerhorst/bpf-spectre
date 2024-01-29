@@ -67,11 +67,10 @@ cns <- colnames(DATA)
 perf_metrics <- cns[startsWith(cns, "perf_") & ! startsWith(cns, "perf_counter_run_time_")]
 for (m in perf_metrics) {
   print(m)
-  ggplot(DATA, aes(y=paste(OSE_WORKLOAD, OSE_TRACER), x=get(m), colour=OSE_SYSCTL)) +
-    geom_smooth(linetype = "dashed", method = "lm") +
-    geom_jitter() +
+  ggplot(DATA, aes(y=paste(OSE_TRACER), x=get(m), colour=OSE_SYSCTL)) +
+    geom_boxplot() +
     scale_y_discrete(labels = function(y) str_wrap(y, width = 40)) +
-    facet_grid(rows=vars(hostname_short, workload_exitcode),
+    facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_WORKLOAD),
                cols=vars(uname_a, OSE_CPUFREQ, bench_script),
                labeller=label_both, scales="free")
   eval_save(paste0(m, "-point"))

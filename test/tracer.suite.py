@@ -66,11 +66,12 @@ def append_T(suite, T):
                 "statsnoop", "syscount", "tcptracer", "tcpconnect", "tcpconnlat",
                 "tcplife",
                 "tcprtt", "tcpstates", "tcpsynbl", "tcptop",
-                # "vfsstat",
+                "vfsstat",
                 "wakeuptime"]
 
-    # parca-agent with 19Hz <= x <= 1999Hz blocks debian (easy7 with Ryzen 3800X)
+    # Only these are interesting:
     # bcc_apps = ["klockstat", "wakeuptime", "tcprtt", "offcputime"]
+
     bcc_apps += [
         "parca-agent",
         "parca-agent --profiling-cpu-sampling-frequency=997",

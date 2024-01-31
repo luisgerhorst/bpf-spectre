@@ -84,6 +84,10 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
             tidy_wrk_latency(bench_run_path, burst_pos)
         ])
+    elif yaml["bench_script"] == "tracer":
+        return pd_concat_cols([
+            tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
+        ])
     elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
         dfs = [
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),

@@ -48,27 +48,28 @@ set -x
 
 sudo pkill memcached || true
 
+list_workload_bpf_progs --json init
+
 bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD_PREPARE}"
+
+set +m # allow sigint to background process
+$OSE_TRACER > $dst/workload/trace 2>&1 &
+tracer_pid=$!
+set -m
 
 sync
 echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 sleep 1
+
+list_workload_bpf_progs --json pre
+
 for burst_pos in $(seq 0 $(expr ${burst_len} - 1))
 do
-	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.init.bpftool_prog_show.json 2>&1
-
-	set +m # allow sigint to background process
-	$OSE_TRACER > $dst/workload/${burst_pos}.trace 2>&1 &
-	tracer_pid=$!
-	set -m
-
 	set +e
 	env -i sudo --preserve-env perf stat \
 		--output ${dst}/workload/${burst_pos}.perf -x , \
 		--all-cpus \
-		-e duration_time \
-		-e task-clock \
-		-e raw_syscalls:sys_enter \
+		${OSE_PERF_DEFAULT_EVENTS} \
 		${OSE_PERF_EVENTS} \
 		bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD}" \
 		> ${dst}/workload/${burst_pos}.stdout \
@@ -76,63 +77,24 @@ do
 	exitcode=$?
 	set -e
 
-	sudo bpftool prog show --json --pretty > $dst/workload/${burst_pos}.bpftool_prog_show.json 2>&1
-	sudo bpftool prog show > $dst/workload/${burst_pos}.bpftool_prog_show 2>&1
-
-	echo -n "" > ${dst}/values/bpftool_progs
-	set +x
-	IFS=$'\n'
-	for	line in $(cat $dst/workload/${burst_pos}.bpftool_prog_show.json)
-	do
-		if [[ $(echo "$line" | cut -d '"' -f 2) == "id" ]]
-		then
-			# Program ID:
-			prog=$(echo "$line" | cut -d ':' -f 2 | cut -d , -f 1 | cut -d ' ' -f 2)
-			echo "prog=$prog" 1>&2
-
-			set +e
-			sudo bpftool prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog &
-			p0=$!
-			sudo bpftool prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog &
-			p1=$!
-			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.$prog.json &
-			p2=$!
-			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.$prog.json &
-			p3=$!
-			wait $p0
-			e0=$?
-			wait $p1
-			e1=$?
-			wait $p2
-			e2=$?
-			wait $p3
-			e3=$?
-			set -e
-
-			if [ $e0 = 0 ] && [ $e1 = 0 ] && [ $e2 = 0 ] && [ $e3 = 0 ]
-			then
-				echo -n " $prog" >> ${dst}/values/bpftool_progs
-			fi
-		fi
-	done
-	unset IFS
-	set -x
-
-	sudo kill -SIGINT $tracer_pid || true # might have terminated already
-	sleep 5 && sudo kill -SIGKILL $tracer_pid || true
-
-	set +e
-	wait $tracer_pid
-	tracer_ec=$?
-	set -e
-
-	if [ $exitcode != 0 ] || [ $tracer_ec != 0 ]
+	if [ $exitcode != 0 ]
 	then
 		break
 	fi
 done
 
-# Must run in same pwd as _PREPARE.
+list_workload_bpf_progs --json post
+dump_workload_bpf_progs post
+
+sudo kill -SIGINT $tracer_pid || true # might have terminated already
+sleep 5 && sudo kill -SIGKILL $tracer_pid || true
+
+set +e
+wait $tracer_pid
+tracer_ec=$?
+set -e
+
+# Must run in same cwd as _PREPARE.
 bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD_CLEANUP}"
 
 ./bench-runtime-end.sh $@

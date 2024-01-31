@@ -82,11 +82,13 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
     elif yaml["bench_script"] == "loxilb-burst":
         return pd_concat_cols([
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
+            tidy_workload_bpf_progs(bench_run_path, burst_pos, yaml, values),
             tidy_wrk_latency(bench_run_path, burst_pos)
         ])
     elif yaml["bench_script"] == "tracer":
         return pd_concat_cols([
-            tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
+            tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
+            tidy_workload_bpf_progs(bench_run_path, burst_pos, yaml, values)
         ])
     elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
         dfs = [
@@ -399,6 +401,59 @@ def tidy_workload_perf(bench_run_path, burst_pos, yaml, values):
             df["perf_" + counter_name + "_" + mu] = row.metric_value
 
     return df
+
+# Sums up info accross all loaded BPF programs.
+def tidy_workload_bpf_progs(bench_run_path, burst_pos, yaml, values):
+    avail = values["workload_exitcode"] == "0" and values.get("tracer_exitcode", "0") == "0"
+    if not avail:
+        return pd.DataFrame()
+
+    init_progs = json.load(bench_run_path.joinpath(f"workload/init.bpftool_prog_show.json").open())
+    pre_progs = json.load(bench_run_path.joinpath(f"workload/pre.bpftool_prog_show.json").open())
+    progs = json.load(bench_run_path.joinpath(f"workload/post.bpftool_prog_show.json").open())
+
+    # Accumulate json items, skip systemd progs.
+    f = ["run_time_ns", "run_cnt", "bytes_jited", "bytes_xlated", "bytes_memlock"]
+    d = {}
+    insncnt_dfs = []
+    for n in f:
+        d[n] = [0]
+    d["cnt"] = [0]
+    for prog in progs:
+
+        # Exclude programs loaded before tracer was started:
+        is_init = False
+        for ip in init_progs:
+            if ip["id"] == prog["id"]:
+                assert ip["tag"] == prog["tag"]
+                is_init = True
+                break
+        if is_init:
+            try:
+                assert prog.get("pids", "NA") == "NA" or prog["pids"][0]["comm"] in ["systemd"]
+            except KeyError as e:
+                logging.error(f'prog from unexpected pid (not systemd) {prog}')
+                raise e
+            continue
+
+        # Add program runtime to total:
+        for n in f:
+            d[n][0] += int(prog.get(n, "0"))
+
+        # Substract program runtime before workload burst:
+        is_init = False
+        for pp in pre_progs:
+            if pp["id"] == prog["id"]:
+                assert pp["tag"] == prog["tag"]
+                for n in ["run_time_ns", "run_cnt"]:
+                    d[n][0] -= int(pp.get(n, "0"))
+                break
+
+        d["cnt"][0] += 1
+    if d["cnt"][0] == 0:
+        return pd.DataFrame(d, index=[0])
+
+    return pd.DataFrame(d, index=[0]).add_prefix('bpftool_prog_show_burst_')
 
 # Sums up info accross all loaded BPF programs.
 def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):

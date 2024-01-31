@@ -38,3 +38,6 @@
 [submodule "src/bpf-samples/loxilb"]
 	path = src/bpf-samples/external/loxilb
 	url = git@github.com:luisgerhorst/loxilb.git
+[submodule "src/bpf-samples/external/parca-agent"]
+	path = src/bpf-samples/external/parca-agent
+	url = git@github.com:parca-dev/parca-agent.git

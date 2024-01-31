@@ -28,10 +28,12 @@ KATRAN = $(patsubst %,katran_%,balancer_kern healthchecking_ipip healthchecking_
 
 LOXILB = llb_ebpf_emain llb_ebpf_main llb_kern_mon llb_xdp_main
 
+PARCA_AGENT = $(patsubst %,parca-agent_%,native pid_namespace pyperf rbperf)
+
 LINUX=../linux-main
 
 # $(KATRAN)
-PROGS = $(LOXILB) $(VBPF) $(CILIUM) $(LBE) falco_probe
+PROGS = $(LOXILB) $(VBPF) $(CILIUM) $(LBE) falco_probe $(PARCA_AGENT)
 
 LLVM_BIN = /usr/lib/llvm-16/bin
 ifneq ($(wildcard $(LLVM_BIN)/*),)
@@ -73,6 +75,14 @@ linux-selftests: $(LINUX)/.config | .build
 		V=1 -j $(shell nproc) -k \
 		2> .build/make-linux-selftests.stderr > .build/make-linux-selftests.stdout || true
 	./linux-selftests.sh
+
+.PHONY: parca-agent
+parca-agent: | .build
+	$(MAKE) -C external/parca-agent bpf
+
+.PHONY: .build/parca-agent_%.bpf.o
+.build/parca-agent_%.bpf.o: parca-agent | .build
+	ln -fs ../external/parca-agent/bpf/out/amd64/$*.bpf.o $@
 
 .PHONY: prog-%
 prog-%: | .build

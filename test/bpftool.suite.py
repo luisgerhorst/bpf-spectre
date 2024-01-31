@@ -29,11 +29,11 @@ def main():
 def append_T(suite, T):
     priv="--drop="
     unpr="--drop=cap_sys_admin --drop=cap_perfmon"
-    sc_always = "kernel.bpf_stats_enabled=1 kernel.bpf_complexity_limit_jmp_seq=16384 kernel.bpf_spec_v1_complexity_limit_jmp_seq=8192"
+    sc_always = "" # in target-scripts
     configs = [
-        (priv, "net.core.bpf_jit_harden=0", "HEAD-dirty"),
-        (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "HEAD-dirty"),
-        (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=0", "HEAD-dirty"),
+        (priv, "", "bpf-spectre-baseline"), # Baseline (Best Performance, Very Unsafe)
+        (priv, "kernel.bpf_spec_v1=0 kernel.bpf_spec_v4=2", "bpf-spectre-baseline"), # Baseline (No Load Failures, Unsafe)
+        (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "bpf-spectre-baseline"), # Baseline (Load Failures, Safe)
         (priv, "kernel.bpf_spec_v1=2 kernel.bpf_spec_v4=2", "HEAD-dirty"),
     ]
 

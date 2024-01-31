@@ -94,6 +94,11 @@ wait $tracer_pid
 tracer_ec=$?
 set -e
 
+if grep 'failed to load BPF' $dst/workload/trace
+then
+	tracer_ec=1
+fi
+
 # Must run in same cwd as _PREPARE.
 bash -c "export OSE_RANDOM_PORT='$OSE_RANDOM_PORT'; ${OSE_WORKLOAD_CLEANUP}"
 

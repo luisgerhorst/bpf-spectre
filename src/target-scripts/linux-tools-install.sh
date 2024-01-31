@@ -84,7 +84,7 @@
     sudo stow --override '.*' --stow $r
     popd
 
-    parca_version=0.26.0
+    parca_version=0.28.0
     r=parca-agent-v$parca_version
     if ! test -d $stow/$r
     then
@@ -162,11 +162,9 @@
     fi
 
     . ./common.sh
-    set +e
     test="$SUDO docker run -u root --cap-add SYS_ADMIN --privileged -v /dev/log:/dev/log -i $loxilb_url loxilib --version | grep $loxilb_version"
     if ! $test
     then
-            set -e
             # https://loxilb-io.github.io/loxilbdocs/simple_topo/
             $SUDO docker pull $loxilb_url
 
@@ -177,9 +175,7 @@
             docker commit $id ghcr.io/loxilb-io/loxilb:latest
             docker stop loxilb && docker rm loxilb
 
-            set +e
             $test
-            set -e
     fi
 
     test="command -v iperf3"
@@ -195,15 +191,13 @@
     # reinstall is skipped. If we modify the tools in the linux tree, we should
     # use install-prefix + stow.
 
-    if ! memtier_benchmark --version && [[ "$(lsb_release --codename | cut -f2)" == "bullseye" ]]
+    if ! memtier_benchmark --version
     then
             tmp=$(mktemp -d)
-            deb=memtier-benchmark_1.4.0.bullseye_amd64.deb
+            deb=memtier-benchmark_1.4.0.$(lsb_release --codename | cut -f2)_amd64.deb
             pushd $tmp
             wget https://github.com/RedisLabs/memtier_benchmark/releases/download/1.4.0/$deb
-            $SUDO dpkg -i $deb                                      # announce deps
-            $SUDO $APT --fix-broken install # install deps
-            $SUDO dpkg -i $deb # install
+            $SUDO $APT install ./$deb
             memtier_benchmark --version
             popd
             rm -rfd $tmp

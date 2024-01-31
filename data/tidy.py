@@ -84,6 +84,10 @@ def tidy_bench_run(bench_run_path, values, yaml, burst_pos):
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
             tidy_wrk_latency(bench_run_path, burst_pos)
         ])
+    elif yaml["bench_script"] == "tracer":
+        return pd_concat_cols([
+            tidy_workload_perf(bench_run_path, burst_pos, yaml, values)
+        ])
     elif yaml["bench_script"] == "tracer" or yaml["bench_script"] == "loxilb":
         dfs = [
             tidy_workload_perf(bench_run_path, burst_pos, yaml, values),
@@ -402,8 +406,8 @@ def tidy_bpf_tracer(bench_run_path, burst_pos, yaml, values):
     if not avail:
         return pd.DataFrame()
 
-    init_progs = json.load(bench_run_path.joinpath("workload/0.init.bpftool_prog_show.json" % burst_pos).open())
-    progs = json.load(bench_run_path.joinpath("workload/%d.bpftool_prog_show.json" % burst_pos).open())
+    init_progs = json.load(bench_run_path.joinpath(f"workload/{burst_pos}.init.bpftool_prog_show.json").open())
+    progs = json.load(bench_run_path.joinpath(f"workload/{burst_pos}.bpftool_prog_show.json").open())
 
     # Accumulate json items, skip systemd progs.
     f = ["run_time_ns", "run_cnt", "bytes_jited", "bytes_xlated", "bytes_memlock"]

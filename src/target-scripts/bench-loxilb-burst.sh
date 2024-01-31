@@ -11,7 +11,6 @@ bpftool_dst=${dst}/bpftool
 mkdir -p $dst/values $dst/workload $bpftool_dst
 
 . ./common.sh
-OSE_PERF_EVENTS=${OSE_PERF_EVENTS:-"-e instructions -e cycles -e branch-misses"}
 OSE_LOXILB_WORKFLOW=${OSE_LOXILB_WORKFLOW:-tcpsctpperf}
 OSE_LOXILB_VALIDATION=${OSE_LOXILB_VALIDATION:-iperf3-sctp}
 OSE_LOXILB_CLIENTS=${OSE_LOXILB_CLIENTS:-1}
@@ -40,67 +39,19 @@ rmconfig
 
 ./bench-runtime-begin.sh $@
 
-list_bpf_progs() {
-	flags="$1"
-	first_suffix="$2"
-
-	last_suffix=""
-	if [[ "$flags" == "--json" ]]
-	then
-		flags="--json --pretty"
-		last_suffix=".json"
-	fi
-
-	sudo bpftool prog show $flags > $dst/workload/${first_suffix}.bpftool_prog_show${last_suffix} 2>&1
-}
-
-dump_bpf_progs() {
-	suffix="$1"
-
-	echo -n "" > ${dst}/values/bpftool_progs.$suffix
-	set +x
-	IFS=$'\n'
-	for	line in $(cat $dst/workload/${suffix}.bpftool_prog_show.json)
-	do
-		if [[ $(echo "$line" | cut -d '"' -f 2) == "id" ]]
-		then
-			# Program ID:
-			prog=$(echo "$line" | cut -d ':' -f 2 | cut -d , -f 1 | cut -d ' ' -f 2)
-			echo "prog=$prog" 1>&2
-
-			set +e
-			sudo bpftool --json --pretty prog dump xlated id "$prog" > ${bpftool_dst}/xlated.${prog}.${suffix}.json
-			e1=$?
-			sudo bpftool --json --pretty prog dump jited id "$prog" > ${bpftool_dst}/jited.${prog}.${suffix}.json
-			e2=$?
-			set -e
-
-			# Dump may fail spuriously.
-			if [ $e1 = 0 ] && [ $e2 = 0 ]
-			then
-				echo -n " $prog" >> ${dst}/values/bpftool_progs.${suffix}
-			fi
-		fi
-	done
-	unset IFS
-	set -x
-}
-
 # Save bpf programs loaded by system to filter them out in analysis.
-list_bpf_progs --json init
+list_workload_bpf_progs --json init
 
 env -C $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW ./config.sh
 
-list_bpf_progs --json pre
+list_workload_bpf_progs --json pre
 
 # --output is supplied by validation-* script.
 export OSE_PERF_STAT=" \
 	sudo --preserve-env perf stat \
 	-x , \
 	--all-cpus \
-	-e duration_time \
-	-e task-clock \
-	${OSE_PERF_EVENTS} \
+	${OSE_PERF_DEFAULT_EVENTS} ${OSE_PERF_EVENTS} \
 	"
 set +e
 $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW/validation-${OSE_LOXILB_VALIDATION} \
@@ -108,8 +59,8 @@ $loxilb_src/cicd/$OSE_LOXILB_WORKFLOW/validation-${OSE_LOXILB_VALIDATION} \
 exitcode=$?
 set -e
 
-list_bpf_progs --json post
-dump_bpf_progs post
+list_workload_bpf_progs --json post
+dump_workload_bpf_progs post
 
 docker exec -i llb1 bash -c 'cat /var/log/loxilb*.log' > $dst/workload/llb1-loxilb.log
 

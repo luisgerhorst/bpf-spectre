@@ -10,7 +10,7 @@ BZIMAGE := $(LINUX)/arch/x86_64/boot/bzImage
 
 # Should be in a directory that disappears on reboot to invalidate state of VMM
 # virtual machines.
-export TS := .run/$(shell cat /proc/sys/kernel/random/boot_id)
+export TS := .run/$(T)-$(shell cat /proc/sys/kernel/random/boot_id)
 
 export LD_LIBRARY_PATH := /usr/local/lib
 

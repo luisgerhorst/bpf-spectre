@@ -54,7 +54,7 @@ for (m in perf_metrics) {
                linetype=paste0(kernel_bpf_spec_v4))) +
       stat_ecdf() +
       scale_colour_viridis_d(begin = 0.2, end = 0.8) +
-      scale_x_continuous(limits=c(quantile(DATA[[m]], probs=c(.0)),quantile(DATA[[m]], probs=c(.95)))) +
+      scale_x_log10(limits=c(quantile(DATA[[m]], probs=c(.0)),quantile(DATA[[m]], probs=c(.95)))) +
       facet_grid(rows=vars(hostname_short, workload_exitcode, OSE_LOXILB_VALIDATION, OSE_WRK_RATE, OSE_LATENCY_PAYLOAD_SIZE, OSE_LOXILB_CLIENTS, OSE_LOXILB_SERVERS, OSE_WRK_CONNECTIONS),
                  cols=vars(uname_a, OSE_CPUFREQ, bench_script, OSE_WRK_EXTRA_FLAGS),
                  scales="free")

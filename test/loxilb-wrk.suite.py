@@ -31,7 +31,7 @@ def main():
     for T in [os.getenv("T", default="faui49easy2")]:
         for v, p in workloads:
             # Each nginx can handle up to ~16k RPS.
-            for rpn in [12500, 14000, 15500]:
+            for rpn in [14750, 15125]: # [12500, 14000, 15500]
                 # https://nginx.org/en/docs/ngx_core_module.html#worker_connections
                 r = p * rpn
                 # For connections per server, out of [1, 256, 1024] for 2

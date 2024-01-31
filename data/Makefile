@@ -11,7 +11,8 @@ all: plots
 
 RAW_DIRS := $(filter %/, $(wildcard $(TESTRUN_DATA)/*/))
 DATA_REAL := $(RAW_DIRS:$(TESTRUN_DATA)/%/=%)
-DATA_VIRT :=
+# Real data names separated by +.
+DATA_VIRT := 24-01-25_17-11_loxilb-wrk_r20-b20+24-01-29_14-50_loxilb-wrk_r20-b20-load-0.95-0.975
 DATA := $(DATA_REAL) $(DATA_VIRT)
 PLOTS := $(DATA:%=d-%)
 

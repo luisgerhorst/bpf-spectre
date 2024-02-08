@@ -30,7 +30,7 @@ expr <- ed %>%
 
 ggplot(expr, aes(paste(kernel_bpf_spec_v1, kernel_bpf_spec_v4),
                  colour=paste(`BPF Loadable`, bpftool_loadall_error),
-                 fill=paste(bpftool_loadall_type, verification_error, str_trunc(bpftool_loadall_error_reason, 64)))) +
+                 fill=paste(verification_error))) +
   geom_histogram(stat = "count") +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   scale_fill_viridis_d() +
